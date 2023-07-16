@@ -18,7 +18,7 @@ public class StatFilter {
 		
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.06");
+		System.out.println("Version: 0.08");
 			
 	}//end constructor
 	
@@ -43,9 +43,6 @@ public class StatFilter {
 
 	public void divide_image(int n){
 		
-		//n matrices per side
-		
-		
 		//height and width of sub matrixes
 		int hs,ws;
 				
@@ -69,19 +66,19 @@ public class StatFilter {
 						int offsetH = (r)*hs;
 						int offsetW = (c)*ws;		
 						
-						tempR[h][w]= image.getRedMatrix()[offsetH+h][offsetW+w];
-						tempG[h][w]= image.getGreenMatrix()[offsetH+h][offsetW+w];
-						tempB[h][w]= image.getBlueMatrix()[offsetH+h][offsetW+w];
-						tempA[h][w]= image.getAlphaMatrix()[offsetH+h][offsetW+w];
+						tempR[h][w]= image.getMatrix("red")[offsetH+h][offsetW+w];
+						tempG[h][w]= image.getMatrix("green")[offsetH+h][offsetW+w];
+						tempB[h][w]= image.getMatrix("blue")[offsetH+h][offsetW+w];
+						tempA[h][w]= image.getMatrix("alpha")[offsetH+h][offsetW+w];
 						
 					}	//end height
 				}//end width
 				
 				tiles[r][c]=new RGBHolder();		
-				tiles[r][c].setRedMatrix(tempR);
-				tiles[r][c].setGreenMatrix(tempG);
-				tiles[r][c].setBlueMatrix(tempB);
-				tiles[r][c].setAlphaMatrix(tempA);
+				tiles[r][c].setMatrix("red", tempR);
+				tiles[r][c].setMatrix("green", tempG);
+				tiles[r][c].setMatrix("blue", tempB);
+				tiles[r][c].setMatrix("alpha", tempA);
 				
 				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
 				tiles[r][c].setTly((r)*hs);
@@ -127,6 +124,14 @@ public class StatFilter {
 		return this.exportImage();
 		
 	}//end ShowTiles
+	
+	
+	public RGBHolder getTile (int x, int y) {
+		
+		return tiles[x][y];
+		
+	}
+	
 	
 	public BufferedImage [] getTiles() {
 		
@@ -215,9 +220,9 @@ public class StatFilter {
 			for (int c=0; c<tiles[0].length; c++){
 				
 				
-				inputLayer[i]=this.findMax(tiles[r][c].getRedMatrix(), null)[0];
-				inputLayer[i+1]=this.findMax(tiles[r][c].getGreenMatrix(), null)[0];
-				inputLayer[i+2]=this.findMax(tiles[r][c].getBlueMatrix(), null)[0];
+				inputLayer[i]=this.findMax(tiles[r][c].getMatrix("red"), null)[0];
+				inputLayer[i+1]=this.findMax(tiles[r][c].getMatrix("green"), null)[0];
+				inputLayer[i+2]=this.findMax(tiles[r][c].getMatrix("blue"), null)[0];
 				
 				i=i+3;
 				
@@ -326,18 +331,18 @@ public class StatFilter {
 		for (int h=0; h<maxh; h++){
 			for (int w=0; w<maxw; w++){
 								
-				tempR[h][w]= image.getRedMatrix()[offsetH+h][offsetW+w];
-				tempG[h][w]= image.getGreenMatrix()[offsetH+h][offsetW+w];
-				tempB[h][w]= image.getBlueMatrix()[offsetH+h][offsetW+w];
-				tempA[h][w]= image.getAlphaMatrix()[offsetH+h][offsetW+w];
+				tempR[h][w]= image.getMatrix("red")[offsetH+h][offsetW+w];
+				tempG[h][w]= image.getMatrix("green")[offsetH+h][offsetW+w];
+				tempB[h][w]= image.getMatrix("blue")[offsetH+h][offsetW+w];
+				tempA[h][w]= image.getMatrix("alpha")[offsetH+h][offsetW+w];
 
 			}	//end height
 		}//end width
 		
-		resSection.setRedMatrix(tempR);
-		resSection.setGreenMatrix(tempG);
-		resSection.setBlueMatrix(tempB);
-		resSection.setAlpha(255);
+		resSection.setMatrix("red", tempR);
+		resSection.setMatrix("green", tempG);
+		resSection.setMatrix("blue", tempB);
+		resSection.setMatrix("alpha", 255);
 		
 		resSection.setTly(offsetH);
 		resSection.setTlx(offsetW);
@@ -375,9 +380,9 @@ public class StatFilter {
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
-				int [][] RMatrix=tiles[r][c].getRedMatrix();
-				int [][] GMatrix=tiles[r][c].getGreenMatrix();
-				int [][] BMatrix=tiles[r][c].getBlueMatrix();
+				int [][] RMatrix=tiles[r][c].getMatrix("red");
+				int [][] GMatrix=tiles[r][c].getMatrix("green");
+				int [][] BMatrix=tiles[r][c].getMatrix("blue");
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
@@ -397,10 +402,10 @@ public class StatFilter {
 		
 		RGBHolder imgout = new RGBHolder();
 		
-		imgout.setRedMatrix(redPixels);
-		imgout.setGreenMatrix(greenPixels);
-		imgout.setBlueMatrix(bluePixels);
-		imgout.setAlpha(255);
+		imgout.setMatrix("red", redPixels);
+		imgout.setMatrix("green", greenPixels);
+		imgout.setMatrix("blue", bluePixels);
+		imgout.setMatrix("alpha", 255);
 		
 		
 		redPixels=null;

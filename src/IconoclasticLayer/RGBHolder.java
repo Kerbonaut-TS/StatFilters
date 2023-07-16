@@ -57,10 +57,10 @@ public class RGBHolder {
 		alphaPixels	= new int[height][width];
 		
 		
-		redPixels = this.copyMatrix(ih.getRedMatrix());
-		greenPixels = this.copyMatrix(ih.getGreenMatrix());
-		bluePixels = this.copyMatrix(ih.getBlueMatrix());
-		alphaPixels = this.copyMatrix(ih.getAlphaMatrix());
+		redPixels = this.copyMatrix(ih.getMatrix("red"));
+		greenPixels = this.copyMatrix(ih.getMatrix("green"));
+		bluePixels = this.copyMatrix(ih.getMatrix("blue"));
+		alphaPixels = this.copyMatrix(ih.getMatrix("alpha"));
 		
 
 	}//end setImage
@@ -139,9 +139,9 @@ public class RGBHolder {
 		//get Image matrix
 		for (int h=0; h<height;h++){
 			for (int w=0; w<width;w++){
-				if(redPixels[h][w]>threshold)	redPixels[h][w]=redPixels[h][w]-x.getRedMatrix()[h][w];
-				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=greenPixels[h][w]-x.getGreenMatrix()[h][w];
-				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=bluePixels[h][w]-x.getBlueMatrix()[h][w];
+				if(redPixels[h][w]>threshold)	redPixels[h][w]=redPixels[h][w]-x.getMatrix("red")[h][w];
+				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=greenPixels[h][w]-x.getMatrix("green")[h][w];
+				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=bluePixels[h][w]-x.getMatrix("blue")[h][w];
 							
 			}//end height			
 		}// end width
@@ -153,9 +153,9 @@ public class RGBHolder {
 		//get Image matrix
 		for (int h=0; h<height;h++){
 			for (int w=0; w<width;w++){
-				if(redPixels[h][w]<threshold)	redPixels[h][w]=redPixels[h][w]+x.getRedMatrix()[h][w];
-				if(greenPixels[h][w]<threshold)	greenPixels[h][w]=greenPixels[h][w]+x.getGreenMatrix()[h][w];
-				if(bluePixels[h][w]<threshold)	bluePixels[h][w]=bluePixels[h][w]+x.getBlueMatrix()[h][w];
+				if(redPixels[h][w]<threshold)	redPixels[h][w]=redPixels[h][w]+x.getMatrix("red")[h][w];
+				if(greenPixels[h][w]<threshold)	greenPixels[h][w]=greenPixels[h][w]+x.getMatrix("green")[h][w];
+				if(bluePixels[h][w]<threshold)	bluePixels[h][w]=bluePixels[h][w]+x.getMatrix("blue")[h][w];
 							
 			}//end height			
 		}// end width
@@ -242,9 +242,9 @@ public class RGBHolder {
 	public  double entropy() {
         // Create a map to count the frequency of each color
         Map<Color, Integer> colorCounts = new HashMap<>();
-        int [][] red = this.getRedMatrix();
-        int [][] blue = this.getBlueMatrix();
-        int [][] green = this.getGreenMatrix();
+        int [][] red = this.getMatrix("red");
+        int [][] blue = this.getMatrix("blue");
+        int [][] green = this.getMatrix("green");
 
 
         // Iterate over each pixel and count the occurrences of each color
@@ -309,10 +309,10 @@ public class RGBHolder {
 			this.setHeight(newH);
 			this.setWidth(newW);
 			
-			this.setGreenMatrix(newgreen);
-			this.setRedMatrix(newred);
-			this.setBlueMatrix(newblue);
-			this.setAlphaMatrix(newalpha);
+			this.setMatrix("green", newgreen);
+			this.setMatrix("red", newred);
+			this.setMatrix("blue", newblue);
+			this.setMatrix("alpha",newalpha);
 	
 			
 			
@@ -384,27 +384,9 @@ public class RGBHolder {
 	
 	//export to file
 	
-	private BufferedImage save_BufferedImage() {
-		
-		BufferedImage imgBuf = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-		
-		for (int h=0; h<height;h++){
-			for (int w=0; w<width;w++){
-				int rgb = (((int)alphaPixels[h][w]<<24) | ((int)redPixels[h][w]) << 16 | ((int)greenPixels[h][w]) << 8 | ((int)bluePixels[h][w]));      
-				imgBuf.setRGB(w, h, rgb);            
-           }//end h
-        }//end w
-		
-		this.img = imgBuf;
 
-		return imgBuf;
-		
-	}
-		
 	public void saveImage(String filepath) throws IOException{
-	
-		if (this.img == null) this.save_BufferedImage();
-		
+			
 		
         File file = new File(filepath);
         file.getParentFile().mkdirs();
@@ -412,101 +394,77 @@ public class RGBHolder {
 
 	}//end write image
 		
-	// === OTHER get and set ===
-	public void setRedMatrix(int [][] newMatrix){
+	public int[][] getMatrix(String color){
+				
+		switch(color) {
+		  case "red":
+			  return redPixels;		
+		    
+		  case "green":
+			  return greenPixels;
+			
+		  case "blue":
+			  return bluePixels;
+			  
+		  case "alpha":
+			  return alphaPixels;
+			  
+		  default:
+			  System.out.println("Invalid: set red, green, blue or alpha");
+			  return null;
 		
-		redPixels =new int[newMatrix.length][newMatrix[0].length];
-		redPixels=this.copyMatrix(newMatrix);
-		
-		//if the new matrix is smaller overlaps the old one
-		if(newMatrix.length>height) height=newMatrix.length;
-		if(newMatrix[0].length>width) width=newMatrix[0].length;
+		}
+				
 	}
 	
 	public void setMatrix(String color, double constant){
-		int [][] matrix ;
+		
+		int [][] matrix = new int[height][width]; 
 		
 		switch(color) {
 		  case "red":
-			 matrix = redPixels;		
-		    break;
+			  matrix = redPixels;
+			  break;
 		    
 		  case "green":
-			  matrix = greenPixels;
-			break;
+			  matrix =  greenPixels;
+			  break;
 			
 		  case "blue":
-			  matrix = greenPixels;
+			  matrix =  bluePixels;
+			  break;
+			  
+		  case "alpha":
+			  matrix =  alphaPixels;
 			  break;
 			  
 		  default:
-			  matrix = null;
-			  System.out.println("Invalid: red, green or blue.");
+			  System.out.println("Invalid: set red, green, blue or alpha");
+			  matrix =  null;
 		
 		}
 		
+	
 		for(int i=0; i<matrix.length;i++){
 			for(int j=0; j<matrix[0].length; j++) matrix[i][j]=(int)constant;
 		}
 		
 	}
-	
-	/*public void setGreenMatrix(double constant){
+	public void setMatrix(String color, int [][] RGBmatrix){
 		
+		//if the new matrix is smaller use the old one otherwise update
+		if(RGBmatrix.length>height) height=RGBmatrix.length;
+		if(RGBmatrix[0].length>width) width=RGBmatrix[0].length;
 		
-		for(int i=0; i<greenPixels.length;i++){
-			for(int j=0; j<greenPixels[0].length; j++) greenPixels[i][j]=(int)constant;
-		}
+		 int [][] matrix = this.getMatrix(color);
+
 		
+		matrix =new int[height][width];
+		matrix=this.copyMatrix(RGBmatrix);
+		
+
 	}
 	
-	
-	public void setBlueMatrix(double constant){
-		
-		
-		for(int i=0; i<bluePixels.length;i++){
-			for(int j=0; j<bluePixels[0].length; j++) bluePixels[i][j]=(int)constant;
-		}
-		
-	}*/
-	
-	
-	public void setGreenMatrix(int [][] matrix){ 
-		greenPixels =new int[matrix.length][matrix[0].length];
-		
-		greenPixels=this.copyMatrix(matrix);
-		this.height=matrix.length;		
-		this.width=matrix[0].length;
-	}
-	
-	public void setBlueMatrix(int [][] matrix){ 
-		bluePixels =new int[matrix.length][matrix[0].length];
-		bluePixels=this.copyMatrix(matrix);
-		if(matrix.length>height) height=matrix.length;
-		if(matrix[0].length>width) width=matrix[0].length;
-	}
-	
-	public void setAlphaMatrix(int [][] matrix){ 
-		alphaPixels =new int[matrix.length][matrix[0].length];
-		alphaPixels=this.copyMatrix(matrix);
-		if(matrix.length>height) height=matrix.length;
-		if(matrix[0].length>width) width=matrix[0].length;
-	}
-	
-	public void setAlpha(int alpha){
-		alphaPixels =new int[this.height][this.width];
-		for(int h=0; h<this.height; h++){
-			for(int w=0; w<this.width;w++){
-				alphaPixels[h][w]=alpha;
-			}//for h
-		}//for w
-		
-	}//end setAlphaMax
-		
-	public int[][] getRedMatrix(){ return redPixels;}
-	public int[][] getGreenMatrix(){ return greenPixels;}
-	public int[][] getBlueMatrix(){ return bluePixels;}
-	public int[][] getAlphaMatrix(){ return alphaPixels;}
 	
 	public int getHeight(){ return height;}
 	public int getWidth(){ return width;}
@@ -544,8 +502,6 @@ public class RGBHolder {
 	
 	public void add_text(String text, int size, Color mycolor, int x, int y) {
 		
-		//input Img
-		if (this.img == null) this.save_BufferedImage();
 
 		//output Img		
 		BufferedImage imgWithText = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
