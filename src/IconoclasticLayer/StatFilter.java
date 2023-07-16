@@ -1,25 +1,45 @@
-package iconoclasticlayer;
+ package IconoclasticLayer;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
 
-public class IconoclasticLayer {
+public class StatFilter {
 
 	RGBHolder image;
-	public RGBHolder[][] sections; //[rows], [columns]  c and r are the coordinates in the picture
-	RGBHolder maxInfoAreas[];
-	double [][] I; //information quantity for each section
+	RGBHolder[][] sections; //[rows], [columns]  c and r are the coordinates in the picture
+	RGBHolder features[];
 	
-	
-	public IconoclasticLayer(RGBHolder rgbh)  {
-		this.image = new RGBHolder();
+	//entropy matrix
+	double [][] I; 
+		
+	public StatFilter(RGBHolder rgbh)  {
 		this.image.clone(rgbh);
-		this.setResolution(1);
+		this.divide_image(1);
 			
 	}//end constructor
 	
-	public void setResolution(int n){
+	
+	//IMPORT ========================================================================================
+	
+	public void set_source(String filepath) throws IOException {
+		
+		this.image = new RGBHolder();
+		image.setImageFromFile(filepath);
+
+	}
+	
+	public void set_image(BufferedImage img) {
+		
+		this.image = new RGBHolder();
+		image.setBufferedImage(img);
+		
+	}
+	
+	//SECTION DIVISION  ==============================================================================
+
+	public void divide_image(int n){
 		
 		//n matrices per side
 		
@@ -75,7 +95,31 @@ public class IconoclasticLayer {
 	
 
 	}//end setResolution
-			
+	
+	public double[][] rank_sections() throws IOException{
+		
+		//I matrix contains the quantity of Information for each section		
+	    I= new double [sections.length][sections[0].length];
+		
+	   
+		//Populate the I matrix 
+		for (int r=0; r<sections.length; r++){
+			for (int c=0; c<sections[0].length; c++){					
+				I[r][c]=sections[r][c].entropy();				
+			}//for columns
+		}//for rows
+		
+	    //sort all sections by information and get the list	
+		
+		double sortedList [][]= this.create_ranks();
+
+		
+		return sortedList;
+		
+	} //end 
+	
+	//OPERATIONS  ====================================================================================
+
 	//returns a linear RGB Array with the average colour of each section 
 	public double[] getAVGValues() {
 		
@@ -89,7 +133,7 @@ public class IconoclasticLayer {
 		for (int r=0; r<sections.length; r++){
 			for (int c=0; c<sections[0].length; c++){
 				
-				double [] avgRGB=sections[r][c].getAVGvalue();
+				double [] avgRGB=sections[r][c].mean();
 				
 				inputLayer[i]=avgRGB[0];
 				inputLayer[i+1]=avgRGB[1];
@@ -131,103 +175,21 @@ public class IconoclasticLayer {
 		
 	}//end getinputlayer
 	
+	//normalization
+	public void localNormalisation() {
+		
+		//standardized values in each section
 
-	
-	public double[][] rank_sections() throws IOException{
-		
-		//I matrix contains the quantity of Information for each section		
-	    I= new double [sections.length][sections[0].length];
-		
-	   
-		//Populate the I matrix 
 		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){					
-				I[r][c]=sections[r][c].calculateEntropy();				
-			}//for columns
-		}//for rows
+			for (int c=0; c<sections[0].length; c++){			
+				sections[r][c].standardise();		
+			}//end col
+		}//end rows
 		
-	    //sort all sections by information and get the list	
-		
-		double sortedList [][]= this.create_ranks();
-
-		
-		return sortedList;
-		
-	} //end 
-	
-	private double[][]  create_ranks() throws IOException {
-
-		
-		//prepare list
-		int i =0;
-		int n = I.length * I[0].length;
-		double[][] rankedList = new double [n][3]; //   (measure, row, column)
-		
-		//copy I matrix and coordinates
-		for (int r=0; r<I.length; r++){
-			for (int c=0; c<I[0].length; c++){	
-				
-				rankedList[i][0] = I[r][c];
-			    rankedList[i][1] = r;
-				rankedList[i][2] = c;
-				i++;
-				
-			}//for columns
-		}//for rows
-		
-		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[0]));
-
-		return rankedList;
-		
-		}
-	
-	private double[] findMax(double [][] matrix, int excludedElements[][]){
-		
-		//returns [maxValue,r,c] ... row/column  where the max value was found in the original matrix
-		// excluded elements is a list of pairs of coordinates that 
-		double [] max = new double [3];
-		
-		//initialise
-		max[0]=0;
-		max[1]=-1;
-		max[2]=-1;
-		
-		
-		//for each element in the matrix
-		for(int r=0; r<matrix.length;r++){
-			for(int c=0;c<matrix[0].length;c++){			
-				
-				//found new max
-				if(matrix[r][c]>=max[0]) {
-					
-					boolean excluded=false;
-					
-					//check if any exclusion is defined
-					if(excludedElements!=null) {
-						
-						//check if coordinates are excluded
-						for(int i=0; i< excludedElements.length; i++) {
-							if( excludedElements[i][0]==r && excludedElements[i][1]==c ) excluded=true; 	
-						}
-					}// end if exclusion
-					
-					if(!excluded) {
-						max[0]=matrix[r][c];
-						max[1]=r;
-						max[2]=c;
-					}//end if
-					
-				}//if found new max
-			}//for columns
-		}//for rows
-		
-		return max;
-	}//find max end
+	}//end localstd
 	
 	
-	
-	
-	//Information Optimiser
+	//IMAGE TRANSFORM  ====================================================================================
 	private RGBHolder optimiseSection(RGBHolder section, int direction) {
 		
 		
@@ -251,15 +213,15 @@ public class IconoclasticLayer {
 		
 		
 		//calculate direction gradient (if direction=0 calculate both) 
-		info=section.calc_entropy();
+		info=section.entropy();
 		if(direction>=0){
 			larger=this.resizeSection(section, delta);
-			infoL=larger.calc_entropy();
+			infoL=larger.entropy();
 			gradL=infoL-info;
 		}
 		if(direction<=0){
 			smaller=this.resizeSection(section, (-1)*delta);
-			infoS=smaller.calc_entropy();
+			infoS=smaller.entropy();
 			gradS=infoS-info;
 		}
 		
@@ -336,33 +298,7 @@ public class IconoclasticLayer {
 		
 	}
 
-	//normalization
-	public void localNormalisation() {
-		
-		//standardized values in each section
 
-		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){			
-				sections[r][c].standardise();		
-			}//end col
-		}//end rows
-		
-	}//end localstd
-	
-	private double findMin(double [][] matrix){
-		//used in resizing to 0-255
-		
-		double min=matrix[0][0];
-		
-		//calculate z variable
-		for(int j=0; j<matrix.length;j++){
-			for(int i=0;i<matrix[0].length;i++){			
-				if(matrix[j][i]<min) min=matrix[j][i];
-			}//i
-		}//j
-		
-		return min;
-	}//find max end
 	
 	//debugging: used to display the standardised image (resize to 0-255 then stitch sections together)
 	public RGBHolder getImage() {
@@ -422,7 +358,6 @@ public class IconoclasticLayer {
 	
 	}
 	
-	
 	private double [][] resizeToRGB(double[][] zmatrix){
 		
 			
@@ -444,6 +379,91 @@ public class IconoclasticLayer {
 	}// end resizeToRGB
 	
 
+	//Tools ========================================================================================
 	
+	private double[][]  create_ranks() throws IOException {
+
+		
+		//prepare list
+		int i =0;
+		int n = I.length * I[0].length;
+		double[][] rankedList = new double [n][3]; //   (measure, row, column)
+		
+		//copy I matrix and coordinates
+		for (int r=0; r<I.length; r++){
+			for (int c=0; c<I[0].length; c++){	
+				
+				rankedList[i][0] = I[r][c];
+			    rankedList[i][1] = r;
+				rankedList[i][2] = c;
+				i++;
+				
+			}//for columns
+		}//for rows
+		
+		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[0]));
+
+		return rankedList;
+		
+		}
 	
+	private double[] findMax(double [][] matrix, int excludedElements[][]){
+		
+		//returns [maxValue,r,c] ... row/column  where the max value was found in the original matrix
+		// excluded elements is a list of pairs of coordinates that 
+		double [] max = new double [3];
+		
+		//initialise
+		max[0]=0;
+		max[1]=-1;
+		max[2]=-1;
+		
+		
+		//for each element in the matrix
+		for(int r=0; r<matrix.length;r++){
+			for(int c=0;c<matrix[0].length;c++){			
+				
+				//found new max
+				if(matrix[r][c]>=max[0]) {
+					
+					boolean excluded=false;
+					
+					//check if any exclusion is defined
+					if(excludedElements!=null) {
+						
+						//check if coordinates are excluded
+						for(int i=0; i< excludedElements.length; i++) {
+							if( excludedElements[i][0]==r && excludedElements[i][1]==c ) excluded=true; 	
+						}
+					}// end if exclusion
+					
+					if(!excluded) {
+						max[0]=matrix[r][c];
+						max[1]=r;
+						max[2]=c;
+					}//end if
+					
+				}//if found new max
+			}//for columns
+		}//for rows
+		
+		return max;
+	}//find max end
+	
+	private double findMin(double [][] matrix){
+		//used in resizing to 0-255
+		
+		double min=matrix[0][0];
+		
+		//calculate z variable
+		for(int j=0; j<matrix.length;j++){
+			for(int i=0;i<matrix[0].length;i++){			
+				if(matrix[j][i]<min) min=matrix[j][i];
+			}//i
+		}//j
+		
+		return min;
+	}//find max end
+
+
 }//end class

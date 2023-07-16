@@ -1,4 +1,5 @@
- package iconoclasticlayer;
+package IconoclasticLayer;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -17,25 +18,24 @@ public class RGBHolder {
 	
 	String imgpath;
 	int height, width;
+	
+	//image for export
+	BufferedImage img;
 
 	double[][]redPixels;
 	double[][]greenPixels;
 	double[][]bluePixels;
 	double[][]alphaPixels;
 	
-	//top left coordinates
+	//top left coordinates 
 	int tlx;
 	int tly;
-	
-	
-	//image for export
-	BufferedImage img;
 		
 	public RGBHolder()  {
 		
+		//an imageHolder can be empty
 		this.height=0;
 		this.width=0;
-		//an imageHolder can be empty
 		
 		//default reference system
 		tlx=0;
@@ -43,10 +43,11 @@ public class RGBHolder {
 		
 	}//end constructor
 	
-	//=== IMPORT METHODS ===
+	//=== IMPORT METHODS =====================================================================
 	
 	//import image from another RGBHolder Object
 	public void clone(RGBHolder ih){
+		
 		this.height=ih.getHeight();
 		this.width=ih.getWidth();
 		
@@ -55,16 +56,13 @@ public class RGBHolder {
 		redPixels= new double[height][width];
 		alphaPixels	= new double[height][width];
 		
-		//get Image matrix
-		for (int h=0; h<ih.getHeight();h++){
-			for (int w=0; w<ih.getWidth();w++){
-				redPixels[h][w]=ih.getRedMatrix()[h][w];
-				greenPixels[h][w]=ih.getGreenMatrix()[h][w];
-				bluePixels[h][w]=ih.getBlueMatrix()[h][w];
-				alphaPixels[h][w]=ih.getAlphaMatrix()[h][w];
-			}//end height			
-		}// end width
 		
+		redPixels = this.copyMatrix(ih.getRedMatrix());
+		greenPixels = this.copyMatrix(ih.getGreenMatrix());
+		bluePixels = this.copyMatrix(ih.getBlueMatrix());
+		alphaPixels = this.copyMatrix(ih.getAlphaMatrix());
+		
+
 	}//end setImage
 	
 	//import a BufferedImage
@@ -106,7 +104,7 @@ public class RGBHolder {
 	} //end getImageFrom
 	
 	//import image from a linear RGB array
-	public void setImgFromLinearRGB(double[] array ){
+	public void setImgFromVector(double[] array ){
 		
 		//linear format is R1,G1,B1, R2,G2,B2, R3..... 
 		
@@ -130,10 +128,7 @@ public class RGBHolder {
 	}
 	
 	
-	
-	//=== ANALYSIS ===
-	
-	//invert colours
+	//=== OPERATIONS ========================================================================
 	
 	public void subtract(RGBHolder x) {
 		this.subtract(x, 0);
@@ -205,57 +200,8 @@ public class RGBHolder {
 		}//j
 		
 	}//end standardize
-		
-	public void crop(double percent) {
-		
-		int newH = (int) Math.round(this.height*percent);
-		int newW = (int) Math.round(this.width*percent);
-		
-		int dh = height-newH;
-		int dw =width-newW;
-		
-		this.setTlx(Math.round(dw/2));
-		this.setTly(Math.round(dh/2));
-		
-		
 
-		double[][] newred;
-		double[][] newgreen;
-		double[][] newblue;
-		double[][] newalpha;
-		
-		
-		newblue		= new double[newH][newW];
-		newgreen	= new double[newH][newW];
-		newred		= new double[newH][newW];
-		newalpha	= new double[newH][newW];
-		
-		
-
-		for(int j=tly; j<(height-dh/2);j++){
-			for(int i=tlx;i<(width-dw/2);i++){							
-				newred[j-dh/2][i-dw/2]= redPixels[j][i];	
-				newgreen[j-dh/2][i-dw/2]= greenPixels[j][i];
-				newblue[j-dh/2][i-dw/2]= bluePixels[j][i];
-				newalpha[j-dh/2][i-dw/2]= alphaPixels[j][i];
-
-			}//i
-		}//j
-		
-		this.setHeight(newH);
-		this.setWidth(newW);
-		
-		this.setGreenMatrix(newgreen);
-		this.setRedMatrix(newred);
-		this.setBlueMatrix(newblue);
-		this.setAlphaMatrix(newalpha);
-
-		
-		
-	}
-	
-	
-	public double[] getAVGvalue() {
+	public double[] mean() {
 			
 			double[] rgbAVG = new double[3];	
 			double sumR,sumG, sumB;
@@ -282,8 +228,97 @@ public class RGBHolder {
 			return rgbAVG;
 			
 		}
+
+	public double std_dev(){
+		
+		double sigmar, sigmag, sigmab;
+		sigmar=this.stdDevMatrix(redPixels);
+		sigmag=this.stdDevMatrix(greenPixels);
+		sigmab=this.stdDevMatrix(bluePixels);
+		
+		return sigmar+sigmag+sigmab;
 	
-	 //resize image
+	}//end getinfo
+	
+	public  double entropy() {
+        // Create a map to count the frequency of each color
+        Map<Color, Integer> colorCounts = new HashMap<>();
+       double [][] red = this.getRedMatrix();
+       double [][] blue = this.getBlueMatrix();
+       double [][] green = this.getGreenMatrix();
+
+
+        // Iterate over each pixel and count the occurrences of each color
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                Color pixel = new Color((int) red[i][j], (int)green[i][j], (int)blue[i][j]);
+                colorCounts.put(pixel, colorCounts.getOrDefault(pixel, 0) + 1);
+            }
+        }
+
+        // Calculate the entropy
+        double totalPixels = width * height;
+        double entropy = 0.0;
+
+        for (int count : colorCounts.values()) {
+            double probability = count / totalPixels;
+            entropy -= probability * Math.log(probability) / Math.log(2);
+        }
+
+        return entropy;
+    }
+
+	
+	// === IMG transform ========================================================================
+	
+	public void crop(double percent) {
+			
+			int newH = (int) Math.round(this.height*percent);
+			int newW = (int) Math.round(this.width*percent);
+			
+			int dh = height-newH;
+			int dw =width-newW;
+			
+			this.setTlx(Math.round(dw/2));
+			this.setTly(Math.round(dh/2));
+			
+			
+	
+			double[][] newred;
+			double[][] newgreen;
+			double[][] newblue;
+			double[][] newalpha;
+			
+			
+			newblue		= new double[newH][newW];
+			newgreen	= new double[newH][newW];
+			newred		= new double[newH][newW];
+			newalpha	= new double[newH][newW];
+			
+			
+	
+			for(int j=tly; j<(height-dh/2);j++){
+				for(int i=tlx;i<(width-dw/2);i++){							
+					newred[j-dh/2][i-dw/2]= redPixels[j][i];	
+					newgreen[j-dh/2][i-dw/2]= greenPixels[j][i];
+					newblue[j-dh/2][i-dw/2]= bluePixels[j][i];
+					newalpha[j-dh/2][i-dw/2]= alphaPixels[j][i];
+	
+				}//i
+			}//j
+			
+			this.setHeight(newH);
+			this.setWidth(newW);
+			
+			this.setGreenMatrix(newgreen);
+			this.setRedMatrix(newred);
+			this.setBlueMatrix(newblue);
+			this.setAlphaMatrix(newalpha);
+	
+			
+			
+		}
+	
  	public RGBHolder resize (int newHeight, int newWidth) throws IOException{
 		
 		BufferedImage img = this.getBufferedImage();	
@@ -305,58 +340,12 @@ public class RGBHolder {
 	  
 	}
 	
- 	//TO DO CROP
- 	
-	public double calc_entropy(){
-		
-		double sigmar, sigmag, sigmab;
-		sigmar=this.stdDevMatrix(redPixels);
-		sigmag=this.stdDevMatrix(greenPixels);
-		sigmab=this.stdDevMatrix(bluePixels);
-		
-		return sigmar+sigmag+sigmab;
 	
-	}//end getinfo
- 	
+	//=== EXPORT METHODS ========================================================================
 	
-	public  double calculateEntropy() {
-        // Create a map to count the frequency of each color
-        Map<Color, Integer> colorCounts = new HashMap<>();
-       double [][] red = this.getRedMatrix();
-       double [][] blue = this.getBlueMatrix();
-       double [][] green = this.getGreenMatrix();
-
-        // Get the dimensions of the image
-        int width = red.length;
-        int height = red[0].length;
-
-        // Iterate over each pixel and count the occurrences of each color
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                Color pixel = new Color((int) red[i][j], (int)green[i][j], (int)blue[i][j]);
-                colorCounts.put(pixel, colorCounts.getOrDefault(pixel, 0) + 1);
-            }
-        }
-
-        // Calculate the entropy
-        double totalPixels = width * height;
-        double entropy = 0.0;
-
-        for (int count : colorCounts.values()) {
-            double probability = count / totalPixels;
-            entropy -= probability * Math.log(probability) / Math.log(2);
-        }
-
-        return entropy;
-    }
+	public double[] getRGBArray(){
+	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 	
-	
-	//=== EXPORT METHODS ===
-	
- 	//export linear RGB array R1,G1,B1, R2,G2,B2....
-	public double[] getlinearArray(){
-		
-		
 		int pixels=this.height * this.width;
 		double [] lineararray = new double [pixels*3];
 		
@@ -396,39 +385,6 @@ public class RGBHolder {
 	
 	//export to file
 	
-	public void add_text(String text, int size, Color mycolor, int x, int y) throws IOException{
-		
-		//input Img
-		if (this.img == null) this.save_BufferedImage();
-
-		//output Img		
-		BufferedImage outputImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2d = outputImg.createGraphics();
-
-		// draw Text
-		Font font = new Font("Arial", Font.BOLD, size);
-		g2d.setFont(font);
-		g2d.setColor(mycolor);
-		
-		Rectangle2D bounds;
-		bounds=font.getStringBounds(text, g2d.getFontRenderContext());
-		int stringWidth= (int) bounds.getWidth();
-		
-		//offset if exceeding margin
-		if(x+stringWidth>=width) x= x-((x+stringWidth)-width);
-		if(x<0) x= 0;
-		
-		g2d.drawImage(img, 0, 0, null);
-		g2d.drawString(text, x, y);
-		g2d.dispose();
-        
-		this.img = outputImg;
-		
-
-	}//end write image
-	
-	
-	
 	private BufferedImage save_BufferedImage() {
 		
 		BufferedImage imgBuf = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
@@ -445,8 +401,7 @@ public class RGBHolder {
 		return imgBuf;
 		
 	}
-	
-	
+		
 	public void saveImage(String filepath) throws IOException{
 	
 		if (this.img == null) this.save_BufferedImage();
@@ -457,7 +412,6 @@ public class RGBHolder {
 	    ImageIO.write(this.img, "png", file);
 
 	}//end write image
-	
 		
 	// === OTHER get and set ===
 	public void setRedMatrix(double [][] newMatrix){
@@ -501,8 +455,7 @@ public class RGBHolder {
 		}//for w
 		
 	}//end setAlphaMax
-	
-	
+		
 	public double[][] getRedMatrix(){ return redPixels;}
 	public double[][] getGreenMatrix(){ return greenPixels;}
 	public double[][] getBlueMatrix(){ return bluePixels;}
@@ -525,8 +478,39 @@ public class RGBHolder {
 	public void setTly(int y ){ this.tly=y;}
 	
 	
-	//=== additional tools ===
+	//=== additional tools ========================================================================
 	
+	private void add_text(String text, int size, Color mycolor, int x, int y) throws IOException{
+		
+		//input Img
+		if (this.img == null) this.save_BufferedImage();
+
+		//output Img		
+		BufferedImage outputImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = outputImg.createGraphics();
+
+		// draw Text
+		Font font = new Font("Arial", Font.BOLD, size);
+		g2d.setFont(font);
+		g2d.setColor(mycolor);
+		
+		Rectangle2D bounds;
+		bounds=font.getStringBounds(text, g2d.getFontRenderContext());
+		int stringWidth= (int) bounds.getWidth();
+		
+		//offset if exceeding margin
+		if(x+stringWidth>=width) x= x-((x+stringWidth)-width);
+		if(x<0) x= 0;
+		
+		g2d.drawImage(img, 0, 0, null);
+		g2d.drawString(text, x, y);
+		g2d.dispose();
+        
+		this.img = outputImg;
+		
+
+	}//end write image
+		
 	private double[][] copyMatrix(double[][] matrix){
 		
 		double[][] output=new double[matrix.length][matrix[0].length];

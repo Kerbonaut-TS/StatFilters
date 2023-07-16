@@ -1,7 +1,8 @@
 import java.io.IOException;
 
-import iconoclasticlayer.IconoclasticLayer;
-import iconoclasticlayer.RGBHolder;
+import IconoclasticLayer.IconoclasticLayer;
+import IconoclasticLayer.RGBHolder;
+
 
 
 
@@ -23,7 +24,7 @@ public class Main {
 			IconoclasticLayer ic0=new IconoclasticLayer(img);
 			ic0.setResolution(5); //this divides the img in 5^2 sections
 			System.out.println("Extracting 10 features... ");	
-			ic0.getNfeatures(10, 50, 50,dirpath+"features\\");
+			//ic0.getNfeatures(10, 50, 50,dirpath+"features\\");
 			
 			
 			// example 1: standardise each section first and then extract features
@@ -32,7 +33,7 @@ public class Main {
 			System.out.println("Calculating standard values... ");	
 			ic1.localNormalisation();
 			System.out.println("Extracting 15 features... ");	
-			ic1.getNfeatures(15, 50, 50,dirpath+"STDfeatures\\");
+			//ic1.getNfeatures(15, 50, 50,dirpath+"STDfeatures\\");
 			
 			
 			// example 2: get AVG values as a unidimentional RGB array
@@ -43,7 +44,7 @@ public class Main {
 			// example 3: invert colours and print img
 			System.out.println("Printing inverted image... ");	
 			img.invert();
-			img.printOnFile(dirpath+"inverted.jpg");
+			//img.printOnFile(dirpath+"inverted.jpg");
 			
 		}//end if
 		
