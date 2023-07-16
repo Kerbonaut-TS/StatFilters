@@ -13,26 +13,28 @@ public class StatFilter {
 	RGBHolder[][] tiles; //[rows], [columns]  c and r are the coordinates in the picture
 	RGBHolder features[];
 	
-	//entropy matrix
-	double [][] I; 
-		
+	//measures matrix
+	double [][] M; 
+	//list of tiles coordinates according to the Matrix M
+	double sortedTiles[][];
+	
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.09");
+		System.out.println("Version: 0.1");
 			
 	}//end constructor
 	
 	
 	//IMPORT ========================================================================================
 	
-	public void set_source(String filepath) throws IOException {
+	public void setSource(String filepath) throws IOException {
 		
 		this.image = new RGBHolder();
 		image.setImageFromFile(filepath);
 		System.out.println("IMG: " + image.getHeight()+" x "+image.getWidth());
 	}
 	
-	public void set_image(BufferedImage img) {
+	public void setImage(BufferedImage img) {
 		
 		this.image = new RGBHolder();
 		image.setBufferedImage(img);
@@ -50,7 +52,10 @@ public class StatFilter {
 		ws= (int) Math.floor(image.getWidth()/n);
 		
 		tiles = new RGBHolder [(int) n][(int) n];
-
+		this.sortedTiles = new double [n*n][3];
+		
+		int t = 0;
+		
 		//for each  section  c=columns r=rows
 		for (int r=0; r<n; r++){
 			for (int c=0; c<n; c++){
@@ -83,12 +88,16 @@ public class StatFilter {
 				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
 				tiles[r][c].setTly((r)*hs);
 				
+				this.sortedTiles[t][0] = r;
+				this.sortedTiles[t][1] = c;
+				this.sortedTiles[t][2] = 0;
 				
 				tempR=null;
 				tempG=null;
 				tempB=null;
 				tempA=null;
-					
+				
+				t++;
 			}//end rows
 		}//end columns
 		
@@ -103,20 +112,18 @@ public class StatFilter {
 		int rows = tiles.length;
 		int columns = tiles[0].length;
 		
-		int t = 0;
-		
-		
 		// stitching all tiles together
-		for (int r=0; r<rows; r++){
-			for (int c=0; c<columns; c++){				
+		for (int t=0; t<sortedTiles.length; t++){
+				
+				//tile coordinate
+				int r = (int) sortedTiles[t][0];
+				int c = (int) sortedTiles[t][1];
 				
 				int x = tiles[r][c].get_center_x(false);
 				int y = tiles[r][c].get_center_y(false);
 				tiles[r][c].add_text(String.valueOf(t), 24, Color.RED,x,y);
-				t++;
 				
-			}//for columns
-		}//for rows
+		}//for each tile
 		
 		
 		return this.exportImage();
@@ -156,25 +163,37 @@ public class StatFilter {
 		
 	}
 	
-	public double[][] rank_tiles() throws IOException{
+	public void rank_tiles(String measure) throws IOException{
 		
 		//I matrix contains the quantity of Information for each section		
-	    I= new double [tiles.length][tiles[0].length];
+	    M = new double [tiles.length][tiles[0].length];
 		
 	   
 		//Populate the I matrix 
 		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){					
-				I[r][c]=tiles[r][c].entropy();				
+			for (int c=0; c<tiles[0].length; c++){
+				
+
+				switch(measure) {
+				  case "entropy":
+					  M[r][c]=tiles[r][c].entropy();
+					  break;
+				  case "mean":
+					  int[] avg = tiles[r][c].mean();
+					  M[r][c]=  (avg[0]+avg[1]+avg[2])/3 ;
+					  break;
+				  case "std.dev":
+					  M[r][c]=tiles[r][c].std_dev();
+					  break;
+				  default:
+					  break;
+				}//end switch
+				
 			}//for columns
 		}//for rows
 		
-	    //sort all tiles by information and get the list	
-		
-		double sortedList [][]= this.create_ranks();
+		this.sortedTiles= this.createRanks();
 
-		
-		return sortedList;
 		
 	} //end 
 	
@@ -205,29 +224,20 @@ public class StatFilter {
 	}//end getinputlayer
 	
 	
-	public double[] getMaxValues() {
+	public void printRanks() {
 		
-		//linear RGB array size: tiles(W) * tiles(H)  * 3 colors
-		int size = (int) Math.pow(tiles.length, 2) *3; 
-		double[] inputLayer = new double[size];
+		int n = sortedTiles.length;
 		
-		int i = 0;
-		
-		//for each section
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){
+		// stitching all tiles together
+		for (int t=0; t<n; t++){
 				
+				//tile coordinate
+				int r = (int) sortedTiles[t][0];
+				int c = (int) sortedTiles[t][1];
 				
-				inputLayer[i]=this.findMax(tiles[r][c].getMatrix("red"), null)[0];
-				inputLayer[i+1]=this.findMax(tiles[r][c].getMatrix("green"), null)[0];
-				inputLayer[i+2]=this.findMax(tiles[r][c].getMatrix("blue"), null)[0];
-				
-				i=i+3;
-				
-			}//end columns
-		}//end rows
-		
-		return inputLayer;
+				System.out.println(sortedTiles[t][2]+"     [" + r +"]"+ "[" + c +"]");
+		}//for each tile
+
 		
 	}//end getinputlayer
 	
@@ -418,8 +428,8 @@ public class StatFilter {
 		
 			
 		//resize z variable to 0-255
-		double max=this.findMax(zmatrix,null)[0];
-		double min=this.findMin(zmatrix);
+		double max=0;
+		double min=0;
 		
 
 		double[][] RGBmatrix = new double [zmatrix.length][zmatrix[0].length];
@@ -437,89 +447,32 @@ public class StatFilter {
 
 	//Tools ========================================================================================
 	
-	private double[][]  create_ranks() throws IOException {
+	private double[][]  createRanks() throws IOException {
 
 		
 		//prepare list
 		int i =0;
-		int n = I.length * I[0].length;
+		int n = M.length * M[0].length;
 		double[][] rankedList = new double [n][3]; //   (measure, row, column)
 		
 		//copy I matrix and coordinates
-		for (int r=0; r<I.length; r++){
-			for (int c=0; c<I[0].length; c++){	
+		for (int r=0; r<M.length; r++){
+			for (int c=0; c<M[0].length; c++){	
 				
-				rankedList[i][0] = I[r][c];
-			    rankedList[i][1] = r;
-				rankedList[i][2] = c;
+			    rankedList[i][0] = r;
+				rankedList[i][1] = c;
+				rankedList[i][2] = M[r][c];
 				i++;
 				
 			}//for columns
 		}//for rows
 		
-		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[0]));
+		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[2]));
 
 		return rankedList;
 		
 		}
 	
-	private double[] findMax(int [][] matrix, int excludedElements[][]){
-		
-		//returns [maxValue,r,c] ... row/column  where the max value was found in the original matrix
-		// excluded elements is a list of pairs of coordinates that 
-		double [] max = new double [3];
-		
-		//initialise
-		max[0]=0;
-		max[1]=-1;
-		max[2]=-1;
-		
-		
-		//for each element in the matrix
-		for(int r=0; r<matrix.length;r++){
-			for(int c=0;c<matrix[0].length;c++){			
-				
-				//found new max
-				if(matrix[r][c]>=max[0]) {
-					
-					boolean excluded=false;
-					
-					//check if any exclusion is defined
-					if(excludedElements!=null) {
-						
-						//check if coordinates are excluded
-						for(int i=0; i< excludedElements.length; i++) {
-							if( excludedElements[i][0]==r && excludedElements[i][1]==c ) excluded=true; 	
-						}
-					}// end if exclusion
-					
-					if(!excluded) {
-						max[0]=matrix[r][c];
-						max[1]=r;
-						max[2]=c;
-					}//end if
-					
-				}//if found new max
-			}//for columns
-		}//for rows
-		
-		return max;
-	}//find max end
-	
-	private double findMin(int [][] matrix){
-		//used in resizing to 0-255
-		
-		double min=matrix[0][0];
-		
-		//calculate z variable
-		for(int j=0; j<matrix.length;j++){
-			for(int i=0;i<matrix[0].length;i++){			
-				if(matrix[j][i]<min) min=matrix[j][i];
-			}//i
-		}//j
-		
-		return min;
-	}//find max end
 
 
 }//end class

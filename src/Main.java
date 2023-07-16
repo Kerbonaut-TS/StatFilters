@@ -17,7 +17,7 @@ public class Main {
 
 		StatFilter filter= new StatFilter();
 		
-		filter.set_source(path);
+		filter.setSource(path);
 		filter.divide_image(2);
 		
 		BufferedImage  img;
