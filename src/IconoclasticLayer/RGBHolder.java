@@ -418,52 +418,80 @@ public class RGBHolder {
 	}
 	
 	public void setMatrix(String color, double constant){
+				
 		
-		int [][] matrix = new int[height][width]; 
 		
 		switch(color) {
 		  case "red":
-			  matrix = redPixels;
+			   redPixels = new int [height][width];
+				for(int i=0; i<redPixels.length;i++){
+					for(int j=0; j<redPixels[0].length; j++) redPixels[i][j]=(int)constant;
+				}
 			  break;
 		    
 		  case "green":
-			  matrix =  greenPixels;
+			  greenPixels = new int [height][width];
+				for(int i=0; i<greenPixels.length;i++){
+					for(int j=0; j<greenPixels[0].length; j++) greenPixels[i][j]=(int)constant;
+				}
 			  break;
 			
 		  case "blue":
-			  matrix =  bluePixels;
+			  bluePixels = new int [height][width];
+				for(int i=0; i<bluePixels.length;i++){
+					for(int j=0; j<bluePixels[0].length; j++) bluePixels[i][j]=(int)constant;
+				}
 			  break;
 			  
 		  case "alpha":
-			  matrix =  alphaPixels;
+			  alphaPixels = new int [height][width];
+				for(int i=0; i<alphaPixels.length;i++){
+					for(int j=0; j<alphaPixels[0].length; j++) alphaPixels[i][j]=(int)constant;
+				}
 			  break;
 			  
 		  default:
 			  System.out.println("Invalid: set red, green, blue or alpha");
-			  matrix =  null;
+		
+		}
+	
+		
+	}
+	
+	
+	public void setMatrix(String color, int [][] RGBmatrix) {
+		
+		this.setHeight(RGBmatrix.length);
+		this.setWidth(RGBmatrix[0].length);
+		
+		switch(color) {
+		  case "red":
+			  redPixels=this.copyMatrix(RGBmatrix);
+			  break;
+		    
+		  case "green":
+			  greenPixels=this.copyMatrix(RGBmatrix);
+			  break;
+			
+		  case "blue":
+			  bluePixels=this.copyMatrix(RGBmatrix);
+			  break;
+			  
+		  case "alpha":
+			  alphaPixels=this.copyMatrix(RGBmatrix);
+			  break;
+			  
+		  default:
+			  System.out.println("Invalid: set red, green, blue or alpha");
 		
 		}
 		
 	
-		for(int i=0; i<matrix.length;i++){
-			for(int j=0; j<matrix[0].length; j++) matrix[i][j]=(int)constant;
-		}
+	
 		
 	}
-	public void setMatrix(String color, int [][] RGBmatrix){
-		
-		//if the new matrix is smaller use the old one otherwise update
-		if(RGBmatrix.length>height) height=RGBmatrix.length;
-		if(RGBmatrix[0].length>width) width=RGBmatrix[0].length;
-		
-		 int [][] matrix = this.getMatrix(color);
-
-		
-		matrix =new int[height][width];
-		matrix=this.copyMatrix(RGBmatrix);
-		
-
-	}
+	
+	
 	
 	
 	public int getHeight(){ return height;}
