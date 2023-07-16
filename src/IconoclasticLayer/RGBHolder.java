@@ -366,7 +366,7 @@ public class RGBHolder {
 	}//end getlinearArray
 	
 	//export BufferedImage
-	public BufferedImage getBufferedImage() throws IOException{
+	public BufferedImage getBufferedImage() {
 		
 		
 		//prepare the buffered output image
@@ -470,8 +470,23 @@ public class RGBHolder {
 	public int getTlx(){ return this.tlx;}
 	public int getTly(){ return this.tly;}
 	
-	public int get_center_x(){ return this.tlx + (int) ((float) width * 0.5);}
-	public int get_center_y(){ return this.tly + (int) ((float) height * 0.5);}
+	public int get_center_x(Boolean absolute){ 
+		
+		int offset = (absolute) ? this.tlx :  0; 
+		
+		return  offset + (int) ((float) width * 0.5);
+		
+		
+		
+	}
+	public int get_center_y(Boolean absolute){
+		
+		int offset = (absolute) ? this.tly :  0; 
+	
+		return offset + (int) ((float) height * 0.5);
+		
+		
+	}
 	
 	
 	public void setTlx( int x){ this.tlx=x;}
@@ -480,14 +495,14 @@ public class RGBHolder {
 	
 	//=== additional tools ========================================================================
 	
-	private void add_text(String text, int size, Color mycolor, int x, int y) throws IOException{
+	public void add_text(String text, int size, Color mycolor, int x, int y) {
 		
 		//input Img
 		if (this.img == null) this.save_BufferedImage();
 
 		//output Img		
-		BufferedImage outputImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2d = outputImg.createGraphics();
+		BufferedImage imgWithText = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = imgWithText.createGraphics();
 
 		// draw Text
 		Font font = new Font("Arial", Font.BOLD, size);
@@ -506,8 +521,8 @@ public class RGBHolder {
 		g2d.drawString(text, x, y);
 		g2d.dispose();
         
-		this.img = outputImg;
-		
+		this.setBufferedImage(imgWithText);
+	
 
 	}//end write image
 		

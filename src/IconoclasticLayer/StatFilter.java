@@ -1,4 +1,5 @@
  package IconoclasticLayer;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
@@ -8,15 +9,14 @@ import java.util.Comparator;
 public class StatFilter {
 
 	RGBHolder image;
-	RGBHolder[][] sections; //[rows], [columns]  c and r are the coordinates in the picture
+	RGBHolder[][] tiles; //[rows], [columns]  c and r are the coordinates in the picture
 	RGBHolder features[];
 	
 	//entropy matrix
 	double [][] I; 
 		
-	public StatFilter(RGBHolder rgbh)  {
-		this.image.clone(rgbh);
-		this.divide_image(1);
+	public StatFilter()  {
+
 			
 	}//end constructor
 	
@@ -27,7 +27,7 @@ public class StatFilter {
 		
 		this.image = new RGBHolder();
 		image.setImageFromFile(filepath);
-
+		System.out.println("IMG: " + image.getHeight()+" x "+image.getWidth());
 	}
 	
 	public void set_image(BufferedImage img) {
@@ -37,7 +37,7 @@ public class StatFilter {
 		
 	}
 	
-	//SECTION DIVISION  ==============================================================================
+	//TILES   ==============================================================================
 
 	public void divide_image(int n){
 		
@@ -50,7 +50,7 @@ public class StatFilter {
 		hs= (int) Math.floor(image.getHeight()/n);
 		ws= (int) Math.floor(image.getWidth()/n);
 		
-		sections = new RGBHolder [(int) n][(int) n];
+		tiles = new RGBHolder [(int) n][(int) n];
 
 		//for each  section  c=columns r=rows
 		for (int r=0; r<n; r++){
@@ -75,14 +75,14 @@ public class StatFilter {
 					}	//end height
 				}//end width
 				
-				sections[r][c]=new RGBHolder();		
-				sections[r][c].setRedMatrix(tempR);
-				sections[r][c].setGreenMatrix(tempG);
-				sections[r][c].setBlueMatrix(tempB);
-				sections[r][c].setAlphaMatrix(tempA);
+				tiles[r][c]=new RGBHolder();		
+				tiles[r][c].setRedMatrix(tempR);
+				tiles[r][c].setGreenMatrix(tempG);
+				tiles[r][c].setBlueMatrix(tempB);
+				tiles[r][c].setAlphaMatrix(tempA);
 				
-				sections[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
-				sections[r][c].setTly((r)*hs);
+				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
+				tiles[r][c].setTly((r)*hs);
 				
 				
 				tempR=null;
@@ -92,24 +92,82 @@ public class StatFilter {
 					
 			}//end rows
 		}//end columns
-	
+		
+		
+		
 
 	}//end setResolution
 	
-	public double[][] rank_sections() throws IOException{
+	
+	public BufferedImage showTiles() {
 		
-		//I matrix contains the quantity of Information for each section		
-	    I= new double [sections.length][sections[0].length];
 		
-	   
-		//Populate the I matrix 
-		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){					
-				I[r][c]=sections[r][c].entropy();				
+		
+		int rows = tiles.length;
+		int columns = tiles[0].length;
+		
+		int t = 0;
+		
+		
+		// stitching all tiles together
+		for (int r=0; r<rows; r++){
+			for (int c=0; c<columns; c++){				
+				
+				int x = tiles[r][c].get_center_x(false);
+				int y = tiles[r][c].get_center_y(false);
+				tiles[r][c].add_text(String.valueOf(t), 24, Color.RED,x,y);
+				t++;
+				
 			}//for columns
 		}//for rows
 		
-	    //sort all sections by information and get the list	
+		
+		return this.exportImage();
+		
+	}//end ShowTiles
+	
+	
+	
+	
+	public BufferedImage [] getTiles() {
+		
+		BufferedImage [] output;
+		
+		int rows = tiles.length;
+		int columns = tiles[0].length;
+		
+		output = new BufferedImage[rows*columns];
+		
+		int t = 0;
+		
+		// stitching all tiles together
+		for (int r=0; r<rows; r++){
+			for (int c=0; c<columns; c++){
+				
+				output[t]= tiles[r][c].getBufferedImage();
+				t++;
+				
+			}
+		}
+		
+		return output;
+		
+	}
+	
+	public double[][] rank_tiles() throws IOException{
+		
+		//I matrix contains the quantity of Information for each section		
+	    I= new double [tiles.length][tiles[0].length];
+		
+	   
+		//Populate the I matrix 
+		for (int r=0; r<tiles.length; r++){
+			for (int c=0; c<tiles[0].length; c++){					
+				I[r][c]=tiles[r][c].entropy();				
+			}//for columns
+		}//for rows
+		
+	    //sort all tiles by information and get the list	
 		
 		double sortedList [][]= this.create_ranks();
 
@@ -123,17 +181,17 @@ public class StatFilter {
 	//returns a linear RGB Array with the average colour of each section 
 	public double[] getAVGValues() {
 		
-		//linear RGB array size: sections(W) * sections(H)  * 3 colors
-		int size = (int) Math.pow(sections.length, 2) *3; 
+		//linear RGB array size: tiles(W) * tiles(H)  * 3 colors
+		int size = (int) Math.pow(tiles.length, 2) *3; 
 		double[] inputLayer = new double[size];
 		
 		int i = 0;
 		
 		//for each section
-		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){
+		for (int r=0; r<tiles.length; r++){
+			for (int c=0; c<tiles[0].length; c++){
 				
-				double [] avgRGB=sections[r][c].mean();
+				double [] avgRGB=tiles[r][c].mean();
 				
 				inputLayer[i]=avgRGB[0];
 				inputLayer[i+1]=avgRGB[1];
@@ -151,20 +209,20 @@ public class StatFilter {
 	
 	public double[] getMaxValues() {
 		
-		//linear RGB array size: sections(W) * sections(H)  * 3 colors
-		int size = (int) Math.pow(sections.length, 2) *3; 
+		//linear RGB array size: tiles(W) * tiles(H)  * 3 colors
+		int size = (int) Math.pow(tiles.length, 2) *3; 
 		double[] inputLayer = new double[size];
 		
 		int i = 0;
 		
 		//for each section
-		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){
+		for (int r=0; r<tiles.length; r++){
+			for (int c=0; c<tiles[0].length; c++){
 				
 				
-				inputLayer[i]=this.findMax(sections[r][c].getRedMatrix(), null)[0];
-				inputLayer[i+1]=this.findMax(sections[r][c].getGreenMatrix(), null)[0];
-				inputLayer[i+2]=this.findMax(sections[r][c].getBlueMatrix(), null)[0];
+				inputLayer[i]=this.findMax(tiles[r][c].getRedMatrix(), null)[0];
+				inputLayer[i+1]=this.findMax(tiles[r][c].getGreenMatrix(), null)[0];
+				inputLayer[i+2]=this.findMax(tiles[r][c].getBlueMatrix(), null)[0];
 				
 				i=i+3;
 				
@@ -180,9 +238,9 @@ public class StatFilter {
 		
 		//standardized values in each section
 
-		for (int r=0; r<sections.length; r++){
-			for (int c=0; c<sections[0].length; c++){			
-				sections[r][c].standardise();		
+		for (int r=0; r<tiles.length; r++){
+			for (int c=0; c<tiles[0].length; c++){			
+				tiles[r][c].standardise();		
 			}//end col
 		}//end rows
 		
@@ -300,31 +358,31 @@ public class StatFilter {
 
 
 	
-	//debugging: used to display the standardised image (resize to 0-255 then stitch sections together)
-	public RGBHolder getImage() {
+	//debugging: used to display the standardised image (resize to 0-255 then stitch tiles together)
+	public BufferedImage exportImage() {
 		
-		int n =this.sections.length; // matrices per side (it's a square)
-		
-		int subh, subw, offsetW, offsetH;
-		subh= sections[0][0].getHeight();
-		subw = sections[0][0].getWidth();
+		int rows = tiles.length;
+		int columns = tiles[0].length;
+				
+		int subh= tiles[0][0].getHeight();
+		int subw = tiles[0][0].getWidth();
+		int offsetH=0;
+		int offsetW=0;
 		
 		//final image
-		double [][] redPixels = new double [subh*n][subw*n];
-		double [][] greenPixels = new double [subh*n][subw*n];
-		double [][] bluePixels = new double [subh*n][subw*n];
+		double [][] redPixels = new double [subh*rows][subw*columns];
+		double [][] greenPixels = new double [subh*rows][subw*columns];
+		double [][] bluePixels = new double [subh*rows][subw*columns];
 		
-		offsetH=0;
-		offsetW=0;
+
 			
-		// stitching all sections together
-		for (int r=0; r<n; r++){
-			for (int c=0; c<n; c++){
+		// stitching all tiles together
+		for (int r=0; r<rows; r++){
+			for (int c=0; c<columns; c++){
 				
-				//resize standardized  matrices to 0-255
-				double [][] RMatrix=this.resizeToRGB(sections[r][c].getRedMatrix());
-				double [][] GMatrix=this.resizeToRGB(sections[r][c].getGreenMatrix());
-				double [][] BMatrix=this.resizeToRGB(sections[r][c].getBlueMatrix());
+				double [][] RMatrix=tiles[r][c].getRedMatrix();
+				double [][] GMatrix=tiles[r][c].getGreenMatrix();
+				double [][] BMatrix=tiles[r][c].getBlueMatrix();
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
@@ -354,7 +412,7 @@ public class StatFilter {
 		greenPixels=null;
 		bluePixels=null;
 		
-		return imgout;
+		return imgout.getBufferedImage();
 	
 	}
 	

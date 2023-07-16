@@ -1,7 +1,5 @@
 import java.io.IOException;
 
-import IconoclasticLayer.IconoclasticLayer;
-import IconoclasticLayer.RGBHolder;
 
 
 
@@ -10,7 +8,7 @@ import IconoclasticLayer.RGBHolder;
 public class Main {
 
 	public static void main(String[] args) throws IOException {
-		
+		/*
 		final String dirpath= "C:\\Desktop\\car\\";
 
 		RGBHolder img=new RGBHolder();
@@ -48,7 +46,7 @@ public class Main {
 			
 		}//end if
 		
-		System.out.println("end test");
+		System.out.println("end test");*/
 		
 
 	}//end main
