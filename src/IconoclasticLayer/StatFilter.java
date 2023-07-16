@@ -200,21 +200,34 @@ public class StatFilter {
 	//OPERATIONS  ====================================================================================
 
 	
-	public BufferedImage apply_mean() {
-		
-		//linear RGB array size: tiles(W) * tiles(H)  * 3 colors
-		int size = (int) Math.pow(tiles.length, 2) *3; 
-		
-		int i = 0;
+	public BufferedImage apply_stat(String operation) {
 		
 		//for each section
 		for (int r=0; r<tiles.length; r++){
 			for (int c=0; c<tiles[0].length; c++){
 				
+				switch (operation) {
+				
+				case "mean":
+					int[] rgb = tiles[r][c].mean();
+					tiles[r][c].setMatrix("red", rgb[0]);
+					tiles[r][c].setMatrix("green", rgb[1]);
+					tiles[r][c].setMatrix("blue", rgb[2]);
+
+					break;
+				case "std.dev":
+					double value  = tiles[r][c].std_dev();
+					tiles[r][c].setMatrix("red",value);
+					tiles[r][c].setMatrix("green", value);
+					tiles[r][c].setMatrix("blue", value);
+
+				default:
+					break;
+				}
+				
+				
 				int[] rgb  = tiles[r][c].mean();
-				tiles[r][c].setMatrix("red", rgb[0]);
-				tiles[r][c].setMatrix("green", rgb[1]);
-				tiles[r][c].setMatrix("blue", rgb[2]);
+
 				
 			}//end columns
 		}//end rows
@@ -222,6 +235,35 @@ public class StatFilter {
 		return this.exportImage();
 		
 	}//end getinputlayer
+	
+	
+	
+	public BufferedImage apply_RGB(String color) {
+		
+		switch (color) {
+		
+		case "red":
+			image.setMatrix("blue", 255);
+			image.setMatrix("green", 255);
+			break;
+		case "green":
+			image.setMatrix("blue", 255);
+			image.setMatrix("red", 255);
+			break;
+		case "blue":
+			image.setMatrix("green", 255);
+			image.setMatrix("red", 255);
+			break;
+		default:
+			break;
+		}
+		
+	    return image.getBufferedImage();
+			
+	}
+			
+
+
 	
 	
 	public void printRanks() {
@@ -363,7 +405,6 @@ public class StatFilter {
 		return resSection;
 		
 	}
-	
 	
 	
 	//debugging: used to display the standardised image (resize to 0-255 then stitch tiles together)
