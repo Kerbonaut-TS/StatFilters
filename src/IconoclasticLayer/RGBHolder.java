@@ -419,8 +419,7 @@ public class RGBHolder {
 	
 	public void setMatrix(String color, double constant){
 				
-		
-		
+
 		switch(color) {
 		  case "red":
 			   redPixels = new int [height][width];
@@ -457,8 +456,7 @@ public class RGBHolder {
 	
 		
 	}
-	
-	
+		
 	public void setMatrix(String color, int [][] RGBmatrix) {
 		
 		this.setHeight(RGBmatrix.length);
@@ -490,7 +488,6 @@ public class RGBHolder {
 	
 		
 	}
-	
 	
 	
 	
@@ -548,7 +545,7 @@ public class RGBHolder {
 		if(x+stringWidth>=width) x= x-((x+stringWidth)-width);
 		if(x<0) x= 0;
 		
-		g2d.drawImage(img, 0, 0, null);
+		g2d.drawImage(this.getBufferedImage(), 0, 0, null);
 		g2d.drawString(text, x, y);
 		g2d.dispose();
         

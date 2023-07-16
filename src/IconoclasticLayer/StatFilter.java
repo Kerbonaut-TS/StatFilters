@@ -99,9 +99,7 @@ public class StatFilter {
 	
 	
 	public BufferedImage showTiles() {
-		
-		
-		
+
 		int rows = tiles.length;
 		int columns = tiles[0].length;
 		
