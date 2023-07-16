@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 
+
 public class StatFilter {
 
 	RGBHolder image;
@@ -16,7 +17,8 @@ public class StatFilter {
 	double [][] I; 
 		
 	public StatFilter()  {
-
+		
+		System.out.println("Version: 0.06");
 			
 	}//end constructor
 	
@@ -56,10 +58,10 @@ public class StatFilter {
 		for (int r=0; r<n; r++){
 			for (int c=0; c<n; c++){
 				
-				double [][] tempR = new double[hs][ws];
-				double [][] tempG = new double[hs][ws];
-				double [][] tempB = new double[hs][ws];
-				double [][] tempA = new double[hs][ws];
+				int [][] tempR = new int[hs][ws];
+				int [][] tempG = new int[hs][ws];
+				int [][] tempB = new int[hs][ws];
+				int [][] tempA = new int[hs][ws];
 				
 				for (int h=0; h<hs; h++){
 					for (int w=0; w<ws; w++){
@@ -126,9 +128,6 @@ public class StatFilter {
 		
 	}//end ShowTiles
 	
-	
-	
-	
 	public BufferedImage [] getTiles() {
 		
 		BufferedImage [] output;
@@ -178,12 +177,11 @@ public class StatFilter {
 	
 	//OPERATIONS  ====================================================================================
 
-	//returns a linear RGB Array with the average colour of each section 
-	public double[] getAVGValues() {
+	
+	public BufferedImage apply_mean() {
 		
 		//linear RGB array size: tiles(W) * tiles(H)  * 3 colors
 		int size = (int) Math.pow(tiles.length, 2) *3; 
-		double[] inputLayer = new double[size];
 		
 		int i = 0;
 		
@@ -191,21 +189,18 @@ public class StatFilter {
 		for (int r=0; r<tiles.length; r++){
 			for (int c=0; c<tiles[0].length; c++){
 				
-				double [] avgRGB=tiles[r][c].mean();
-				
-				inputLayer[i]=avgRGB[0];
-				inputLayer[i+1]=avgRGB[1];
-				inputLayer[i+2]=avgRGB[2];
-				
-				avgRGB=null;
-				i=i+3;
+				int[] rgb  = tiles[r][c].mean();
+				tiles[r][c].setMatrix("red", rgb[0]);
+				tiles[r][c].setMatrix("green", rgb[1]);
+				tiles[r][c].setMatrix("blue", rgb[2]);
 				
 			}//end columns
 		}//end rows
 		
-		return inputLayer;
+		return this.exportImage();
 		
 	}//end getinputlayer
+	
 	
 	public double[] getMaxValues() {
 		
@@ -322,10 +317,10 @@ public class StatFilter {
 		int maxw = Math.min(section.getHeight()+delta, image.width-offsetW-1);
 		
 		
-		double [][] tempR = new double[maxh][maxw];
-		double [][] tempG = new double[maxh][maxw];
-		double [][] tempB = new double[maxh][maxw];
-		double [][] tempA = new double[maxh][maxw];
+		int [][] tempR = new int[maxh][maxw];
+		int [][] tempG = new int[maxh][maxw];
+		int [][] tempB = new int[maxh][maxw];
+		int [][] tempA = new int[maxh][maxw];
 		
 				
 		for (int h=0; h<maxh; h++){
@@ -355,8 +350,8 @@ public class StatFilter {
 		return resSection;
 		
 	}
-
-
+	
+	
 	
 	//debugging: used to display the standardised image (resize to 0-255 then stitch tiles together)
 	public BufferedImage exportImage() {
@@ -370,9 +365,9 @@ public class StatFilter {
 		int offsetW=0;
 		
 		//final image
-		double [][] redPixels = new double [subh*rows][subw*columns];
-		double [][] greenPixels = new double [subh*rows][subw*columns];
-		double [][] bluePixels = new double [subh*rows][subw*columns];
+		int [][] redPixels = new int [subh*rows][subw*columns];
+		int [][] greenPixels = new int [subh*rows][subw*columns];
+		int [][] bluePixels = new int [subh*rows][subw*columns];
 		
 
 			
@@ -380,9 +375,9 @@ public class StatFilter {
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
-				double [][] RMatrix=tiles[r][c].getRedMatrix();
-				double [][] GMatrix=tiles[r][c].getGreenMatrix();
-				double [][] BMatrix=tiles[r][c].getBlueMatrix();
+				int [][] RMatrix=tiles[r][c].getRedMatrix();
+				int [][] GMatrix=tiles[r][c].getGreenMatrix();
+				int [][] BMatrix=tiles[r][c].getBlueMatrix();
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
@@ -416,7 +411,7 @@ public class StatFilter {
 	
 	}
 	
-	private double [][] resizeToRGB(double[][] zmatrix){
+	private double [][] resizeToRGB(int[][] zmatrix){
 		
 			
 		//resize z variable to 0-255
@@ -465,7 +460,7 @@ public class StatFilter {
 		
 		}
 	
-	private double[] findMax(double [][] matrix, int excludedElements[][]){
+	private double[] findMax(int [][] matrix, int excludedElements[][]){
 		
 		//returns [maxValue,r,c] ... row/column  where the max value was found in the original matrix
 		// excluded elements is a list of pairs of coordinates that 
@@ -508,7 +503,7 @@ public class StatFilter {
 		return max;
 	}//find max end
 	
-	private double findMin(double [][] matrix){
+	private double findMin(int [][] matrix){
 		//used in resizing to 0-255
 		
 		double min=matrix[0][0];
