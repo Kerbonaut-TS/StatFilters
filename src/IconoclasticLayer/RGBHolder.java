@@ -342,25 +342,25 @@ public class RGBHolder {
 	
 	//=== EXPORT METHODS ========================================================================
 	
-	public double[] getRGBArray(){
+	public int[] getRGBArray(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 	
-		int pixels=this.height * this.width;
-		double [] lineararray = new double [pixels*3];
+		int pixels= this.height * this.width;
+		int [] RGBarray = new int [pixels*3];
 		
 		int count=0;
 	
 		//linearize the matrix [ R1,G1,B1, R2,G2,B2, R3..... 
 		for (int h=0; h<this.height;h++){
 			for (int w=0; w<this.width;w++){			
-				lineararray[count]=redPixels[h][w];
-				lineararray[count+1]=greenPixels[h][w];
-				lineararray[count+2]=bluePixels[h][w];
+				RGBarray[count]=redPixels[h][w];
+				RGBarray[count+1]=greenPixels[h][w];
+				RGBarray[count+2]=bluePixels[h][w];
 				count=count+3;
 			}//end width
 		}//end height
 		
-		return lineararray;
+		return RGBarray;
 
 	}//end getlinearArray
 	
@@ -384,10 +384,8 @@ public class RGBHolder {
 	
 	//export to file
 	
-
 	public void saveImage(String filepath) throws IOException{
 			
-		
         File file = new File(filepath);
         file.getParentFile().mkdirs();
 	    ImageIO.write(this.img, "png", file);

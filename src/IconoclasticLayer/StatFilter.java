@@ -138,32 +138,33 @@ public class StatFilter {
 	}
 	
 	
-	public BufferedImage [] getTiles() {
+	public BufferedImage [] getSortedTiles() {
 		
 		BufferedImage [] output;
+		int H = tiles.length;
+		int W = tiles[0].length;
+		output = new BufferedImage[H*W];
 		
-		int rows = tiles.length;
-		int columns = tiles[0].length;
 		
-		output = new BufferedImage[rows*columns];
-		
-		int t = 0;
+		int n = sortedTiles.length;
 		
 		// stitching all tiles together
-		for (int r=0; r<rows; r++){
-			for (int c=0; c<columns; c++){
+		for (int t=0; t<n; t++){
 				
-				output[t]= tiles[r][c].getBufferedImage();
-				t++;
+				//tile coordinate
+				int r = (int) sortedTiles[t][0];
+				int c = (int) sortedTiles[t][1];
+
+				output[t] = tiles[r][c].getBufferedImage();
 				
-			}
 		}
+		
 		
 		return output;
 		
 	}
 	
-	public void rank_tiles(String measure) throws IOException{
+	public void sort_tiles_by(String measure) throws IOException{
 		
 		//I matrix contains the quantity of Information for each section		
 	    M = new double [tiles.length][tiles[0].length];
@@ -197,6 +198,14 @@ public class StatFilter {
 		
 	} //end 
 	
+	
+	public int[] getPixels(int row, int column) {
+	
+		 return tiles[row][column].getRGBArray();
+		
+	
+	}
+	
 	//OPERATIONS  ====================================================================================
 
 	
@@ -226,7 +235,6 @@ public class StatFilter {
 				}
 				
 				
-				int[] rgb  = tiles[r][c].mean();
 
 				
 			}//end columns
@@ -235,9 +243,7 @@ public class StatFilter {
 		return this.exportImage();
 		
 	}//end getinputlayer
-	
-	
-	
+		
 	public BufferedImage apply_RGB(String color) {
 		
 		switch (color) {
@@ -262,9 +268,6 @@ public class StatFilter {
 			
 	}
 			
-
-
-	
 	
 	public void printRanks() {
 		
@@ -469,8 +472,8 @@ public class StatFilter {
 		
 			
 		//resize z variable to 0-255
-		double max=0;
-		double min=0;
+		double max=this.getMaxValue(zmatrix);
+		double min=this.getMinValue(zmatrix);
 		
 
 		double[][] RGBmatrix = new double [zmatrix.length][zmatrix[0].length];
@@ -515,5 +518,29 @@ public class StatFilter {
 		}
 	
 
+    private static int getMaxValue(int[][] numbers) {
+        int maxValue = numbers[0][0];
+        for (int j = 0; j < numbers.length; j++) {
+            for (int i = 0; i < numbers[j].length; i++) {
+                if (numbers[j][i] > maxValue) {
+                    maxValue = numbers[j][i];
+                }
+            }
+        }
+        return maxValue;
+    }
 
+    private static int getMinValue(int[][] numbers) {
+        int minValue = numbers[0][0];
+        
+        for (int j = 0; j < numbers.length; j++) {
+            for (int i = 0; i < numbers[j].length; i++) {
+                if (numbers[j][i] < minValue ) {
+                    minValue = numbers[j][i];
+                }
+            }
+        }
+        return minValue ;
+    
+    }
 }//end class
