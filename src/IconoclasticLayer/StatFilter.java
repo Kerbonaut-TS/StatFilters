@@ -247,21 +247,21 @@ public class StatFilter {
 		
 	}//end getinputlayer
 		
-	public BufferedImage apply_RGB(String color) {
+	public BufferedImage filterColor(String color) {
 		
 		switch (color) {
 		
 		case "red":
-			image.setMatrix("blue", 255);
-			image.setMatrix("green", 255);
+			image.setMatrix("blue", 0);
+			image.setMatrix("green", 0);
 			break;
 		case "green":
-			image.setMatrix("blue", 255);
-			image.setMatrix("red", 255);
+			image.setMatrix("blue", 0);
+			image.setMatrix("red", 0);
 			break;
 		case "blue":
-			image.setMatrix("green", 255);
-			image.setMatrix("red", 255);
+			image.setMatrix("green", 0);
+			image.setMatrix("red", 0);
 			break;
 		default:
 			break;
