@@ -41,7 +41,7 @@ public class StatFilter {
 		
 	}
 	
-	//TILES   ==============================================================================
+	//TILES & SORTING  ==============================================================================
 
 	public void divide_image(int n){
 		
@@ -209,7 +209,7 @@ public class StatFilter {
 	//OPERATIONS  ====================================================================================
 
 	
-	public BufferedImage apply_stat(String operation) {
+	public BufferedImage apply_operation(String operation) {
 		
 		//for each section
 		for (int r=0; r<tiles.length; r++){
@@ -227,12 +227,13 @@ public class StatFilter {
 				case "std.dev":
 					double value  = tiles[r][c].std_dev();
 					tiles[r][c].setMatrix("red",value);
-					tiles[r][c].setMatrix("green", value);
-					tiles[r][c].setMatrix("blue", value);
-					
+
 					int[][] m = tiles[r][c].getMatrix("red");
 					m = normaliseRGB(m);
-					tiles[r][c].setMatrix("red", m); 					
+					tiles[r][c].setMatrix("red", m);
+					tiles[r][c].setMatrix("green", m); 
+					tiles[r][c].setMatrix("blue", m);
+					
 				default:
 					break;
 				}
@@ -478,12 +479,14 @@ public class StatFilter {
 		int max=this.getMaxValue(zmatrix);
 		int min=this.getMinValue(zmatrix);
 		
+		int range = max-min ==0 ? 1 : max-min;
+		
 
 		int[][] RGBmatrix = new int [zmatrix.length][zmatrix[0].length];
 		
 		for(int j=0; j<RGBmatrix.length;j++){
 			for(int i=0;i<RGBmatrix[0].length;i++){			
-				RGBmatrix[j][i]=(int) ((zmatrix[j][i]/(max-min))*255);
+				RGBmatrix[j][i]=(int) ((zmatrix[j][i]/range)*255);
 			}//i
 		}//j
 		
