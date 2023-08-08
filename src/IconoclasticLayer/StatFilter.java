@@ -32,6 +32,9 @@ public class StatFilter {
 		this.image = new RGBHolder();
 		image.setImageFromFile(filepath);
 		System.out.println("IMG: " + image.getHeight()+" x "+image.getWidth());
+		
+		
+		
 	}
 	
 	public void setImage(BufferedImage img) {
@@ -126,7 +129,7 @@ public class StatFilter {
 		}//for each tile
 		
 		
-		return this.exportImage();
+		return this.composeImage().getBufferedImage();
 		
 	}//end ShowTiles
 	
@@ -244,7 +247,7 @@ public class StatFilter {
 			}//end columns
 		}//end rows
 		
-		return this.exportImage();
+		return this.composeImage().getBufferedImage();
 		
 	}//end getinputlayer
 		
@@ -414,8 +417,18 @@ public class StatFilter {
 	}
 	
 	
-	//debugging: used to display the standardised image (resize to 0-255 then stitch tiles together)
-	public BufferedImage exportImage() {
+	
+	//IMAGE EXPORT  ====================================================================================
+
+	public void  savefile (String filepath, String format) throws IOException {
+		
+		this.composeImage().savetoFile(filepath, format);
+		
+	} 
+	
+	
+	public RGBHolder composeImage () {
+		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
 		int rows = tiles.length;
 		int columns = tiles[0].length;
@@ -468,7 +481,7 @@ public class StatFilter {
 		greenPixels=null;
 		bluePixels=null;
 		
-		return imgout.getBufferedImage();
+		return imgout;
 	
 	}
 	

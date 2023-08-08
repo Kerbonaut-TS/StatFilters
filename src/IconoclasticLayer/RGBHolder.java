@@ -384,11 +384,12 @@ public class RGBHolder {
 	
 	//export to file
 	
-	public void saveImage(String filepath) throws IOException{
-			
+	public void savetoFile(String filepath, String format) throws IOException{
+		
+		
         File file = new File(filepath);
         file.getParentFile().mkdirs();
-	    ImageIO.write(this.img, "png", file);
+	    ImageIO.write(this.getBufferedImage(), format, file);
 
 	}//end write image
 		
