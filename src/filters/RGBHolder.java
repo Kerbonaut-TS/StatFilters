@@ -1,4 +1,4 @@
-package IconoclasticLayer;
+package filters;
 
 import java.awt.Color;
 import java.awt.Font;

@@ -1,7 +1,7 @@
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-import IconoclasticLayer.StatFilter;
+import filters.StatFilter;
 
 
 
@@ -12,7 +12,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 
-		final String path= "C:\\Users\\Riccardo\\Desktop\\drone pics iceland\\DJI_0128.jpg";
+		final String path= "C:\\path\\to\\image\\input";
 		
 
 		StatFilter filter= new StatFilter();
@@ -24,8 +24,12 @@ public class Main {
 
 		img = filter.showTiles();
 		
+		filter.apply_operation("mean");
+		
 		System.out.println("end test");
 		
+		filter.savefile("C:\\path\\to\\image\\output", "png");
+
 
 	}//end main
 
