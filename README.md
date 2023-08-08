@@ -1,6 +1,7 @@
 # Stat Filters
 
-Status: WIP
+Status: WIP  
+
 Java code to apply apply statistical functions on images.  This tool helps experimenting and test image processing pipelines on Jupyter notebooks.
 
 
