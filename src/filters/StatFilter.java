@@ -112,25 +112,8 @@ public class StatFilter {
 	
 	
 	public BufferedImage showTiles() {
-
-		int rows = tiles.length;
-		int columns = tiles[0].length;
 		
-		// stitching all tiles together
-		for (int t=0; t<sortedTiles.length; t++){
-				
-				//tile coordinate
-				int r = (int) sortedTiles[t][0];
-				int c = (int) sortedTiles[t][1];
-				
-				int x = tiles[r][c].get_center_x(false);
-				int y = tiles[r][c].get_center_y(false);
-				tiles[r][c].add_text(String.valueOf(t), 24, Color.RED,x,y);
-				
-		}//for each tile
-		
-		
-		return this.composeImage().getBufferedImage();
+		return this.composeImage(true).getBufferedImage();
 		
 	}//end ShowTiles
 	
@@ -255,7 +238,7 @@ public class StatFilter {
 			}//end columns
 		}//end rows
 		
-		return this.composeImage().getBufferedImage();
+		return this.composeImage(false).getBufferedImage();
 		
 	}//end getinputlayer
 		
@@ -430,12 +413,12 @@ public class StatFilter {
 
 	public void  savefile (String filepath, String format) throws IOException {
 		
-		this.composeImage().savetoFile(filepath, format);
+		this.composeImage(false).savetoFile(filepath, format);
 		
 	} 
 	
 	
-	public RGBHolder composeImage () {
+	public RGBHolder composeImage (Boolean showIndex) {
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
 		int rows = tiles.length;
@@ -446,20 +429,34 @@ public class StatFilter {
 		int offsetH=0;
 		int offsetW=0;
 		
+	
+		
 		//final image
 		int [][] redPixels = new int [subh*rows][subw*columns];
 		int [][] greenPixels = new int [subh*rows][subw*columns];
 		int [][] bluePixels = new int [subh*rows][subw*columns];
 		
-
+		int i=0;
 			
 		// stitching all tiles together
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
-				int [][] RMatrix=tiles[r][c].getMatrix("red");
-				int [][] GMatrix=tiles[r][c].getMatrix("green");
-				int [][] BMatrix=tiles[r][c].getMatrix("blue");
+				RGBHolder render_tile = new RGBHolder();
+				render_tile.setBufferedImage(tiles[r][c].getBufferedImage());
+				
+				if  (showIndex) {
+				
+					int x = render_tile.get_center_x(false);
+					int y = render_tile.get_center_y(false);
+					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
+					
+				}
+				
+				
+				int [][] RMatrix=render_tile.getMatrix("red");
+				int [][] GMatrix=render_tile.getMatrix("green");
+				int [][] BMatrix=render_tile.getMatrix("blue");
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
@@ -474,6 +471,8 @@ public class StatFilter {
 				
 					}//width
 				}//height 
+				
+				i++;
 			}//columns
 		}//rows
 		
