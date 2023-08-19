@@ -11,11 +11,11 @@ public class StatFilter {
 
 	RGBHolder image;
 	RGBHolder[][] tiles; //[rows], [columns]  c and r are the coordinates in the picture
-	RGBHolder features[];
+	int[][] indexList; // list of index and coordinates
 	
 	//measures matrix
 	double [][] M; 
-	//list of tiles coordinates according to the Matrix M
+	//list of tiles coordinates ranked by values in Matrix M
 	double sortedTiles[][];
 	
 	public StatFilter()  {
@@ -91,6 +91,7 @@ public class StatFilter {
 				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
 				tiles[r][c].setTly((r)*hs);
 				
+				
 				this.sortedTiles[t][0] = r;
 				this.sortedTiles[t][1] = c;
 				this.sortedTiles[t][2] = 0;
@@ -134,9 +135,16 @@ public class StatFilter {
 	}//end ShowTiles
 	
 	
-	public RGBHolder getTile (int x, int y) {
+	public BufferedImage getTile (int index) {
 		
-		return tiles[x][y];
+		int rows = this.tiles.length;
+		int cols = this.tiles[0].length;
+		
+		int r = (int) Math.floor( index/rows ) ;
+		int c = index - (r*cols);
+		
+		
+		return tiles[r][c].getBufferedImage();
 		
 	}
 	
@@ -214,7 +222,7 @@ public class StatFilter {
 	
 	public BufferedImage apply_operation(String operation) {
 		
-		//for each section
+		//for each tile
 		for (int r=0; r<tiles.length; r++){
 			for (int c=0; c<tiles[0].length; c++){
 				
