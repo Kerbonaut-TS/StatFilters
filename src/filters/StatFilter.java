@@ -118,14 +118,30 @@ public class StatFilter {
 	}//end ShowTiles
 	
 	
-	public BufferedImage getTile (int index) {
+	private int[] calculateRC(int index) {
 		
 		int rows = this.tiles.length;
 		int cols = this.tiles[0].length;
 		
+		int[] rc = new int[2];
+		
 		int r = (int) Math.floor( index/rows ) ;
 		int c = index - (r*cols);
 		
+		
+		rc[0] = r;
+		rc[1] = c;
+		
+		return rc;
+		
+	}
+	
+	
+	public BufferedImage getTile (int index) {
+		
+		
+		int r = this.calculateRC(index)[0];
+		int c =  this.calculateRC(index)[1];
 		
 		return tiles[r][c].getBufferedImage();
 		
@@ -203,12 +219,12 @@ public class StatFilter {
 	//OPERATIONS  ====================================================================================
 
 	
-	public BufferedImage apply_operation(String operation) {
+	public BufferedImage apply_operation(String operation, int tile) {
 		
-		//for each tile
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){
-				
+		 int r = this.calculateRC(tile)[0];
+		 int c = this.calculateRC(tile)[1];
+			
+
 				switch (operation) {
 				
 				case "mean":
@@ -232,11 +248,6 @@ public class StatFilter {
 					break;
 				}
 				
-				
-
-				
-			}//end columns
-		}//end rows
 		
 		return this.composeImage(false).getBufferedImage();
 		
