@@ -18,13 +18,13 @@ public class Main {
 		StatFilter filter= new StatFilter();
 		
 		filter.setSource(path);
-		filter.divide_image(2);
+		filter.divideImage(2);
 		
 		BufferedImage  img;
 
 		img = filter.showTiles();
 		
-		filter.apply_operation("mean");
+		filter.applyOperation("mean");
 		
 		System.out.println("end test");
 		

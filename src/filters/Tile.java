@@ -8,7 +8,9 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -248,8 +250,8 @@ public class Tile {
 
 
         // Iterate over each pixel and count the occurrences of each color
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width ; j++) {
                 Color pixel = new Color((int) red[i][j], (int)green[i][j], (int)blue[i][j]);
                 colorCounts.put(pixel, colorCounts.getOrDefault(pixel, 0) + 1);
             }
@@ -342,7 +344,7 @@ public class Tile {
 	
 	//=== EXPORT METHODS ========================================================================
 	
-	public int[] getRGBArray(){
+	public int[] getPixels(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 	
 		int pixels= this.height * this.width;
@@ -363,6 +365,28 @@ public class Tile {
 		return RGBarray;
 
 	}//end getlinearArray
+	
+	public Dictionary getStats() {
+		
+		   Dictionary stats = new Hashtable();
+		   
+		   double mean = (this.mean()[0]+this.mean()[1]+this.mean()[2])/3;
+		   
+           // put() method
+		   stats.put("mean", mean);
+		   stats.put("std.dev", this.std_dev());
+		   stats.put("entropy", this.entropy());
+		   stats.put("avg red", this.mean()[0]);
+		   stats.put("avg green", this.mean()[1]);
+		   stats.put("avg blue", this.mean()[2]);
+
+
+           //print out Hashtable out
+           //System.out.println(stats);
+           
+           
+		return stats;
+	}
 	
 	//export BufferedImage
 	public BufferedImage getBufferedImage() {

@@ -4,6 +4,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 
 
@@ -379,25 +381,18 @@ public class StatFilter {
 	}//end localstd
 	
 	//EXPORT  ====================================================================================
-
-	public BufferedImage getTile (int tileIndex) {
+		
+	
+	public Tile getTile (int tileIndex) {
 		
 		
 		int r = this.calculateRC(tileIndex)[0];
 		int c =  this.calculateRC(tileIndex)[1];
 		
-		return tiles[r][c].getBufferedImage();
+		return tiles[r][c];
 		
 	}
 	
-	public int[] getPixels(int tileIndex) {
-		
-		int r = this.calculateRC(tileIndex)[0];
-		int c = this.calculateRC(tileIndex)[1];
-		return tiles[r][c].getRGBArray();
-		
-	
-	}
 		
 	public void  savefile (String filepath, String format) throws IOException {
 		
