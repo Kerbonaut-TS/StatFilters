@@ -113,7 +113,7 @@ public class StatFilter {
 	
 	//SORT TILES  ==============================================================================
 	
-	public int[] sortTilesBy(String measure) throws IOException{
+	public int[] sortTilesBy(String measure, Boolean ascending) throws IOException{
 		
 		//I matrix contains the quantity of Information for each section		
 	    M = new double [tiles.length][tiles[0].length];
@@ -123,18 +123,31 @@ public class StatFilter {
 		for (int r=0; r<tiles.length; r++){
 			for (int c=0; c<tiles[0].length; c++){
 				
+				 int[] avg  = tiles[r][c].mean();
 
 				switch(measure) {
 				  case "entropy":
 					  M[r][c]=tiles[r][c].entropy();
 					  break;
 				  case "mean":
-					  int[] avg = tiles[r][c].mean();
 					  M[r][c]=  (avg[0]+avg[1]+avg[2])/3 ;
 					  break;
 				  case "std.dev":
 					  M[r][c]=tiles[r][c].std_dev();
 					  break;
+					  
+				  case "red":
+					  M[r][c]=  avg[0] ;
+					  break;
+					  
+				  case "green":
+					  M[r][c]=  avg[1] ;
+					  break;
+					  
+				  case "blue":
+					  M[r][c]=  avg[2] ;
+					  break;
+					  
 				  default:
 					  break;
 				}//end switch
@@ -142,7 +155,7 @@ public class StatFilter {
 			}//for columns
 		}//for rows
 		
-		this.sortedTiles= this.sortTiles();
+		this.sortedTiles= this.sortTiles(ascending);
 		this.log(this.sortedTiles);
 		return  this.sortedTiles;
 		
@@ -189,6 +202,7 @@ public class StatFilter {
 				tiles[r][c].setMatrix("blue", rgb[2]);
 	
 				break;
+				
 			case "std.dev":
 				double value  = tiles[r][c].std_dev();
 				tiles[r][c].setMatrix("red",value);
@@ -198,6 +212,20 @@ public class StatFilter {
 				tiles[r][c].setMatrix("red", m);
 				tiles[r][c].setMatrix("green", m); 
 				tiles[r][c].setMatrix("blue", m);
+				
+				
+			case "keepRed":
+				tiles[r][c].setMatrix("blue", 0);
+				tiles[r][c].setMatrix("green", 0);
+				break;
+			case "keepGreen":
+				tiles[r][c].setMatrix("blue", 0);
+				tiles[r][c].setMatrix("red", 0);
+				break;
+			case "keepBlue":
+				tiles[r][c].setMatrix("green", 0);
+				tiles[r][c].setMatrix("red", 0);
+				break;
 				
 			default:
 				break;
@@ -227,32 +255,7 @@ public class StatFilter {
 	
 	}
 	
-	//APPLY FILTER COLOUR  ====================================================================================
-		
-	public BufferedImage filterColor(String color) {
-		
-		switch (color) {
-		
-		case "red":
-			image.setMatrix("blue", 0);
-			image.setMatrix("green", 0);
-			break;
-		case "green":
-			image.setMatrix("blue", 0);
-			image.setMatrix("red", 0);
-			break;
-		case "blue":
-			image.setMatrix("green", 0);
-			image.setMatrix("red", 0);
-			break;
-		default:
-			break;
-		}
-		
-	    return image.getBufferedImage();
-			
-	}
-	
+
 	//IMAGE TRANSFORM (EXP) ====================================================================================
 	private Tile optimiseSection(Tile section, int direction) {
 		
@@ -501,7 +504,7 @@ public class StatFilter {
 
 	//Tools ========================================================================================
 	
-	private int[] sortTiles() throws IOException {
+	private int[] sortTiles(Boolean ascending) throws IOException {
 
 		
 		//prepare list
@@ -509,13 +512,16 @@ public class StatFilter {
 		int n = M.length * M[0].length;
 		double[][] rankedList = new double [n][3]; //   (measure, row, column)
 		
+		int m =  ( ascending == true) ? 1 : -1;
+		
+		
 		//copy I matrix and coordinates
 		for (int r=0; r<M.length; r++){
 			for (int c=0; c<M[0].length; c++){	
 				
 			    rankedList[i][0] = r;
 				rankedList[i][1] = c;
-				rankedList[i][2] = M[r][c];
+				rankedList[i][2] = M[r][c] * m;
 				i++;
 				
 			}//for columns
