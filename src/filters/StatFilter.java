@@ -16,7 +16,7 @@ public class StatFilter {
 	//measures matrix
 	double [][] M; 
 	//list of tiles coordinates ranked by values in Matrix M
-	double sortedTiles[][];
+	int sortedTiles[];
 	
 	public StatFilter()  {
 		
@@ -55,7 +55,7 @@ public class StatFilter {
 		ws= (int) Math.floor(image.getWidth()/n);
 		
 		tiles = new RGBHolder [(int) n][(int) n];
-		this.sortedTiles = new double [n*n][3];
+		this.sortedTiles = new int [n*n];
 		
 		int t = 0;
 		
@@ -90,11 +90,8 @@ public class StatFilter {
 				
 				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
 				tiles[r][c].setTly((r)*hs);
-				
-				
-				this.sortedTiles[t][0] = r;
-				this.sortedTiles[t][1] = c;
-				this.sortedTiles[t][2] = 0;
+							
+				this.sortedTiles[t] = t;
 				
 				tempR=null;
 				tempG=null;
@@ -136,6 +133,14 @@ public class StatFilter {
 		
 	}
 	
+	public int getTileIndex(int r, int c) {
+		
+		int cols = this.tiles[0].length;
+				
+		int index = r * cols + c;
+		
+		return index;
+	}
 	
 	public BufferedImage getTile (int index) {
 		
@@ -162,8 +167,8 @@ public class StatFilter {
 		for (int t=0; t<n; t++){
 				
 				//tile coordinate
-				int r = (int) sortedTiles[t][0];
-				int c = (int) sortedTiles[t][1];
+				int r = (int) this.calculateRC(sortedTiles[t])[0];
+				int c = (int) this.calculateRC(sortedTiles[t])[1];
 
 				output[t] = tiles[r][c].getBufferedImage();
 				
@@ -203,7 +208,7 @@ public class StatFilter {
 			}//for columns
 		}//for rows
 		
-		this.sortedTiles= this.createRanks();
+		this.sortedTiles= this.sortTiles();
 
 		
 	} //end 
@@ -216,42 +221,63 @@ public class StatFilter {
 	
 	}
 	
-	//OPERATIONS  ====================================================================================
+	//APPLY OPERATIONS  ====================================================================================
 
 	
-	public BufferedImage apply_operation(String operation, int tile) {
+	public void apply_operation(String operation, int tile) {
 		
 		 int r = this.calculateRC(tile)[0];
 		 int c = this.calculateRC(tile)[1];
 			
-
-				switch (operation) {
+		switch (operation) {
+			
+			case "mean":
+				int[] rgb = tiles[r][c].mean();
+				tiles[r][c].setMatrix("red", rgb[0]);
+				tiles[r][c].setMatrix("green", rgb[1]);
+				tiles[r][c].setMatrix("blue", rgb[2]);
+	
+				break;
+			case "std.dev":
+				double value  = tiles[r][c].std_dev();
+				tiles[r][c].setMatrix("red",value);
+	
+				int[][] m = tiles[r][c].getMatrix("red");
+				m = normaliseRGB(m);
+				tiles[r][c].setMatrix("red", m);
+				tiles[r][c].setMatrix("green", m); 
+				tiles[r][c].setMatrix("blue", m);
 				
-				case "mean":
-					int[] rgb = tiles[r][c].mean();
-					tiles[r][c].setMatrix("red", rgb[0]);
-					tiles[r][c].setMatrix("green", rgb[1]);
-					tiles[r][c].setMatrix("blue", rgb[2]);
-
-					break;
-				case "std.dev":
-					double value  = tiles[r][c].std_dev();
-					tiles[r][c].setMatrix("red",value);
-
-					int[][] m = tiles[r][c].getMatrix("red");
-					m = normaliseRGB(m);
-					tiles[r][c].setMatrix("red", m);
-					tiles[r][c].setMatrix("green", m); 
-					tiles[r][c].setMatrix("blue", m);
-					
-				default:
-					break;
-				}
+			default:
+				break;
 				
+			}
+				
+				
+	}//end getinputlayer
+	
+	public BufferedImage apply_operation(String operation, int[] tileList) {
 		
+		int n = tileList.length;
+				
+		//for each tile
+		for (int t=0; t<n; t++) this.apply_operation(operation, tileList[t]);
+				
 		return this.composeImage(false).getBufferedImage();
 		
-	}//end getinputlayer
+	
+	}
+	
+	
+	
+	public BufferedImage apply_operation(String operation) {
+				
+	    this.apply_operation(operation, sortedTiles);				
+		return this.composeImage(false).getBufferedImage();
+		
+	
+	}
+	
 		
 	public BufferedImage filterColor(String color) {
 		
@@ -276,21 +302,17 @@ public class StatFilter {
 	    return image.getBufferedImage();
 			
 	}
-			
+	
+	
 	
 	public void printRanks() {
 		
 		int n = sortedTiles.length;
 		
 		// stitching all tiles together
-		for (int t=0; t<n; t++){
-				
-				//tile coordinate
-				int r = (int) sortedTiles[t][0];
-				int c = (int) sortedTiles[t][1];
-				
-				System.out.println(sortedTiles[t][2]+"     [" + r +"]"+ "[" + c +"]");
-		}//for each tile
+		for (int t=0; t<n; t++)			
+				System.out.println(sortedTiles[t]+"     [" + this.calculateRC(sortedTiles[t])[0] +"]"+ "[" + this.calculateRC(sortedTiles[t])[1] +"]");
+	
 
 		
 	}//end getinputlayer
@@ -528,7 +550,7 @@ public class StatFilter {
 
 	//Tools ========================================================================================
 	
-	private double[][]  createRanks() throws IOException {
+	private int[] sortTiles() throws IOException {
 
 		
 		//prepare list
@@ -549,8 +571,11 @@ public class StatFilter {
 		}//for rows
 		
 		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[2]));
+		
+		
+		for (int t=0; t<n; t++) this.sortedTiles[t] =  this.getTileIndex( (int) rankedList[t][0], (int) rankedList[t][1] );
 
-		return rankedList;
+		return sortedTiles;
 		
 		}
 	
