@@ -8,15 +8,14 @@ import java.util.Comparator;
 
 
 public class StatFilter {
-
-	RGBHolder image;
-	RGBHolder[][] tiles; //[rows], [columns]  c and r are the coordinates in the picture
-	int[][] indexList; // list of index and coordinates
 	
-	//measures matrix
-	double [][] M; 
-	//list of tiles coordinates ranked by values in Matrix M
-	int sortedTiles[];
+	
+	Tile image;
+	Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
+	int[][] indexList; 		// the tile index displayed
+		
+	double [][] M; 			//measures matrix	
+	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M
 	
 	public StatFilter()  {
 		
@@ -26,10 +25,9 @@ public class StatFilter {
 	
 	
 	//IMPORT ========================================================================================
-	
 	public void setSource(String filepath) throws IOException {
 		
-		this.image = new RGBHolder();
+		this.image = new Tile();
 		image.setImageFromFile(filepath);
 		System.out.println("IMG: " + image.getHeight()+" x "+image.getWidth());
 		
@@ -39,14 +37,14 @@ public class StatFilter {
 	
 	public void setImage(BufferedImage img) {
 		
-		this.image = new RGBHolder();
+		this.image = new Tile();
 		image.setBufferedImage(img);
 		
 	}
 	
-	//TILES & SORTING  ==============================================================================
+	//CREATE TILES & SORTING  ==============================================================================
 
-	public void divide_image(int n){
+	public void divideImage(int n){
 		
 		//height and width of sub matrixes
 		int hs,ws;
@@ -54,7 +52,7 @@ public class StatFilter {
 		hs= (int) Math.floor(image.getHeight()/n);
 		ws= (int) Math.floor(image.getWidth()/n);
 		
-		tiles = new RGBHolder [(int) n][(int) n];
+		tiles = new Tile [(int) n][(int) n];
 		this.sortedTiles = new int [n*n];
 		
 		int t = 0;
@@ -82,7 +80,7 @@ public class StatFilter {
 					}	//end height
 				}//end width
 				
-				tiles[r][c]=new RGBHolder();		
+				tiles[r][c]=new Tile();		
 				tiles[r][c].setMatrix("red", tempR);
 				tiles[r][c].setMatrix("green", tempG);
 				tiles[r][c].setMatrix("blue", tempB);
@@ -107,79 +105,15 @@ public class StatFilter {
 
 	}//end setResolution
 	
-	
 	public BufferedImage showTiles() {
 		
 		return this.composeImage(true).getBufferedImage();
 		
 	}//end ShowTiles
 	
+	//SORT TILES  ==============================================================================
 	
-	private int[] calculateRC(int index) {
-		
-		int rows = this.tiles.length;
-		int cols = this.tiles[0].length;
-		
-		int[] rc = new int[2];
-		
-		int r = (int) Math.floor( index/rows ) ;
-		int c = index - (r*cols);
-		
-		
-		rc[0] = r;
-		rc[1] = c;
-		
-		return rc;
-		
-	}
-	
-	public int getTileIndex(int r, int c) {
-		
-		int cols = this.tiles[0].length;
-				
-		int index = r * cols + c;
-		
-		return index;
-	}
-	
-	public BufferedImage getTile (int index) {
-		
-		
-		int r = this.calculateRC(index)[0];
-		int c =  this.calculateRC(index)[1];
-		
-		return tiles[r][c].getBufferedImage();
-		
-	}
-	
-	
-	public BufferedImage [] getSortedTiles() {
-		
-		BufferedImage [] output;
-		int H = tiles.length;
-		int W = tiles[0].length;
-		output = new BufferedImage[H*W];
-		
-		
-		int n = sortedTiles.length;
-		
-		// stitching all tiles together
-		for (int t=0; t<n; t++){
-				
-				//tile coordinate
-				int r = (int) this.calculateRC(sortedTiles[t])[0];
-				int c = (int) this.calculateRC(sortedTiles[t])[1];
-
-				output[t] = tiles[r][c].getBufferedImage();
-				
-		}
-		
-		
-		return output;
-		
-	}
-	
-	public void sort_tiles_by(String measure) throws IOException{
+	public int[] sortTilesBy(String measure) throws IOException{
 		
 		//I matrix contains the quantity of Information for each section		
 	    M = new double [tiles.length][tiles[0].length];
@@ -209,22 +143,39 @@ public class StatFilter {
 		}//for rows
 		
 		this.sortedTiles= this.sortTiles();
-
+		this.log(this.sortedTiles);
+		return  this.sortedTiles;
 		
 	} //end 
-	
-	
-	public int[] getPixels(int row, int column) {
-	
-		 return tiles[row][column].getRGBArray();
+
+	public BufferedImage [] getSortedTiles() {
 		
-	
+		BufferedImage [] output;
+		int H = tiles.length;
+		int W = tiles[0].length;
+		output = new BufferedImage[H*W];
+		
+		
+		int n = sortedTiles.length;
+		
+		// stitching all tiles together
+		for (int t=0; t<n; t++){
+				
+				//tile coordinate
+				int r = (int) this.calculateRC(sortedTiles[t])[0];
+				int c = (int) this.calculateRC(sortedTiles[t])[1];
+
+				output[t] = tiles[r][c].getBufferedImage();
+				
+		}
+		
+		return output;
+		
 	}
 	
-	//APPLY OPERATIONS  ====================================================================================
 
-	
-	public void apply_operation(String operation, int tile) {
+	//APPLY OPERATIONS  ====================================================================================
+	public void applyOperation(String operation, int tile) {
 		
 		 int r = this.calculateRC(tile)[0];
 		 int c = this.calculateRC(tile)[1];
@@ -256,28 +207,27 @@ public class StatFilter {
 				
 	}//end getinputlayer
 	
-	public BufferedImage apply_operation(String operation, int[] tileList) {
+	public BufferedImage applyOperation(String operation, int[] tileList) {
 		
 		int n = tileList.length;
 				
 		//for each tile
-		for (int t=0; t<n; t++) this.apply_operation(operation, tileList[t]);
+		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 				
 		return this.composeImage(false).getBufferedImage();
 		
 	
 	}
 	
-	
-	
-	public BufferedImage apply_operation(String operation) {
+	public BufferedImage applyOperation(String operation) {
 				
-	    this.apply_operation(operation, sortedTiles);				
+	    this.applyOperation(operation, sortedTiles);				
 		return this.composeImage(false).getBufferedImage();
 		
 	
 	}
 	
+	//APPLY FILTER COLOUR  ====================================================================================
 		
 	public BufferedImage filterColor(String color) {
 		
@@ -303,43 +253,15 @@ public class StatFilter {
 			
 	}
 	
-	
-	
-	public void printRanks() {
-		
-		int n = sortedTiles.length;
-		
-		// stitching all tiles together
-		for (int t=0; t<n; t++)			
-				System.out.println(sortedTiles[t]+"     [" + this.calculateRC(sortedTiles[t])[0] +"]"+ "[" + this.calculateRC(sortedTiles[t])[1] +"]");
-	
-
-		
-	}//end getinputlayer
-	
-	//normalization
-	public void localNormalisation() {
-		
-		//standardized values in each section
-
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){			
-				tiles[r][c].standardise();		
-			}//end col
-		}//end rows
-		
-	}//end localstd
-	
-	
-	//IMAGE TRANSFORM  ====================================================================================
-	private RGBHolder optimiseSection(RGBHolder section, int direction) {
+	//IMAGE TRANSFORM (EXP) ====================================================================================
+	private Tile optimiseSection(Tile section, int direction) {
 		
 		
 		double info,infoL, infoS;
 		double gradL, gradS;
 
-		RGBHolder larger;
-		RGBHolder smaller;
+		Tile larger;
+		Tile smaller;
 		
 		larger=null;
 		smaller=null;
@@ -392,10 +314,10 @@ public class StatFilter {
 		
 	}//end optimise section
 	
-	private RGBHolder resizeSection(RGBHolder section, int delta){
+	private Tile resizeSection(Tile section, int delta){
 		
 		
-		RGBHolder resSection = new RGBHolder();
+		Tile resSection = new Tile();
 
 
 		//calculate new coordinates
@@ -440,18 +362,47 @@ public class StatFilter {
 		
 	}
 	
-	
-	
-	//IMAGE EXPORT  ====================================================================================
+	//normalization
+	public void localNormalisation() {
+		
+		//standardized values in each section
 
+		for (int r=0; r<tiles.length; r++){
+			for (int c=0; c<tiles[0].length; c++){			
+				tiles[r][c].standardise();		
+			}//end col
+		}//end rows
+		
+	}//end localstd
+	
+	//EXPORT  ====================================================================================
+
+	public BufferedImage getTile (int tileIndex) {
+		
+		
+		int r = this.calculateRC(tileIndex)[0];
+		int c =  this.calculateRC(tileIndex)[1];
+		
+		return tiles[r][c].getBufferedImage();
+		
+	}
+	
+	public int[] getPixels(int tileIndex) {
+		
+		int r = this.calculateRC(tileIndex)[0];
+		int c = this.calculateRC(tileIndex)[1];
+		return tiles[r][c].getRGBArray();
+		
+	
+	}
+		
 	public void  savefile (String filepath, String format) throws IOException {
 		
 		this.composeImage(false).savetoFile(filepath, format);
 		
 	} 
 	
-	
-	public RGBHolder composeImage (Boolean showIndex) {
+	public Tile composeImage (Boolean showIndex) {
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
 		int rows = tiles.length;
@@ -475,7 +426,7 @@ public class StatFilter {
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
-				RGBHolder render_tile = new RGBHolder();
+				Tile render_tile = new Tile();
 				render_tile.setBufferedImage(tiles[r][c].getBufferedImage());
 				
 				if  (showIndex) {
@@ -509,7 +460,7 @@ public class StatFilter {
 			}//columns
 		}//rows
 		
-		RGBHolder imgout = new RGBHolder();
+		Tile imgout = new Tile();
 		
 		imgout.setMatrix("red", redPixels);
 		imgout.setMatrix("green", greenPixels);
@@ -579,7 +530,6 @@ public class StatFilter {
 		
 		}
 	
-
     private static int getMaxValue(int[][] numbers) {
         int maxValue = numbers[0][0];
         for (int j = 0; j < numbers.length; j++) {
@@ -605,4 +555,42 @@ public class StatFilter {
         return minValue ;
     
     }
+
+	private int[] calculateRC(int index) {
+		
+		int rows = this.tiles.length;
+		int cols = this.tiles[0].length;
+		
+		int[] rc = new int[2];
+		
+		int r = (int) Math.floor( index/rows ) ;
+		int c = index - (r*cols);
+		
+		
+		rc[0] = r;
+		rc[1] = c;
+		
+		return rc;
+		
+	}
+	
+	private int getTileIndex(int r, int c) {
+		
+		int cols = this.tiles[0].length;
+				
+		int index = r * cols + c;
+		
+		return index;
+	}
+	
+	private void log(int[] list) {
+		
+		System.out.print("{");
+
+		for (int i=0; i<list.length; i++)  System.out.print(list[i]+",");
+		
+		System.out.println("}");
+
+	}
+
 }//end class

@@ -14,7 +14,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 
-public class RGBHolder {
+public class Tile {
 	
 	String imgpath;
 	int height, width;
@@ -31,7 +31,7 @@ public class RGBHolder {
 	int tlx;
 	int tly;
 		
-	public RGBHolder()  {
+	public Tile()  {
 		
 		//an imageHolder can be empty
 		this.height=0;
@@ -46,7 +46,7 @@ public class RGBHolder {
 	//=== IMPORT METHODS =====================================================================
 	
 	//import image from another RGBHolder Object
-	public void clone(RGBHolder ih){
+	public void clone(Tile ih){
 		
 		this.height=ih.getHeight();
 		this.width=ih.getWidth();
@@ -130,11 +130,11 @@ public class RGBHolder {
 	
 	//=== OPERATIONS ========================================================================
 	
-	public void subtract(RGBHolder x) {
+	public void subtract(Tile x) {
 		this.subtract(x, 0);
 	}
 	
-	public void subtract (RGBHolder x, int threshold) {
+	public void subtract (Tile x, int threshold) {
 		
 		//get Image matrix
 		for (int h=0; h<height;h++){
@@ -148,7 +148,7 @@ public class RGBHolder {
 		
 	}
 	
-	public void add (RGBHolder x, int threshold) {
+	public void add (Tile x, int threshold) {
 		
 		//get Image matrix
 		for (int h=0; h<height;h++){
@@ -318,7 +318,7 @@ public class RGBHolder {
 			
 		}
 	
- 	public RGBHolder resize (int newHeight, int newWidth) throws IOException{
+ 	public Tile resize (int newHeight, int newWidth) throws IOException{
 		
 		BufferedImage img = this.getBufferedImage();	
 		Image newImage = img.getScaledInstance(newWidth, newHeight, Image.SCALE_DEFAULT);	 
@@ -332,7 +332,7 @@ public class RGBHolder {
 	    bGr.dispose();
 	    
 	    //return resized IMG
-	    RGBHolder resizedIMG = new RGBHolder();
+	    Tile resizedIMG = new Tile();
 	    resizedIMG.setBufferedImage(bimage);		    
 	    
 	   return resizedIMG;
