@@ -194,7 +194,9 @@ public class StatFilter {
 		
 		 int r = this.calculateRC(tile)[0];
 		 int c = this.calculateRC(tile)[1];
-			
+		
+		 double value;
+		 
 		switch (operation) {
 			
 			case "mean":
@@ -202,14 +204,21 @@ public class StatFilter {
 				tiles[r][c].setMatrix("red", rgb[0]);
 				tiles[r][c].setMatrix("green", rgb[1]);
 				tiles[r][c].setMatrix("blue", rgb[2]);
-	
 				break;
 				
 			case "std.dev":
-				double value  = tiles[r][c].std_dev();
+				value  = tiles[r][c].std_dev();
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value); 
-				tiles[r][c].setMatrix("blue", value);				
+				tiles[r][c].setMatrix("blue", value);	
+				break;
+				
+			case "entropy":
+				value  = tiles[r][c].entropy();
+				tiles[r][c].setMatrix("red",value);
+				tiles[r][c].setMatrix("green", value); 
+				tiles[r][c].setMatrix("blue", value);	
+				break;
 				
 			case "keepRed":
 				tiles[r][c].setMatrix("blue", 0);
@@ -483,7 +492,7 @@ public class StatFilter {
 		int max=this.getMaxValue(zmatrix);
 		int min=this.getMinValue(zmatrix);
 		
-		double range = max-min ==0 ? 1 : max-min;
+		int range = max-min ==0 ? 1 : max-min;
 		
 
 		int[][] RGBmatrix = new int [zmatrix.length][zmatrix[0].length];
