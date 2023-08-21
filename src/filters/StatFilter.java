@@ -4,8 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Dictionary;
-import java.util.Hashtable;
 
 
 
