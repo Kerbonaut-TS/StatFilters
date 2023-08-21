@@ -17,8 +17,6 @@ An image can be divided into tiles
 
 Each tile can be selected by ID and local statistics can be displayed.
 
-
-
 ![get1](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/fa3c985d-8cb8-4848-9314-ec9b7400f08e)
 
 Tiles can be sorted by different metrics: ```red```,```green```,```blue``` ```mean```, ```std.dev```, ```entropy```...
@@ -33,10 +31,9 @@ f.sortTilesBy("std.dev", ascending);
 
 These same metrics can be used as "filters" and applied to a subset of Tiles. 
 
-For instance, keeping only the ```Red``` channel in those tiles that have the highest standard deviation
+For instance, keeping only the ```red``` channel in those tiles that have the highest standard deviation
 
-![sort](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/9fa7a848-882a-4c1f-b673-5a6217918ace)
-
+![sort](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/427c4476-afdd-41ac-8f7b-0fb300ea3da5)
 
 Or apply a ```mean```  to those tiles that have the highest amount of green
 
