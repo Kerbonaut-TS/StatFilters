@@ -194,7 +194,9 @@ public class StatFilter {
 		
 		 int r = this.calculateRC(tile)[0];
 		 int c = this.calculateRC(tile)[1];
-			
+		
+		 double value;
+		 
 		switch (operation) {
 			
 			case "mean":
@@ -202,25 +204,28 @@ public class StatFilter {
 				tiles[r][c].setMatrix("red", rgb[0]);
 				tiles[r][c].setMatrix("green", rgb[1]);
 				tiles[r][c].setMatrix("blue", rgb[2]);
-	
 				break;
 				
 			case "std.dev":
-				double value  = tiles[r][c].std_dev();
+				value  = tiles[r][c].std_dev();
 				tiles[r][c].setMatrix("red",value);
-	
-				int[][] m = tiles[r][c].getMatrix("red");
-				m = normaliseRGB(m);
-				tiles[r][c].setMatrix("red", m);
-				tiles[r][c].setMatrix("green", m); 
-				tiles[r][c].setMatrix("blue", m);
+				tiles[r][c].setMatrix("green", value); 
+				tiles[r][c].setMatrix("blue", value);	
+				break;
 				
+			case "entropy":
+				value  = tiles[r][c].entropy();
+				tiles[r][c].setMatrix("red",value);
+				tiles[r][c].setMatrix("green", value); 
+				tiles[r][c].setMatrix("blue", value);	
+				break;
 				
 			case "keepRed":
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("green", 0);
 				break;
 			case "keepGreen":
+
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("red", 0);
 				break;
@@ -243,17 +248,27 @@ public class StatFilter {
 				
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
-				
-		return this.composeImage(false).getBufferedImage();
+		
+		Tile composedImg = this.composeImage(false);		
+
+		
+		if(operation.contains("std.dev") || operation.contains("entropy")) {
+		
+			composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
+			composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
+			composedImg.setMatrix("blue", this.normaliseRGB(composedImg.getMatrix("blue")));
+		}
+		
+		return composedImg.getBufferedImage();
+
 		
 	
 	}
 	
 	public BufferedImage applyOperation(String operation) {
 				
-	    this.applyOperation(operation, sortedTiles);				
-		return this.composeImage(false).getBufferedImage();
-		
+	    return this.applyOperation(operation, sortedTiles);				
+	    
 	
 	}
 	
@@ -481,14 +496,14 @@ public class StatFilter {
 		int max=this.getMaxValue(zmatrix);
 		int min=this.getMinValue(zmatrix);
 		
-		int range = max-min ==0 ? 1 : max-min;
+		double range = max-min ==0 ? 1 : max-min;
 		
 
 		int[][] RGBmatrix = new int [zmatrix.length][zmatrix[0].length];
 		
 		for(int j=0; j<RGBmatrix.length;j++){
 			for(int i=0;i<RGBmatrix[0].length;i++){			
-				RGBmatrix[j][i]=(int) ((zmatrix[j][i]/range)*255);
+				RGBmatrix[j][i]=(int) (((zmatrix[j][i]-min)/range)*255);
 			}//i
 		}//j
 		
@@ -532,7 +547,7 @@ public class StatFilter {
 		}
 	
     private static int getMaxValue(int[][] numbers) {
-        int maxValue = numbers[0][0];
+    	int maxValue = numbers[0][0];
         for (int j = 0; j < numbers.length; j++) {
             for (int i = 0; i < numbers[j].length; i++) {
                 if (numbers[j][i] > maxValue) {
@@ -544,7 +559,7 @@ public class StatFilter {
     }
 
     private static int getMinValue(int[][] numbers) {
-        int minValue = numbers[0][0];
+    	int minValue = numbers[0][0];
         
         for (int j = 0; j < numbers.length; j++) {
             for (int i = 0; i < numbers[j].length; i++) {
