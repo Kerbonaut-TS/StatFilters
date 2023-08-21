@@ -270,7 +270,7 @@ public class Tile {
     }
 
 	
-	// === IMG transform ========================================================================
+	// === IMG transform ======================================================================
 	
 	public void crop(double percent) {
 			
@@ -342,7 +342,7 @@ public class Tile {
 	}
 	
 	
-	//=== EXPORT METHODS ========================================================================
+	//=== EXPORT  ==============================================================================
 	
 	public int[] getPixels(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
@@ -388,7 +388,6 @@ public class Tile {
 		return stats;
 	}
 	
-	//export BufferedImage
 	public BufferedImage getBufferedImage() {
 		
 		
@@ -406,8 +405,6 @@ public class Tile {
 
 	}//end write image
 	
-	//export to file
-	
 	public void savetoFile(String filepath, String format) throws IOException{
 		
 		
@@ -417,8 +414,12 @@ public class Tile {
 
 	}//end write image
 		
+
+	
+	//=== GET/SET  ========================================================================
+
 	public int[][] getMatrix(String color){
-				
+		
 		switch(color) {
 		  case "red":
 			  return redPixels;		
@@ -512,16 +513,26 @@ public class Tile {
 		
 	}
 	
-	
+
 	
 	public int getHeight(){ return height;}
+	
 	public int getWidth(){ return width;}
 	
 	public void setHeight(int h){ this.height=h;}
+	
 	public void setWidth(int w){ this.width=w;}
 	
+	
+	
 	public int getTlx(){ return this.tlx;}
+	
 	public int getTly(){ return this.tly;}
+	
+	public void setTlx( int x){ this.tlx=x;}
+	
+	public void setTly(int y ){ this.tly=y;}
+	
 	
 	public int get_center_x(Boolean absolute){ 
 		
@@ -540,10 +551,6 @@ public class Tile {
 		
 		
 	}
-	
-	
-	public void setTlx( int x){ this.tlx=x;}
-	public void setTly(int y ){ this.tly=y;}
 	
 	
 	//=== additional tools ========================================================================

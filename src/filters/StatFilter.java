@@ -220,16 +220,17 @@ public class StatFilter {
 				tiles[r][c].setMatrix("blue", value);	
 				break;
 				
-			case "keepRed":
+			case "red":
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("green", 0);
 				break;
-			case "keepGreen":
-
+				
+			case "green":
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("red", 0);
 				break;
-			case "keepBlue":
+				
+			case "blue":
 				tiles[r][c].setMatrix("green", 0);
 				tiles[r][c].setMatrix("red", 0);
 				break;
@@ -397,7 +398,6 @@ public class StatFilter {
 	
 	//EXPORT  ====================================================================================
 		
-	
 	public Tile getTile (int tileIndex) {
 		
 		
@@ -407,8 +407,7 @@ public class StatFilter {
 		return tiles[r][c];
 		
 	}
-	
-		
+			
 	public void  savefile (String filepath, String format) throws IOException {
 		
 		this.composeImage(false).savetoFile(filepath, format);

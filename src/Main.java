@@ -18,8 +18,9 @@ public class Main {
 		StatFilter filter= new StatFilter();
 		
 		filter.setSource(path);
-		filter.divideImage(2);
-		
+		filter.divideImage(5);
+	
+			
 		BufferedImage  img;
 
 		img = filter.showTiles();
