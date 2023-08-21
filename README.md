@@ -11,8 +11,6 @@ This tool was designed around Jupyter Notebooks to interactively test image proc
 
 ## Overview
 
-This is a brief overview of the features developed so far.
-
 An image can be divided into tiles
 
 ![divide](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/88b69a8b-f439-4c40-9c45-8b2f131f6279)
@@ -56,17 +54,34 @@ f.sortTilesBy("green",ascending);
 
 This is useful when done at scale, for instance:
 
- divide the image in 1000 tiles and apply the standard deviation to the entire image
+Divide the image in 1000 tiles and apply the standard deviation to the entire image
+
+![1000](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/1edfd412-d021-4ab0-b1ce-cddd08d7966c)
 
 
-![1000](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/bcc7075a-21ac-4b7c-b3a6-e917f9949b8c)
-
-
-This helped me to visually debug and test Java code for processing and transform images in a python-like style.
+This helped me to visually test Java code for processing and transform images, using an interactive process similar to python.
 
 
 
-### Tutorial
-WIP
+## Tutorial
+
+### Step 1
+Install [IJava](https://github.com/SpencerPark/IJava) a Jupyer kernel for executing Java code developed by [SpencerPark](https://github.com/SpencerPark)
+
+### Step 2
+Download the latest version of the jar file and save it in your project folder
+
+### Step 3
+Open a new Notebook in the same folder where the jar file is and execute this code in the first cell:
+
+```
+%jars ./StatFilters.jar
+import filters.*;
+import java.awt.image.BufferedImage;
+```
+
+
+
+
 
 
