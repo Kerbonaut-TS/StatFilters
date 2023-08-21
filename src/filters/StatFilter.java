@@ -225,6 +225,7 @@ public class StatFilter {
 				tiles[r][c].setMatrix("green", 0);
 				break;
 			case "keepGreen":
+
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("red", 0);
 				break;
@@ -248,12 +249,15 @@ public class StatFilter {
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 		
+		Tile composedImg = this.composeImage(false);		
+
 		
-		Tile composedImg = this.composeImage(false);
+		if(operation.contains("std.dev") || operation.contains("entropy")) {
 		
-		composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
-		composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
-		composedImg.setMatrix("blue", this.normaliseRGB(composedImg.getMatrix("blue")));
+			composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
+			composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
+			composedImg.setMatrix("blue", this.normaliseRGB(composedImg.getMatrix("blue")));
+		}
 		
 		return composedImg.getBufferedImage();
 
@@ -492,7 +496,7 @@ public class StatFilter {
 		int max=this.getMaxValue(zmatrix);
 		int min=this.getMinValue(zmatrix);
 		
-		int range = max-min ==0 ? 1 : max-min;
+		double range = max-min ==0 ? 1 : max-min;
 		
 
 		int[][] RGBmatrix = new int [zmatrix.length][zmatrix[0].length];
