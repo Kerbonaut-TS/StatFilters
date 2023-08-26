@@ -203,6 +203,34 @@ public class Tile {
 		
 	}//end standardize
 
+	public void log() {
+		
+		
+		for (int h=0; h<this.height;h++){
+			for (int w=0; w<this.width;w++){			
+				redPixels[h][w] = (int) Math.log(redPixels[h][w]);
+				greenPixels[h][w] =(int) Math.log(greenPixels[h][w]);
+				bluePixels[h][w]=(int) Math.log(bluePixels[h][w]);
+			}//end width
+		}//end height 
+		
+		
+	}
+
+	public void sqrt() {
+		
+		
+		for (int h=0; h<this.height;h++){
+			for (int w=0; w<this.width;w++){			
+				redPixels[h][w] = (int) Math.sqrt(redPixels[h][w]);
+				greenPixels[h][w] =(int) Math.sqrt(greenPixels[h][w]);
+				bluePixels[h][w]=(int) Math.sqrt(bluePixels[h][w]);
+			}//end width
+		}//end height 
+		
+	}
+	
+	
 	public int[] mean() {
 			
 			int[] rgbAVG = new int[3];	
@@ -269,6 +297,58 @@ public class Tile {
         return entropy;
     }
 
+	
+	public void sobel() {
+	
+			
+			int sx[][] = new int[][]
+			{ 
+				  {-1,0,1},
+		          {-2,0,2},
+		          {-1,0,1}
+			};
+			
+			int sy[][] = new int[][]
+			{ 
+				  {-1,-2,-1},
+		          {0,0,0},
+		          {1,2,1}
+		    };
+		    
+		    int gx,gy,G;
+		    
+		    gx = 0;
+		    gy = 0;
+		    G = 0;
+		    
+		    //iterate in the 3x3 tile
+			for (int h=0; h<this.height;h++){
+				for (int w=0; w<this.width;w++){			
+					int pixel = (int) Math.floor((redPixels[h][w]+greenPixels[h][w] +bluePixels[h][w])/3) ;
+					
+				      gx = gx + pixel *sx[h][w];
+				      gy = gy + pixel *sy[h][w];
+
+				}//end width
+			}//end height 
+			
+		     G = Math.min( (int) Math.sqrt( Math.pow((double) gx, 2) + Math.pow((double) gy, 2)), 255);
+
+		     
+			//set pixels equal to gradient
+			for (int h=0; h<this.height;h++){
+				for (int w=0; w<this.width;w++){			
+
+				     redPixels[h][w] = G;
+				     greenPixels[h][w] = G;
+				     bluePixels[h][w] = G;
+					
+				}//end width
+			}//end height 
+			
+		    
+	}	   
+		
 	
 	// === IMG transform ======================================================================
 	

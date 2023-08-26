@@ -18,7 +18,7 @@ public class Main {
 		StatFilter filter= new StatFilter();
 		
 		filter.setSource(path);
-		filter.divideImage(5);
+		filter.createTiles("5x5");
 	
 			
 		BufferedImage  img;
