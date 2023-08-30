@@ -19,7 +19,7 @@ public class StatFilter {
 	
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.1");
+		System.out.println("Version: 0.2");
 			
 	}//end constructor
 	
