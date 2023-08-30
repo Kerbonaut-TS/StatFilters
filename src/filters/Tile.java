@@ -229,8 +229,7 @@ public class Tile {
 		}//end height 
 		
 	}
-	
-	
+		
 	public int[] mean() {
 			
 			int[] rgbAVG = new int[3];	
@@ -297,7 +296,6 @@ public class Tile {
         return entropy;
     }
 
-	
 	public void sobel() {
 	
 			
@@ -421,6 +419,35 @@ public class Tile {
 	  
 	}
 	
+ 	public void drawSquare() {
+ 		
+ 		 for (int h=0; h<this.height;h++) {
+ 			 
+ 			redPixels[h][0] = 255;
+ 		    redPixels[h][this.width-1] = 255;
+ 		    
+ 		    greenPixels[h][0] = 0;
+ 		    greenPixels[h][this.width-1] = 0;
+		    
+	 		bluePixels[h][0] = 0;
+	 		bluePixels[h][this.width-1] = 0;
+ 		 }
+ 		 
+ 		 
+ 		 for (int w=0; w<this.width;w++) {
+ 			 
+ 			redPixels[0][w] = 255;
+ 		    redPixels[this.height-1][w] = 255;
+ 		    
+ 		    greenPixels[0][w] = 0;
+ 		    greenPixels[this.height-1][w] = 0;
+		    
+	 		bluePixels[0][w] = 0;
+	 		bluePixels[this.height-1][w] = 0;
+ 		 }
+ 		 
+ 		
+ 	}
 	
 	//=== EXPORT  ==============================================================================
 	
@@ -594,7 +621,6 @@ public class Tile {
 	}
 	
 
-	
 	public int getHeight(){ return height;}
 	
 	public int getWidth(){ return width;}

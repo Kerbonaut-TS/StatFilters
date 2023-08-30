@@ -491,6 +491,7 @@ public class StatFilter {
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
 					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
+					render_tile.drawSquare();
 					
 				}
 				
