@@ -1,25 +1,27 @@
 # Stat Filters
 
-Status: WIP  
+Status: v0.2  
 
-Java code to apply mathematical functions on Images and visualise statistics.  
+Java code to apply mathematical functions on images and visualise statistics.  
 
-This tool was designed around Jupyter Notebooks to interactively test image processing operations and understand how they affect the image.
+This tool was designed around Jupyter Notebooks to test interactively different image processing operations and understand how they affect the image.
 
 ![statFilters](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/98437bc3-1d31-418e-9d38-19d8a08456bc)
 
 
 ## Overview
 
-An image can be divided into tiles
+An image can be divided into tiles using ```createTiles(rows, columns)``` or alternatively ```createTiles(pixelsize)``` where pixel size is given in this format "3x3", "16x16","32x32" 
 
-![divide](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/88b69a8b-f439-4c40-9c45-8b2f131f6279)
+![divide](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/125bb558-ae32-4dc2-8fd6-1e8f363d6894)
 
-Each tile can be selected by ID and local statistics can be displayed.
 
-![get1](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/fa3c985d-8cb8-4848-9314-ec9b7400f08e)
+Each tile can be selected either by ID or (row,column) coordinates  and local statistics can be displayed.
 
-Tiles can be sorted by different metrics: ```red```,```green```,```blue``` ```mean```, ```std.dev```, ```entropy```...
+![get1](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/efdc9fb4-da18-4734-9c0f-0cbe9d84a3e2)
+
+
+Tile IDs can be sorted by different metrics: ```red```,```green```,```blue``` ```mean```, ```std.dev```, ```entropy```...
 
 ```
 Boolean ascending = true;
@@ -29,9 +31,9 @@ f.sortTilesBy("std.dev", ascending);
 {6,19,16,17,10,2,8,23,18,3,11,9,22,1,13,24,12,14,4,5,7,21,0,15,20,}
 ```
 
-These same metrics can be used as "filters" and applied to a subset of Tiles. 
+These same metrics can be applied as "filters" using ```applyOperation(operation, subset)``` specifying a subset of tiles. 
 
-For instance, keeping only the ```red``` channel in those tiles that have the highest standard deviation
+Example: keeping only the ```red``` channel in those tiles that have the highest standard deviation
 
 ![sort](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/427c4476-afdd-41ac-8f7b-0fb300ea3da5)
 
@@ -48,15 +50,13 @@ f.sortTilesBy("green",ascending);
 
 ![green](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/f4a4c286-77c5-4aca-8d84-f668b5af4bde)
 
+If subset is not specified the opration is applied to the entire image. 
 
-This is useful when done at scale, for instance:
-
-Divide the image in 1000 tiles and apply the standard deviation to the entire image
+Example: Divide the image in "5x5" tiles and apply the standard deviation to the entire image
 
 ![1000](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/1edfd412-d021-4ab0-b1ce-cddd08d7966c)
 
-
-This helped me to visually test Java code for processing and transform images, using an interactive process similar to python.
+This helped me in visually testing Java code for processing and transform images, following an interactive process similar to python.
 
 
 

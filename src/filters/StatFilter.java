@@ -19,7 +19,7 @@ public class StatFilter {
 	
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.1");
+		System.out.println("Version: 0.2");
 			
 	}//end constructor
 	
@@ -29,7 +29,7 @@ public class StatFilter {
 		
 		this.image = new Tile();
 		image.setImageFromFile(filepath);
-		System.out.println("IMG: " + image.getHeight()+" x "+image.getWidth());
+		System.out.println("IMG: " + image.getWidth()+" x "+image.getHeight());
 		
 		
 		
@@ -44,22 +44,22 @@ public class StatFilter {
 	
 	//CREATE TILES & SORTING  ==============================================================================
 
-	public void divideImage(int n){
+	public void createTiles(int rows, int columns ){
 		
 		//height and width of sub matrixes
 		int hs,ws;
 				
-		hs= (int) Math.floor(image.getHeight()/n);
-		ws= (int) Math.floor(image.getWidth()/n);
+		hs= (int) Math.floor(image.getHeight()/rows);
+		ws= (int) Math.floor(image.getWidth()/columns);
 		
-		tiles = new Tile [(int) n][(int) n];
-		this.sortedTiles = new int [n*n];
+		tiles = new Tile [rows][columns];
+		this.sortedTiles = new int [rows*columns];
 		
 		int t = 0;
 		
 		//for each  section  c=columns r=rows
-		for (int r=0; r<n; r++){
-			for (int c=0; c<n; c++){
+		for (int r=0; r<rows; r++){
+			for (int c=0; c<columns; c++){
 				
 				int [][] tempR = new int[hs][ws];
 				int [][] tempG = new int[hs][ws];
@@ -99,7 +99,38 @@ public class StatFilter {
 				t++;
 			}//end rows
 		}//end columns
+	}
+	
+	public void createTiles(String pixelWindow){
 		
+		
+		String[] dimensions = pixelWindow.split("x");
+		  try {
+			  
+			  
+              int n1 = Integer.parseInt(dimensions[0]);
+              int n2 = Integer.parseInt(dimensions[1]);
+              
+              if (n1 != n2){
+            	  
+            	  System.out.println("Error: Invalid size. Only square windows suported");
+            	  
+              } else {
+            	  
+            	  int rows = (int) Math.floor(image.getHeight()/n1);
+            	  int columns = (int) Math.floor(image.getWidth()/n1);
+           	  
+            	  this.createTiles(rows,columns);
+              }
+              
+              
+          } catch (NumberFormatException e) {
+        	  
+              System.out.println("Error: Invalid input format");
+          }
+		  
+		  
+
 		
 		
 
@@ -175,8 +206,8 @@ public class StatFilter {
 		for (int t=0; t<n; t++){
 				
 				//tile coordinate
-				int r = (int) this.calculateRC(sortedTiles[t])[0];
-				int c = (int) this.calculateRC(sortedTiles[t])[1];
+				int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
+				int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
 
 				output[t] = tiles[r][c].getBufferedImage();
 				
@@ -190,8 +221,8 @@ public class StatFilter {
 	//APPLY OPERATIONS  ====================================================================================
 	public void applyOperation(String operation, int tile) {
 		
-		 int r = this.calculateRC(tile)[0];
-		 int c = this.calculateRC(tile)[1];
+		 int r = this.getTileCoordinates(tile)[0];
+		 int c = this.getTileCoordinates(tile)[1];
 		
 		 double value;
 		 
@@ -211,13 +242,25 @@ public class StatFilter {
 				tiles[r][c].setMatrix("blue", value);	
 				break;
 				
+			case "log":
+				tiles[r][c].log();
+				break;				
+				
+			case "sobel":
+				tiles[r][c].sobel();
+				break;
+								
+			case "sqrt":
+				tiles[r][c].sqrt();
+				break;
+				
 			case "entropy":
 				value  = tiles[r][c].entropy();
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
 				break;
-				
+
 			case "red":
 				tiles[r][c].setMatrix("blue", 0);
 				tiles[r][c].setMatrix("green", 0);
@@ -244,14 +287,15 @@ public class StatFilter {
 	public BufferedImage applyOperation(String operation, int[] tileList) {
 		
 		int n = tileList.length;
-				
+		
+						
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 		
 		Tile composedImg = this.composeImage(false);		
 
 		
-		if(operation.contains("std.dev") || operation.contains("entropy")) {
+		if(operation.contains("std.dev") || operation.contains("entropy") || operation.contains("log")|| operation.contains("sqrt")) {
 		
 			composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
 			composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
@@ -265,7 +309,9 @@ public class StatFilter {
 	}
 	
 	public BufferedImage applyOperation(String operation) {
-				
+		
+		if(operation.contains("sobel")) this.createTiles("3x3");
+
 	    return this.applyOperation(operation, sortedTiles);				
 	    
 	
@@ -380,6 +426,7 @@ public class StatFilter {
 		return resSection;
 		
 	}
+
 	
 	//normalization
 	public void localNormalisation() {
@@ -399,8 +446,8 @@ public class StatFilter {
 	public Tile getTile (int tileIndex) {
 		
 		
-		int r = this.calculateRC(tileIndex)[0];
-		int c =  this.calculateRC(tileIndex)[1];
+		int r = this.getTileCoordinates(tileIndex)[0];
+		int c =  this.getTileCoordinates(tileIndex)[1];
 		
 		return tiles[r][c];
 		
@@ -444,6 +491,7 @@ public class StatFilter {
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
 					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
+					render_tile.drawSquare();
 					
 				}
 				
@@ -569,15 +617,14 @@ public class StatFilter {
     
     }
 
-	private int[] calculateRC(int index) {
-		
-		int rows = this.tiles.length;
-		int cols = this.tiles[0].length;
-		
+	private int[] getTileCoordinates(int index) {
+				
 		int[] rc = new int[2];
 		
-		int r = (int) Math.floor( index/rows ) ;
-		int c = index - (r*cols);
+		int cols = this.tiles[0].length;
+	
+		int r = (int) Math.floor( index/cols ) ;
+		int c = index-r*cols;
 		
 		
 		rc[0] = r;
