@@ -50,7 +50,7 @@ f.sortTilesBy("green",ascending);
 
 ![green](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/f4a4c286-77c5-4aca-8d84-f668b5af4bde)
 
-If subset is not specified the opration is applied to the entire image. 
+If subset is not specified the operation is applied to the entire image. 
 
 Example: Divide the image in "5x5" tiles and apply the standard deviation to the entire image
 
