@@ -256,7 +256,69 @@ public class Tile {
 			return rgbAVG;
 			
 		}
+    
+	public double hue() {
+		
+		int[] rgbAVG = this.mean();
+		
+		float rp,gp,bp, max,min,hue;
+		
+		rp = rgbAVG[0]/255f;
+		gp = rgbAVG[1]/255f;
+		bp = rgbAVG[2]/255f;
+		
+		max = Math.max(Math.max(rp,gp),bp);
+		min = Math.min(Math.min(rp,gp),bp);
+		
+		// each colour takes a 60 degree segment
+		hue = 360 * (max -min)/6f + rp-gp/(max - min);
+		
+		
+		return Math.floor(hue);
+		
+	}
+	
+	
+	public double saturation(){
+		
+		int[] rgbAVG = this.mean();
+		
+		float rp,gp,bp, max,min,saturation;
+		
+		rp = rgbAVG[0]/255f;
+		gp = rgbAVG[1]/255f;
+		bp = rgbAVG[2]/255f;
+		
+		max = Math.max(Math.max(rp,gp),bp);
+		min = Math.min(Math.min(rp,gp),bp);
+		
+		saturation = (max == 0) ? 0 : ((max - min) / max);
+		
+		saturation = saturation*100;
+		
+		return Math.floor(saturation);
+		
+		
+	}
+	
+	
+	public double brightness() {
+		
+		int[] rgbAVG = this.mean();
+		
+		float  max, brightness;
 
+		
+		max = Math.max(Math.max(rgbAVG[0],rgbAVG[1]),rgbAVG[2]);
+		
+		brightness = max/255f *100 ;
+		
+		
+		return Math.floor(brightness);
+		
+		
+	}
+	
 	public double std_dev(){
 		
 		double sigmar, sigmag, sigmab;
@@ -486,6 +548,9 @@ public class Tile {
 		   stats.put("avg red", this.mean()[0]);
 		   stats.put("avg green", this.mean()[1]);
 		   stats.put("avg blue", this.mean()[2]);
+		   stats.put("hue", this.hue());
+		   stats.put("saturation", this.saturation());
+		   stats.put("brightness", this.brightness());
 
 
            //print out Hashtable out
