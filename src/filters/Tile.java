@@ -136,28 +136,46 @@ public class Tile {
 		this.subtract(x, 0);
 	}
 	
+	public void add(Tile x) {
+		this.add(x, 0);
+	}
+	
+	
 	public void subtract (Tile x, int threshold) {
 		
+		//use dimensions of the smaller image
+		int max_height = Math.min(height, x.getHeight());
+		int max_width =  Math.min(width, x.getWidth());
+		
 		//get Image matrix
-		for (int h=0; h<height;h++){
-			for (int w=0; w<width;w++){
-				if(redPixels[h][w]>threshold)	redPixels[h][w]=redPixels[h][w]-x.getMatrix("red")[h][w];
-				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=greenPixels[h][w]-x.getMatrix("green")[h][w];
-				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=bluePixels[h][w]-x.getMatrix("blue")[h][w];
+		for (int h=0; h<max_height;h++){
+			for (int w=0; w<max_width;w++){
+				
+				if(redPixels[h][w]>threshold)	redPixels[h][w]=Math.max(redPixels[h][w]-x.getMatrix("red")[h][w], 0);
+				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=Math.max(greenPixels[h][w]-x.getMatrix("green")[h][w], 0);
+				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=Math.max(bluePixels[h][w]-x.getMatrix("blue")[h][w], 0);
 							
 			}//end height			
 		}// end width
+		
+		
+		
+		
 		
 	}
 	
 	public void add (Tile x, int threshold) {
 		
+		//use dimensions of the smaller image
+		int max_height = Math.min(height, x.getHeight());
+		int max_width =  Math.min(width, x.getWidth());
+		
 		//get Image matrix
-		for (int h=0; h<height;h++){
-			for (int w=0; w<width;w++){
-				if(redPixels[h][w]<threshold)	redPixels[h][w]=redPixels[h][w]+x.getMatrix("red")[h][w];
-				if(greenPixels[h][w]<threshold)	greenPixels[h][w]=greenPixels[h][w]+x.getMatrix("green")[h][w];
-				if(bluePixels[h][w]<threshold)	bluePixels[h][w]=bluePixels[h][w]+x.getMatrix("blue")[h][w];
+		for (int h=0; h<max_height;h++){
+			for (int w=0; w<max_width;w++){
+				if(redPixels[h][w]>threshold)	redPixels[h][w]=Math.min(redPixels[h][w]-x.getMatrix("red")[h][w], 255);
+				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=Math.min(greenPixels[h][w]-x.getMatrix("green")[h][w], 255);
+				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=Math.min(bluePixels[h][w]-x.getMatrix("blue")[h][w], 255);
 							
 			}//end height			
 		}// end width

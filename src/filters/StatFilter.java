@@ -9,7 +9,7 @@ import java.util.Comparator;
 
 public class StatFilter {
 	
-	
+	BufferedImage original;
 	Tile image;
 	Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 	int[][] indexList; 		// the tile index displayed
@@ -29,18 +29,35 @@ public class StatFilter {
 		
 		this.image = new Tile();
 		image.setImageFromFile(filepath);
+		this.original = image.getBufferedImage();
+		
 		System.out.println("IMG: " + image.getWidth()+" x "+image.getHeight());
+		this.createTiles(1, 1);
 		
 		
 		
 	}
 	
 	public void setImage(BufferedImage img) {
-		
+		this.original = img;
 		this.image = new Tile();
 		image.setBufferedImage(img);
+		this.createTiles(1, 1);
+
 		
 	}
+	
+	public BufferedImage reset() {
+		
+		
+		this.image = new Tile();
+		image.setBufferedImage(this.original);
+		this.createTiles(1, 1);
+
+		return this.showImage();
+		
+	}
+	
 	
 	//CREATE TILES & SORTING  ==============================================================================
 
@@ -57,7 +74,7 @@ public class StatFilter {
 		
 		int t = 0;
 		
-		//for each  section  c=columns r=rows
+		//for each  tile  c=columns r=rows
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
@@ -136,12 +153,7 @@ public class StatFilter {
 
 	}//end setResolution
 	
-	public BufferedImage showTiles() {
-		
-		return this.composeImage(true).getBufferedImage();
-		
-	}//end ShowTiles
-	
+
 	//SORT TILES  ==============================================================================
 	
 	public int[] sortTilesBy(String measure, Boolean ascending) throws IOException{
@@ -217,8 +229,9 @@ public class StatFilter {
 		
 	}
 	
+	
 
-	//APPLY OPERATIONS  ====================================================================================
+	//POOLING OPERATIONS  ====================================================================================
 	public void applyOperation(String operation, int tile) {
 		
 		 int r = this.getTileCoordinates(tile)[0];
@@ -318,7 +331,7 @@ public class StatFilter {
 	}
 	
 
-	//IMAGE TRANSFORM (EXP) ====================================================================================
+	//IMAGE OPERATIONS (EXP) ====================================================================================
 	private Tile optimiseSection(Tile section, int direction) {
 		
 		
@@ -427,7 +440,34 @@ public class StatFilter {
 		
 	}
 
+	public BufferedImage subtractImage (BufferedImage img) {
+		
+		Tile remove = new Tile();
+		Tile current = this.composeImage(false);
+		
+		remove.setBufferedImage(img);
+		
+		current.subtract(remove);
+		
+		return current.getBufferedImage();
+	    
+			
+	}
 	
+	
+	public BufferedImage addImage (BufferedImage img) {
+		
+		Tile remove = new Tile();
+		Tile current = this.composeImage(false);
+		
+		remove.setBufferedImage(img);
+		
+		current.add(remove);
+		
+		return current.getBufferedImage();
+	    
+			
+	}
 	//normalization
 	public void localNormalisation() {
 		
@@ -442,7 +482,20 @@ public class StatFilter {
 	}//end localstd
 	
 	//EXPORT  ====================================================================================
+	
+	public BufferedImage showTiles() {
 		
+		return this.composeImage(true).getBufferedImage();
+		
+	}//end ShowTiles
+	
+	public BufferedImage showImage() {
+		
+		return this.composeImage(false).getBufferedImage();
+		
+	}//end ShowTiles
+	
+	
 	public Tile getTile (int tileIndex) {
 		
 		
@@ -460,6 +513,7 @@ public class StatFilter {
 	} 
 	
 	public Tile composeImage (Boolean showIndex) {
+		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
 		int rows = tiles.length;
@@ -469,7 +523,6 @@ public class StatFilter {
 		int subw = tiles[0][0].getWidth();
 		int offsetH=0;
 		int offsetW=0;
-		
 	
 		
 		//final image
