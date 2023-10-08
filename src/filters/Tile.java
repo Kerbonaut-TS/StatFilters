@@ -296,7 +296,6 @@ public class Tile {
 		
 	}
 	
-	
 	public double saturation(){
 		
 		int[] rgbAVG = this.mean();
@@ -318,7 +317,6 @@ public class Tile {
 		
 		
 	}
-	
 	
 	public double brightness() {
 		
@@ -531,27 +529,46 @@ public class Tile {
 	
 	//=== EXPORT  ==============================================================================
 	
-	public int[] getPixels(){
+	public String getPixel(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 	
-		int pixels= this.height * this.width;
-		int [] RGBarray = new int [pixels*3];
+		String pixels;
+			
+		pixels =  "["+ redPixels[0][0]+","+greenPixels[0][0]+","+bluePixels[0][0]+"]";
 		
-		int count=0;
-	
-		//linearize the matrix [ R1,G1,B1, R2,G2,B2, R3..... 
-		for (int h=0; h<this.height;h++){
-			for (int w=0; w<this.width;w++){			
-				RGBarray[count]=redPixels[h][w];
-				RGBarray[count+1]=greenPixels[h][w];
-				RGBarray[count+2]=bluePixels[h][w];
-				count=count+3;
-			}//end width
-		}//end height
-		
-		return RGBarray;
 
-	}//end getlinearArray
+		return pixels;
+
+	}//end getPixel
+	
+	public String getPixels(){
+	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
+		
+		StringBuffer sb= null;
+		String pixels = "";
+		
+		for (int h=0; h<this.height;h++){
+			for (int w=0; w<this.width;w++){	
+				
+				pixels =  pixels + "["+ redPixels[h][w]+","+greenPixels[h][w]+","+bluePixels[h][w]+"],";
+
+			}
+			
+			 
+		        sb  = new StringBuffer(pixels);
+		        sb.delete(pixels.length() - 1, pixels.length());
+		        
+		     
+		        
+		        
+		}
+			
+		
+
+		return sb.toString();
+
+	}//end getPixels
+	
 	
 	public Dictionary getStats() {
 		

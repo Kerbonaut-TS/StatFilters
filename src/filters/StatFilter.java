@@ -1,6 +1,8 @@
  package filters;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -229,7 +231,6 @@ public class StatFilter {
 		
 	}
 	
-	
 
 	//POOLING OPERATIONS  ====================================================================================
 	public void applyOperation(String operation, int tile) {
@@ -241,6 +242,8 @@ public class StatFilter {
 		 
 		switch (operation) {
 			
+		//pooling operations
+		
 			case "mean":
 				int[] rgb = tiles[r][c].mean();
 				tiles[r][c].setMatrix("red", rgb[0]);
@@ -254,7 +257,9 @@ public class StatFilter {
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
 				break;
-				
+		
+		
+		//transformations				
 			case "log":
 				tiles[r][c].log();
 				break;				
@@ -510,9 +515,70 @@ public class StatFilter {
 		
 		this.composeImage(false).savetoFile(filepath, format);
 		
-	} 
+	}
 	
-	public Tile composeImage (Boolean showIndex) {
+	
+	public void saveJson(String filepath, int topN) {
+
+		String content = "[";
+		
+		
+			//cycle through tiles
+			for (int t=0; t<topN; t++){		
+					
+				//tile coordinate
+					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
+					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
+					
+					content = content +"{ \"tile\":"+t+", \"X\":"+ c + ", \"Y\":"+ r;
+					
+					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +", \"pixels\": [";
+				
+					content = content  + tiles[r][c].getPixels();
+					
+					content = content + "]}";
+					
+					if(t<topN-1) content = content  + ",";
+			}
+						
+
+		content = content + "]";
+
+
+		this.writeFile(filepath, content);
+		
+		
+	}
+	
+	
+	public void saveJson(String filepath) {
+		
+		int rows = tiles.length;
+		int columns = tiles[0].length;
+		
+		String content = "[{ \"width\":"+columns+", \"height\":"+rows+", \"pixels\": [";
+		
+		
+			//cycle through tiles
+			for (int t=0; t<sortedTiles.length; t++){		
+					
+					//tile coordinate
+					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
+					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
+					content = content  + tiles[r][c].getPixel();
+					if(t<sortedTiles.length-1) content= content  + ",";
+			}
+						
+
+		content = content + "]}]";
+
+	
+		this.writeFile(filepath, content);
+		
+		
+	}
+	
+ 	public Tile composeImage (Boolean showIndex) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
@@ -611,6 +677,43 @@ public class StatFilter {
 	
 
 	//Tools ========================================================================================
+	
+	
+	
+	private void writeFile(String filepath, String content) {
+		
+        int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
+        String folder = filepath.substring(0, lastSeparatorIndex);
+        String filename = filepath.substring(lastSeparatorIndex + 1);
+
+		
+        File directory = new File(folder);
+        if (!directory.exists()) {
+            if (directory.mkdirs()) {
+                System.out.println("Directory created successfully.");
+            } else {
+                System.out.println("Failed to create the directory.");
+                return;
+            }
+        }
+		
+		try {
+			 FileWriter myWriter = new FileWriter(filepath);
+		     myWriter.write(content);
+		     myWriter.close();
+		     
+			} catch (IOException e) {
+			      System.out.println("An error occurred.");
+			      System.out.println(folder);
+			      System.out.println(filename);
+
+			      
+			      e.printStackTrace();
+			}
+		
+		
+	}
+	
 	
 	private int[] sortTiles(Boolean ascending) throws IOException {
 
