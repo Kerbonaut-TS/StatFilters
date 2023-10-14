@@ -32,6 +32,8 @@ public class Tile {
 	//top left coordinates 
 	int tlx;
 	int tly;
+	
+	String [] colours = {"red","green","blue"};
 		
 	public Tile()  {
 		
@@ -130,73 +132,83 @@ public class Tile {
 	}
 	
 	
-	//=== OPERATIONS ========================================================================
+	//==== TILES MERGE FILTERS ========================================================================
 	
-	public void subtract(Tile x) {
-		this.subtract(x, 0);
+	private int pixel_diff(int pixelA, int pixelB) {
+		
+		return (int) Math.max(pixelA - pixelB, 0);
 	}
 	
-	public void add(Tile x) {
-		this.add(x, 0);
+	private int pixel_add(int pixelA, int pixelB) {
+		
+		return (int)  Math.min(pixelA + pixelB, 255);
 	}
 	
+	private int pixel_avg(int pixelA, int pixelB) {
+		
+		return (int)  Math.floor((pixelA + pixelB)*0.5);	
+	}
 	
-	public void subtract (Tile x, int threshold) {
+	private int pixel_max(int pixelA, int pixelB) {
 		
-		//use dimensions of the smaller image
-		int max_height = Math.min(height, x.getHeight());
-		int max_width =  Math.min(width, x.getWidth());
+		return (int)  Math.max(pixelA, pixelB);	
+	}
+	
+	private int pixel_min(int pixelA, int pixelB) {
 		
-		//get Image matrix
-		for (int h=0; h<max_height;h++){
-			for (int w=0; w<max_width;w++){
+		return (int)  Math.min(pixelA, pixelB);		
+	}
+	
+	private int use_operator(int pixelA, int pixelB, String operation){
+		
+		switch(operation) {
+		  case "diff":
+			  return this.pixel_diff(pixelA, pixelB);		
+		    
+		  case "add":
+			  return this.pixel_add(pixelA, pixelB);
+			
+		  case "avg":
+			  return this.pixel_avg(pixelA, pixelB);
+			  
+		  case "max":
+			  return this.pixel_max(pixelA, pixelB);
+			  
+		  case "min":
+			  return this.pixel_min(pixelA, pixelB);
+			  
+		  default:
+			  System.out.println("Invalid operation: not recognized");
+			  return 0;
+		
+		}
 				
-				if(redPixels[h][w]>threshold)	redPixels[h][w]=Math.max(redPixels[h][w]-x.getMatrix("red")[h][w], 0);
-				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=Math.max(greenPixels[h][w]-x.getMatrix("green")[h][w], 0);
-				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=Math.max(bluePixels[h][w]-x.getMatrix("blue")[h][w], 0);
-							
-			}//end height			
-		}// end width
-		
-		
-		
-		
-		
 	}
-	
-	public void add (Tile x, int threshold) {
+		
+	public void merge_with(Tile t2, String operation) {
+		
 		
 		//use dimensions of the smaller image
-		int max_height = Math.min(height, x.getHeight());
-		int max_width =  Math.min(width, x.getWidth());
-		
+		int max_height = Math.min(height, t2.getHeight());
+		int max_width =  Math.min(width, t2.getWidth());
+			
 		//get Image matrix
 		for (int h=0; h<max_height;h++){
 			for (int w=0; w<max_width;w++){
-				if(redPixels[h][w]>threshold)	redPixels[h][w]=Math.min(redPixels[h][w]-x.getMatrix("red")[h][w], 255);
-				if(greenPixels[h][w]>threshold)	greenPixels[h][w]=Math.min(greenPixels[h][w]-x.getMatrix("green")[h][w], 255);
-				if(bluePixels[h][w]>threshold)	bluePixels[h][w]=Math.min(bluePixels[h][w]-x.getMatrix("blue")[h][w], 255);
-							
+				for (String c: this.colours){
+					
+					int pixelA = this.getMatrix(c)[h][w];
+					int pixelB = t2.getMatrix(c)[h][w];
+					int value = this.use_operator(pixelA, pixelB, operation );
+					this.setPixel(c, h, w, value); 
+					
+				}//end colours
 			}//end height			
 		}// end width
 		
 	}
-		
-	public void invert( ){
-		
-		
-		//get Image matrix
-		for (int h=0; h<height;h++){
-			for (int w=0; w<width;w++){
-				redPixels[h][w]=255-redPixels[h][w];
-				greenPixels[h][w]=255-greenPixels[h][w];
-				bluePixels[h][w]=255-bluePixels[h][w];
-							
-			}//end height			
-		}// end width
-		
-		
-	}
+	
+	//==== PIXEL FUNCTIONS/TRANSFORM ==================================================================
 	
 	public void standardise(){
 		
@@ -235,6 +247,25 @@ public class Tile {
 		
 	}
 
+	public void invert( ){
+		
+		
+		//get Image matrix
+		for (int h=0; h<height;h++){
+			for (int w=0; w<width;w++){
+				redPixels[h][w]=255-redPixels[h][w];
+				greenPixels[h][w]=255-greenPixels[h][w];
+				bluePixels[h][w]=255-bluePixels[h][w];
+							
+			}//end height			
+		}// end width
+		
+		
+	}
+		
+
+	// POOLING FILTERS  ========================================================================
+	
 	public void sqrt() {
 		
 		
@@ -426,7 +457,7 @@ public class Tile {
 	}	   
 		
 	
-	// === IMG transform ======================================================================
+	// === IMG OPERATIONS ======================================================================
 	
 	public void crop(double percent) {
 			
@@ -529,15 +560,15 @@ public class Tile {
 	
 	//=== EXPORT  ==============================================================================
 	
-	public String getPixel(){
+	public String get1Pixel(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 	
-		String pixels;
+		String pixel;
 			
-		pixels =  "["+ redPixels[0][0]+","+greenPixels[0][0]+","+bluePixels[0][0]+"]";
+		pixel =  "["+ redPixels[0][0]+","+greenPixels[0][0]+","+bluePixels[0][0]+"]";
 		
 
-		return pixels;
+		return pixel;
 
 	}//end getPixel
 	
@@ -553,17 +584,12 @@ public class Tile {
 				pixels =  pixels + "["+ redPixels[h][w]+","+greenPixels[h][w]+","+bluePixels[h][w]+"],";
 
 			}
-			
 			 
 		        sb  = new StringBuffer(pixels);
 		        sb.delete(pixels.length() - 1, pixels.length());
-		        
-		     
-		        
-		        
+	        
 		}
 			
-		
 
 		return sb.toString();
 
@@ -641,7 +667,8 @@ public class Tile {
 			  return alphaPixels;
 			  
 		  default:
-			  System.out.println("Invalid: set red, green, blue or alpha");
+			  System.out.println("Invalid: set red, green, blue or alpha. ");
+			  System.exit(0);
 			  return null;
 		
 		}
@@ -720,6 +747,40 @@ public class Tile {
 		
 	}
 	
+	public void setPixel(String channel, int h, int w, int value){
+		
+		
+		if ( (value >= 0) && (value<=255)  ) {
+			
+			switch(channel) {
+			  case "red":
+				  redPixels[h][w] = value ;
+				  break;
+			    
+			  case "green":
+				   greenPixels[h][w] = value;
+				   break;
+				
+			  case "blue":
+				   bluePixels[h][w] = value;
+				   break;
+				  
+			  case "alpha":
+				   alphaPixels[h][w] = value;
+				   break;
+				  
+			  default:
+				  System.out.println("ERROR. Invalid channel: " + channel);
+				  System.exit(0);
+			
+			}//end switch
+		}else {
+			
+				System.out.print("ERROR. Invalid pixel value:" + value);
+				System.exit(0);
+		}
+				
+	}//end setPixel
 
 	public int getHeight(){ return height;}
 	
@@ -738,7 +799,6 @@ public class Tile {
 	public void setTlx( int x){ this.tlx=x;}
 	
 	public void setTly(int y ){ this.tly=y;}
-	
 	
 	public int get_center_x(Boolean absolute){ 
 		

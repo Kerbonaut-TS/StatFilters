@@ -444,35 +444,19 @@ public class StatFilter {
 		return resSection;
 		
 	}
-
-	public BufferedImage subtractImage (BufferedImage img) {
+	
+	public BufferedImage merge(BufferedImage img, String operation) {
 		
-		Tile remove = new Tile();
-		Tile current = this.composeImage(false);
+		Tile t1 = this.composeImage(false);
+		Tile t2 = new Tile();
+		t2.setBufferedImage(img);
 		
-		remove.setBufferedImage(img);
+		t1.merge_with(t2, operation );
 		
-		current.subtract(remove);
-		
-		return current.getBufferedImage();
+		return t1.getBufferedImage();
 	    
-			
 	}
 	
-	
-	public BufferedImage addImage (BufferedImage img) {
-		
-		Tile remove = new Tile();
-		Tile current = this.composeImage(false);
-		
-		remove.setBufferedImage(img);
-		
-		current.add(remove);
-		
-		return current.getBufferedImage();
-	    
-			
-	}
 	//normalization
 	public void localNormalisation() {
 		
@@ -488,11 +472,13 @@ public class StatFilter {
 	
 	//EXPORT  ====================================================================================
 	
+	
 	public BufferedImage showTiles() {
 		
 		return this.composeImage(true).getBufferedImage();
 		
 	}//end ShowTiles
+	
 	
 	public BufferedImage showImage() {
 		
@@ -511,6 +497,7 @@ public class StatFilter {
 		
 	}
 			
+	
 	public void  savefile (String filepath, String format) throws IOException {
 		
 		this.composeImage(false).savetoFile(filepath, format);
@@ -565,7 +552,7 @@ public class StatFilter {
 					//tile coordinate
 					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
 					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
-					content = content  + tiles[r][c].getPixel();
+					content = content  + tiles[r][c].getPixels();
 					if(t<sortedTiles.length-1) content= content  + ",";
 			}
 						
@@ -578,7 +565,8 @@ public class StatFilter {
 		
 	}
 	
- 	public Tile composeImage (Boolean showIndex) {
+ 	
+	public Tile composeImage (Boolean showIndex) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
@@ -652,6 +640,7 @@ public class StatFilter {
 		return imgout;
 	
 	}
+	
 	
 	private int [][] normaliseRGB(int[][] zmatrix){
 		
@@ -773,7 +762,8 @@ public class StatFilter {
     
     }
 
-	private int[] getTileCoordinates(int index) {
+	
+    private int[] getTileCoordinates(int index) {
 				
 		int[] rc = new int[2];
 		
@@ -790,7 +780,8 @@ public class StatFilter {
 		
 	}
 	
-	private int getTileIndex(int r, int c) {
+	
+    private int getTileIndex(int r, int c) {
 		
 		int cols = this.tiles[0].length;
 				
@@ -799,7 +790,8 @@ public class StatFilter {
 		return index;
 	}
 	
-	private void log(int[] list) {
+	
+    private void log(int[] list) {
 		
 		System.out.print("{");
 
