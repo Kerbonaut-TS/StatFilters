@@ -33,7 +33,7 @@ public class Tile {
 	int tlx;
 	int tly;
 	
-	String [] colours = {"red","green","blue"};
+	String [] channels = {"red","green","blue"};
 		
 	public Tile()  {
 		
@@ -60,12 +60,13 @@ public class Tile {
 		redPixels= new int[height][width];
 		alphaPixels	= new int[height][width];
 		
-		
-		redPixels = this.copyMatrix(ih.getMatrix("red"));
-		greenPixels = this.copyMatrix(ih.getMatrix("green"));
-		bluePixels = this.copyMatrix(ih.getMatrix("blue"));
-		alphaPixels = this.copyMatrix(ih.getMatrix("alpha"));
-		
+		for(String c: this.channels) {
+			
+			int[][] matrix = this.copyMatrix(ih.getMatrix(c));
+			this.setMatrix(c, matrix);
+			
+		}
+	
 
 	}//end setImage
 	
@@ -195,14 +196,14 @@ public class Tile {
 		//get Image matrix
 		for (int h=0; h<max_height;h++){
 			for (int w=0; w<max_width;w++){
-				for (String c: this.colours){
+				for (String c: this.channels){
 					
 					int pixelA = this.getMatrix(c)[h][w];
 					int pixelB = t2.getMatrix(c)[h][w];
 					int value = this.use_operator(pixelA, pixelB, operation );
 					this.setPixel(c, h, w, value); 
 					
-				}//end colours
+				}//end channels
 			}//end height			
 		}// end width
 		
@@ -651,9 +652,9 @@ public class Tile {
 	
 	//=== GET/SET  ========================================================================
 
-	public int[][] getMatrix(String color){
+	public int[][] getMatrix(String channel){
 		
-		switch(color) {
+		switch(channel) {
 		  case "red":
 			  return redPixels;		
 		    
@@ -675,10 +676,10 @@ public class Tile {
 				
 	}
 	
-	public void setMatrix(String color, double constant){
+	public void setMatrix(String channel, double constant){
 				
 
-		switch(color) {
+		switch(channel) {
 		  case "red":
 			   redPixels = new int [height][width];
 				for(int i=0; i<redPixels.length;i++){
@@ -715,12 +716,12 @@ public class Tile {
 		
 	}
 		
-	public void setMatrix(String color, int [][] RGBmatrix) {
+	public void setMatrix(String channel, int [][] RGBmatrix) {
 		
 		this.setHeight(RGBmatrix.length);
 		this.setWidth(RGBmatrix[0].length);
 		
-		switch(color) {
+		switch(channel) {
 		  case "red":
 			  redPixels=this.copyMatrix(RGBmatrix);
 			  break;

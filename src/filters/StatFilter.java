@@ -21,7 +21,6 @@ public class StatFilter {
 	
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.2");
 			
 	}//end constructor
 	
@@ -33,10 +32,8 @@ public class StatFilter {
 		image.setImageFromFile(filepath);
 		this.original = image.getBufferedImage();
 		
-		System.out.println("IMG: " + image.getWidth()+" x "+image.getHeight());
 		this.createTiles(1, 1);
-		
-		
+			
 		
 	}
 	
