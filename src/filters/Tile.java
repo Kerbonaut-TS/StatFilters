@@ -263,6 +263,22 @@ public class Tile {
 		
 		
 	}
+	
+
+	public void multiply( double multiplier){
+		
+
+		//get Image matrix
+		for (int h=0; h<height;h++){
+			for (int w=0; w<width;w++){
+				redPixels[h][w] = (int) Math.floor(  redPixels[h][w] * multiplier);
+				greenPixels[h][w] = (int) Math.floor(  greenPixels[h][w] * multiplier);
+				bluePixels[h][w] = (int) Math.floor(  bluePixels[h][w] * multiplier);
+			}//end height			
+		}// end width
+		
+		
+	}
 		
 
 	// POOLING FILTERS  ========================================================================
@@ -607,9 +623,9 @@ public class Tile {
 		   stats.put("mean", mean);
 		   stats.put("std.dev", this.std_dev());
 		   stats.put("entropy", this.entropy());
-		   stats.put("avg red", this.mean()[0]);
-		   stats.put("avg green", this.mean()[1]);
-		   stats.put("avg blue", this.mean()[2]);
+		   stats.put("avg.red", this.mean()[0]);
+		   stats.put("avg.green", this.mean()[1]);
+		   stats.put("avg.blue", this.mean()[2]);
 		   stats.put("hue", this.hue());
 		   stats.put("saturation", this.saturation());
 		   stats.put("brightness", this.brightness());

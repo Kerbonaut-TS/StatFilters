@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Dictionary;
 
 
 
@@ -151,7 +152,7 @@ public class StatFilter {
 		
 
 	}//end setResolution
-	
+
 
 	//SORT TILES  ==============================================================================
 	
@@ -198,7 +199,7 @@ public class StatFilter {
 		}//for rows
 		
 		this.sortedTiles= this.sortTiles(ascending);
-		this.log(this.sortedTiles);
+		//this.log(this.sortedTiles);
 		return  this.sortedTiles;
 		
 	} //end 
@@ -312,10 +313,16 @@ public class StatFilter {
 		
 		if(operation.contains("std.dev") || operation.contains("entropy") || operation.contains("log")|| operation.contains("sqrt")) {
 		
-			composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
-			composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
-			composedImg.setMatrix("blue", this.normaliseRGB(composedImg.getMatrix("blue")));
-		}
+			for (String c : composedImg.channels) {
+				
+				 int [][] rescaled =  this.rescaleRGB(composedImg.getMatrix(c),0,255);
+				composedImg.setMatrix(c, rescaled);
+
+			}
+			
+				
+		}//end if
+	
 		
 		return composedImg.getBufferedImage();
 
@@ -514,9 +521,16 @@ public class StatFilter {
 					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
 					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
 					
+					// statistics to String
+					Dictionary stats = tiles[r][c].getStats();
+					String stats_string = stats.toString().replace("=", "\"=").replace(", ", ", \"").replace("{", "\"").replace("}", "");
+						
+
+					//tile coordinates
 					content = content +"{ \"tile\":"+t+", \"X\":"+ c + ", \"Y\":"+ r;
 					
-					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +", \"pixels\": [";
+					//tile stats
+					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string+", \"pixels\": [";
 				
 					content = content  + tiles[r][c].getPixels();
 					
@@ -535,35 +549,10 @@ public class StatFilter {
 	}
 	
 	
-	public void saveJson(String filepath) {
-		
-		int rows = tiles.length;
-		int columns = tiles[0].length;
-		
-		String content = "[{ \"width\":"+columns+", \"height\":"+rows+", \"pixels\": [";
-		
-		
-			//cycle through tiles
-			for (int t=0; t<sortedTiles.length; t++){		
-					
-					//tile coordinate
-					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
-					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
-					content = content  + tiles[r][c].getPixels();
-					if(t<sortedTiles.length-1) content= content  + ",";
-			}
-						
-
-		content = content + "]}]";
-
-	
-		this.writeFile(filepath, content);
-		
-		
-	}
+	public void saveJson(String filepath) { this.saveJson(filepath, 1);}
 	
  	
-	public Tile composeImage (Boolean showIndex) {
+	public Tile composeImage (Boolean drawTiles) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
@@ -590,7 +579,7 @@ public class StatFilter {
 				Tile render_tile = new Tile();
 				render_tile.setBufferedImage(tiles[r][c].getBufferedImage());
 				
-				if  (showIndex) {
+				if  (drawTiles) {
 				
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
@@ -639,12 +628,12 @@ public class StatFilter {
 	}
 	
 	
-	private int [][] normaliseRGB(int[][] zmatrix){
+	private int [][] rescaleRGB (int[][] zmatrix, int newmin, int newmax){
 		
 			
 		//resize z variable to 0-255
-		int max=this.getMaxValue(zmatrix);
-		int min=this.getMinValue(zmatrix);
+		int max = getMaxValue(zmatrix);
+		int min = getMinValue(zmatrix);
 		
 		double range = max-min ==0 ? 1 : max-min;
 		
@@ -653,7 +642,7 @@ public class StatFilter {
 		
 		for(int j=0; j<RGBmatrix.length;j++){
 			for(int i=0;i<RGBmatrix[0].length;i++){			
-				RGBmatrix[j][i]=(int) (((zmatrix[j][i]-min)/range)*255);
+				RGBmatrix[j][i]=(int) (newmin + ((zmatrix[j][i]-min)/range)* (newmax - newmin));
 			}//i
 		}//j
 		
