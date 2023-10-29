@@ -34,10 +34,10 @@ Some of these metrics can be applied as "operation filters" using
 
     filter.applyOperation(operation, subset) 
     
-
 ![operations](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/ff41ab45-225a-4ece-b957-23fa19d46b30)
 This is a list of all the operations available: 
 ``` ["mean", "std.dev","log","sqrt","entropy","sobel","red","green", "blue"]   ```
+
 
 An operatation can be applied only to specific tiles passing an array of IDs in  the parameter subset.  
 If subset of files is not specified the opration is applied to the entire image. 
