@@ -239,9 +239,9 @@ public class Tile {
 		
 		for (int h=0; h<this.height;h++){
 			for (int w=0; w<this.width;w++){			
-				redPixels[h][w] = (int) Math.log(redPixels[h][w]);
-				greenPixels[h][w] =(int) Math.log(greenPixels[h][w]);
-				bluePixels[h][w]=(int) Math.log(bluePixels[h][w]);
+				redPixels[h][w] = (redPixels[h][w] == 0) ?  (int) Math.log(redPixels[h][w]+1) :  (int) Math.log(redPixels[h][w]);
+				greenPixels[h][w] = (greenPixels[h][w] == 0) ?  (int) Math.log(greenPixels[h][w]+1) :  (int) Math.log(greenPixels[h][w]);
+				bluePixels[h][w] = (bluePixels[h][w] == 0) ?  (int) Math.log(bluePixels[h][w]+1) :  (int) Math.log(bluePixels[h][w]);
 			}//end width
 		}//end height 
 		
@@ -264,7 +264,6 @@ public class Tile {
 		
 	}
 	
-
 	public void multiply( double multiplier){
 		
 
@@ -595,6 +594,7 @@ public class Tile {
 		StringBuffer sb= null;
 		String pixels = "";
 		
+		
 		for (int h=0; h<this.height;h++){
 			for (int w=0; w<this.width;w++){	
 				
@@ -611,8 +611,7 @@ public class Tile {
 		return sb.toString();
 
 	}//end getPixels
-	
-	
+		
 	public Dictionary getStats() {
 		
 		   Dictionary stats = new Hashtable();
@@ -807,8 +806,6 @@ public class Tile {
 	
 	public void setWidth(int w){ this.width=w;}
 	
-	
-	
 	public int getTlx(){ return this.tlx;}
 	
 	public int getTly(){ return this.tly;}
@@ -826,6 +823,7 @@ public class Tile {
 		
 		
 	}
+	
 	public int get_center_y(Boolean absolute){
 		
 		int offset = (absolute) ? this.tly :  0; 

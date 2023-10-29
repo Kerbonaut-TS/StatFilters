@@ -18,8 +18,7 @@ public class StatFilter {
 	int[][] indexList; 		// the tile index displayed
 		
 	double [][] M; 			//measures matrix	
-	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M
-	
+	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
 		
 			
@@ -53,7 +52,6 @@ public class StatFilter {
 		this.image = new Tile();
 		image.setBufferedImage(this.original);
 		this.createTiles(1, 1);
-
 		return this.showImage();
 		
 	}
@@ -483,13 +481,11 @@ public class StatFilter {
 		
 	}//end ShowTiles
 	
-	
 	public BufferedImage showImage() {
 		
 		return this.composeImage(false).getBufferedImage();
 		
 	}//end ShowTiles
-	
 	
 	public Tile getTile (int tileIndex) {
 		
@@ -501,57 +497,84 @@ public class StatFilter {
 		
 	}
 			
-	
-	public void  savefile (String filepath, String format) throws IOException {
+	public void  saveImage (String filepath, String format) throws IOException {
 		
 		this.composeImage(false).savetoFile(filepath, format);
 		
+		//json File
+		String json_path = filepath.replace(".jpeg", ".json").replace(".jpg", ".json").replace(".png", ".json");
+		
+		
+		
+		//TODO improve the topN export
+		this.saveJson(json_path, 0);
+		
 	}
 	
-	
-	public void saveJson(String filepath, int topN) {
-
-		String content = "[";
+	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
+		
+		File file = new File(filepath);
+		String path = file.getParent();
+		String name = this.getFilename(filepath);
 		
 		
-			//cycle through tiles
-			for (int t=0; t<topN; t++){		
+		//cycle through tiles
+		for (int i : listTiles){	
+			
+			int r = (int) this.getTileCoordinates(i)[0];
+			int c = (int) this.getTileCoordinates(i)[1];
+		
+			tiles[r][c].savetoFile(path+"\\"+name+"-"+r+"-"+c+".png", "PNG");
+			this.saveJson(filepath, i );
 					
-				//tile coordinate
-					int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
-					int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
+		}
+		
+				
+
+			
+	}//end saveTiles
+		
+	public void saveJson(String filepath) throws IOException{
+		
+		this.composeImage(false);
+		this.saveJson(filepath, 0);
+		
+		
+	}
+	
+	public void saveJson(String filepath, int i) throws IOException{
+		
+		int r = (int) this.getTileCoordinates(i)[0];
+		int c = (int) this.getTileCoordinates(i)[1];
+		
+		File file = new File(filepath);
+		String path = file.getParent();
+		String filename = file.getName();
+		String name = this.getFilename(filepath);
+	
+		String content = "[";
+							
+					//tile coordinates
+					content = content +"{ \"img\":\""+filename+"\", \"Rank\":"+i+", \"Y\":"+ r + ", \"X\":"+ c;
 					
 					// statistics to String
 					Dictionary stats = tiles[r][c].getStats();
-					String stats_string = stats.toString().replace("=", "\"=").replace(", ", ", \"").replace("{", "\"").replace("}", "");
-						
-
-					//tile coordinates
-					content = content +"{ \"tile\":"+t+", \"X\":"+ c + ", \"Y\":"+ r;
+					String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");			
 					
 					//tile stats
-					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string+", \"pixels\": [";
-				
-					content = content  + tiles[r][c].getPixels();
+					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string;
+					content = content + "}";
 					
-					content = content + "]}";
-					
-					if(t<topN-1) content = content  + ",";
-			}
 						
-
 		content = content + "]";
 
 
-		this.writeFile(filepath, content);
+		this.writeFile(path+"\\"+name+"-"+r+"-"+c+".json", content);
 		
 		
 	}
 	
-	
-	public void saveJson(String filepath) { this.saveJson(filepath, 1);}
-	
- 	
+	 	
 	public Tile composeImage (Boolean drawTiles) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
@@ -654,7 +677,6 @@ public class StatFilter {
 	//Tools ========================================================================================
 	
 	
-	
 	private void writeFile(String filepath, String content) {
 		
         int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
@@ -689,8 +711,16 @@ public class StatFilter {
 		
 	}
 	
+	private String getFilename(String filepath) {
+		
+				File f = new File(filepath);
+				String fn = f.getName();
+				String [] name = fn.split("\\.");
+				return name[0];
+		
+	}
 	
-	private int[] sortTiles(Boolean ascending) throws IOException {
+ 	private int[] sortTiles(Boolean ascending) throws IOException {
 
 		
 		//prepare list
@@ -748,7 +778,6 @@ public class StatFilter {
     
     }
 
-	
     private int[] getTileCoordinates(int index) {
 				
 		int[] rc = new int[2];
@@ -766,7 +795,6 @@ public class StatFilter {
 		
 	}
 	
-	
     private int getTileIndex(int r, int c) {
 		
 		int cols = this.tiles[0].length;
@@ -775,7 +803,7 @@ public class StatFilter {
 		
 		return index;
 	}
-	
+
 	
     private void log(int[] list) {
 		
