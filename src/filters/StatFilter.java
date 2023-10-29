@@ -1,25 +1,26 @@
  package filters;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Dictionary;
 
 
 
 public class StatFilter {
 	
-	
+	BufferedImage original;
 	Tile image;
 	Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 	int[][] indexList; 		// the tile index displayed
 		
 	double [][] M; 			//measures matrix	
-	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M
-	
+	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
 		
-		System.out.println("Version: 0.2");
 			
 	}//end constructor
 	
@@ -29,18 +30,32 @@ public class StatFilter {
 		
 		this.image = new Tile();
 		image.setImageFromFile(filepath);
-		System.out.println("IMG: " + image.getWidth()+" x "+image.getHeight());
+		this.original = image.getBufferedImage();
 		
-		
+		this.createTiles(1, 1);
+			
 		
 	}
 	
 	public void setImage(BufferedImage img) {
-		
+		this.original = img;
 		this.image = new Tile();
 		image.setBufferedImage(img);
+		this.createTiles(1, 1);
+
 		
 	}
+	
+	public BufferedImage reset() {
+		
+		
+		this.image = new Tile();
+		image.setBufferedImage(this.original);
+		this.createTiles(1, 1);
+		return this.showImage();
+		
+	}
+	
 	
 	//CREATE TILES & SORTING  ==============================================================================
 
@@ -57,7 +72,7 @@ public class StatFilter {
 		
 		int t = 0;
 		
-		//for each  section  c=columns r=rows
+		//for each  tile  c=columns r=rows
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 				
@@ -135,13 +150,8 @@ public class StatFilter {
 		
 
 	}//end setResolution
-	
-	public BufferedImage showTiles() {
-		
-		return this.composeImage(true).getBufferedImage();
-		
-	}//end ShowTiles
-	
+
+
 	//SORT TILES  ==============================================================================
 	
 	public int[] sortTilesBy(String measure, Boolean ascending) throws IOException{
@@ -187,7 +197,7 @@ public class StatFilter {
 		}//for rows
 		
 		this.sortedTiles= this.sortTiles(ascending);
-		this.log(this.sortedTiles);
+		//this.log(this.sortedTiles);
 		return  this.sortedTiles;
 		
 	} //end 
@@ -218,7 +228,7 @@ public class StatFilter {
 	}
 	
 
-	//APPLY OPERATIONS  ====================================================================================
+	//POOLING OPERATIONS  ====================================================================================
 	public void applyOperation(String operation, int tile) {
 		
 		 int r = this.getTileCoordinates(tile)[0];
@@ -228,6 +238,8 @@ public class StatFilter {
 		 
 		switch (operation) {
 			
+		//pooling operations
+		
 			case "mean":
 				int[] rgb = tiles[r][c].mean();
 				tiles[r][c].setMatrix("red", rgb[0]);
@@ -241,7 +253,9 @@ public class StatFilter {
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
 				break;
-				
+		
+		
+		//transformations				
 			case "log":
 				tiles[r][c].log();
 				break;				
@@ -292,16 +306,8 @@ public class StatFilter {
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 		
-		Tile composedImg = this.composeImage(false);		
-
-		
-		if(operation.contains("std.dev") || operation.contains("entropy") || operation.contains("log")|| operation.contains("sqrt")) {
-		
-			composedImg.setMatrix("red", this.normaliseRGB(composedImg.getMatrix("red")));
-			composedImg.setMatrix("green", this.normaliseRGB(composedImg.getMatrix("green")));
-			composedImg.setMatrix("blue", this.normaliseRGB(composedImg.getMatrix("blue")));
-		}
-		
+		Tile composedImg = this.composeImage(false, true);		
+	
 		return composedImg.getBufferedImage();
 
 		
@@ -318,7 +324,7 @@ public class StatFilter {
 	}
 	
 
-	//IMAGE TRANSFORM (EXP) ====================================================================================
+	//IMAGE OPERATIONS (EXP) ====================================================================================
 	private Tile optimiseSection(Tile section, int direction) {
 		
 		
@@ -426,23 +432,35 @@ public class StatFilter {
 		return resSection;
 		
 	}
-
 	
-	//normalization
-	public void localNormalisation() {
+	public BufferedImage merge(BufferedImage img, String operation) {
 		
-		//standardized values in each section
-
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){			
-				tiles[r][c].standardise();		
-			}//end col
-		}//end rows
+		Tile t1 = this.composeImage(false, false);
+		Tile t2 = new Tile();
+		t2.setBufferedImage(img);
 		
-	}//end localstd
+		t1.merge_with(t2, operation );
+		
+		return t1.getBufferedImage();
+	    
+	}//end merge
+	
 	
 	//EXPORT  ====================================================================================
+	
+	
+	public BufferedImage showTiles() {
 		
+		return this.composeImage(true, true).getBufferedImage();
+		
+	}//end ShowTiles
+	
+	public BufferedImage showImage() {
+		
+		return this.composeImage(false, true).getBufferedImage();
+		
+	}//end ShowTiles
+	
 	public Tile getTile (int tileIndex) {
 		
 		
@@ -453,13 +471,82 @@ public class StatFilter {
 		
 	}
 			
-	public void  savefile (String filepath, String format) throws IOException {
+	public void  saveImage (String filepath, String format) throws IOException {
 		
-		this.composeImage(false).savetoFile(filepath, format);
+		this.composeImage(false, true).savetoFile(filepath, format);
 		
-	} 
+		//json File
+		String json_path = filepath.replace(".jpeg", ".json").replace(".jpg", ".json").replace(".png", ".json");
+		
+		this.saveJson(json_path, 0);
+		
+	}
 	
-	public Tile composeImage (Boolean showIndex) {
+	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
+		
+		File file = new File(filepath);
+		String path = file.getParent();
+		String name = this.getFilename(filepath);
+		
+		
+		//cycle through tiles
+		for (int i : listTiles){	
+			
+			int r = (int) this.getTileCoordinates(i)[0];
+			int c = (int) this.getTileCoordinates(i)[1];
+		
+			tiles[r][c].savetoFile(path+"\\"+name+"-"+r+"-"+c+".png", "PNG");
+			this.saveJson(filepath, i );
+					
+		}
+		
+				
+
+			
+	}//end saveTiles
+		
+	public void saveJson(String filepath) throws IOException{
+		
+		this.saveJson(filepath, 0);
+		
+		
+	}
+	
+	public void saveJson(String filepath, int i) throws IOException{
+		
+		int r = (int) this.getTileCoordinates(i)[0];
+		int c = (int) this.getTileCoordinates(i)[1];
+		
+		File file = new File(filepath);
+		String path = file.getParent();
+		String filename = file.getName();
+		String name = this.getFilename(filepath);
+	
+		String content = "[";
+							
+					//tile coordinates
+					content = content +"{ \"img\":\""+filename+"\", \"Rank\":"+i+", \"Y\":"+ r + ", \"X\":"+ c;
+					
+					// statistics to String
+					Dictionary stats = tiles[r][c].getStats();
+					String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");			
+					
+					//tile stats
+					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string;
+					content = content + "}";
+					
+						
+		content = content + "]";
+
+
+		this.writeFile(path+"\\"+name+"-"+r+"-"+c+".json", content);
+		
+		
+	}
+	
+	 	
+	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
+		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
 		int rows = tiles.length;
@@ -469,7 +556,6 @@ public class StatFilter {
 		int subw = tiles[0][0].getWidth();
 		int offsetH=0;
 		int offsetW=0;
-		
 	
 		
 		//final image
@@ -484,29 +570,23 @@ public class StatFilter {
 			for (int c=0; c<columns; c++){
 				
 				Tile render_tile = new Tile();
-				render_tile.setBufferedImage(tiles[r][c].getBufferedImage());
+				render_tile.clone(tiles[r][c]);
 				
-				if  (showIndex) {
-				
+				if  (drawTiles) {	
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
 					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
-					render_tile.drawSquare();
-					
+					render_tile.drawSquare();				
 				}
 				
-				
-				int [][] RMatrix=render_tile.getMatrix("red");
-				int [][] GMatrix=render_tile.getMatrix("green");
-				int [][] BMatrix=render_tile.getMatrix("blue");
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
 						
 						//place section in the final image
-						redPixels[h+offsetH][w+offsetW]= RMatrix [h][w];
-						greenPixels[h+offsetH][w+offsetW]= GMatrix [h][w];
-						bluePixels[h+offsetH][w+offsetW]= BMatrix [h][w];
+						redPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("red") [h][w];
+						greenPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("green") [h][w];
+						bluePixels[h+offsetH][w+offsetW]= render_tile.getMatrix("blue") [h][w];
 												
 						offsetH=subh*r;
 						offsetW=subw*c;
@@ -519,6 +599,13 @@ public class StatFilter {
 		}//rows
 		
 		Tile imgout = new Tile();
+		
+		if(RGBrescale) {
+			redPixels = this.rescaleRGB(redPixels, 0, 255);
+			greenPixels = this.rescaleRGB(greenPixels, 0, 255);
+			bluePixels  = this.rescaleRGB(bluePixels, 0, 255);
+			
+		}
 		
 		imgout.setMatrix("red", redPixels);
 		imgout.setMatrix("green", greenPixels);
@@ -534,12 +621,13 @@ public class StatFilter {
 	
 	}
 	
-	private int [][] normaliseRGB(int[][] zmatrix){
+	
+	private int [][] rescaleRGB (int[][] zmatrix, int newmin, int newmax){
 		
 			
 		//resize z variable to 0-255
-		int max=this.getMaxValue(zmatrix);
-		int min=this.getMinValue(zmatrix);
+		int max = getMaxValue(zmatrix);
+		int min = getMinValue(zmatrix);
 		
 		double range = max-min ==0 ? 1 : max-min;
 		
@@ -548,7 +636,7 @@ public class StatFilter {
 		
 		for(int j=0; j<RGBmatrix.length;j++){
 			for(int i=0;i<RGBmatrix[0].length;i++){			
-				RGBmatrix[j][i]=(int) (((zmatrix[j][i]-min)/range)*255);
+				RGBmatrix[j][i]=(int) (newmin + ((zmatrix[j][i]-min)/range)* (newmax - newmin));
 			}//i
 		}//j
 		
@@ -559,7 +647,51 @@ public class StatFilter {
 
 	//Tools ========================================================================================
 	
-	private int[] sortTiles(Boolean ascending) throws IOException {
+	
+	private void writeFile(String filepath, String content) {
+		
+        int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
+        String folder = filepath.substring(0, lastSeparatorIndex);
+        String filename = filepath.substring(lastSeparatorIndex + 1);
+
+		
+        File directory = new File(folder);
+        if (!directory.exists()) {
+            if (directory.mkdirs()) {
+                System.out.println("Directory created successfully.");
+            } else {
+                System.out.println("Failed to create the directory.");
+                return;
+            }
+        }
+		
+		try {
+			 FileWriter myWriter = new FileWriter(filepath);
+		     myWriter.write(content);
+		     myWriter.close();
+		     
+			} catch (IOException e) {
+			      System.out.println("An error occurred.");
+			      System.out.println(folder);
+			      System.out.println(filename);
+
+			      
+			      e.printStackTrace();
+			}
+		
+		
+	}
+	
+	private String getFilename(String filepath) {
+		
+				File f = new File(filepath);
+				String fn = f.getName();
+				String [] name = fn.split("\\.");
+				return name[0];
+		
+	}
+	
+ 	private int[] sortTiles(Boolean ascending) throws IOException {
 
 		
 		//prepare list
@@ -617,7 +749,7 @@ public class StatFilter {
     
     }
 
-	private int[] getTileCoordinates(int index) {
+    private int[] getTileCoordinates(int index) {
 				
 		int[] rc = new int[2];
 		
@@ -634,7 +766,7 @@ public class StatFilter {
 		
 	}
 	
-	private int getTileIndex(int r, int c) {
+    private int getTileIndex(int r, int c) {
 		
 		int cols = this.tiles[0].length;
 				
@@ -642,8 +774,9 @@ public class StatFilter {
 		
 		return index;
 	}
+
 	
-	private void log(int[] list) {
+    private void log(int[] list) {
 		
 		System.out.print("{");
 
