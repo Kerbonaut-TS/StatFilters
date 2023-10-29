@@ -306,22 +306,8 @@ public class StatFilter {
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 		
-		Tile composedImg = this.composeImage(false);		
-
-		
-		if(operation.contains("std.dev") || operation.contains("entropy") || operation.contains("log")|| operation.contains("sqrt")) {
-		
-			for (String c : composedImg.channels) {
-				
-				 int [][] rescaled =  this.rescaleRGB(composedImg.getMatrix(c),0,255);
-				composedImg.setMatrix(c, rescaled);
-
-			}
-			
-				
-		}//end if
+		Tile composedImg = this.composeImage(false, true);		
 	
-		
 		return composedImg.getBufferedImage();
 
 		
@@ -449,7 +435,7 @@ public class StatFilter {
 	
 	public BufferedImage merge(BufferedImage img, String operation) {
 		
-		Tile t1 = this.composeImage(false);
+		Tile t1 = this.composeImage(false, false);
 		Tile t2 = new Tile();
 		t2.setBufferedImage(img);
 		
@@ -457,33 +443,21 @@ public class StatFilter {
 		
 		return t1.getBufferedImage();
 	    
-	}
+	}//end merge
 	
-	//normalization
-	public void localNormalisation() {
-		
-		//standardized values in each section
-
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){			
-				tiles[r][c].standardise();		
-			}//end col
-		}//end rows
-		
-	}//end localstd
 	
 	//EXPORT  ====================================================================================
 	
 	
 	public BufferedImage showTiles() {
 		
-		return this.composeImage(true).getBufferedImage();
+		return this.composeImage(true, true).getBufferedImage();
 		
 	}//end ShowTiles
 	
 	public BufferedImage showImage() {
 		
-		return this.composeImage(false).getBufferedImage();
+		return this.composeImage(false, true).getBufferedImage();
 		
 	}//end ShowTiles
 	
@@ -499,14 +473,11 @@ public class StatFilter {
 			
 	public void  saveImage (String filepath, String format) throws IOException {
 		
-		this.composeImage(false).savetoFile(filepath, format);
+		this.composeImage(false, true).savetoFile(filepath, format);
 		
 		//json File
 		String json_path = filepath.replace(".jpeg", ".json").replace(".jpg", ".json").replace(".png", ".json");
 		
-		
-		
-		//TODO improve the topN export
 		this.saveJson(json_path, 0);
 		
 	}
@@ -536,7 +507,6 @@ public class StatFilter {
 		
 	public void saveJson(String filepath) throws IOException{
 		
-		this.composeImage(false);
 		this.saveJson(filepath, 0);
 		
 		
@@ -575,7 +545,7 @@ public class StatFilter {
 	}
 	
 	 	
-	public Tile composeImage (Boolean drawTiles) {
+	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
 		
@@ -600,29 +570,23 @@ public class StatFilter {
 			for (int c=0; c<columns; c++){
 				
 				Tile render_tile = new Tile();
-				render_tile.setBufferedImage(tiles[r][c].getBufferedImage());
+				render_tile.clone(tiles[r][c]);
 				
-				if  (drawTiles) {
-				
+				if  (drawTiles) {	
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
 					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
-					render_tile.drawSquare();
-					
+					render_tile.drawSquare();				
 				}
 				
-				
-				int [][] RMatrix=render_tile.getMatrix("red");
-				int [][] GMatrix=render_tile.getMatrix("green");
-				int [][] BMatrix=render_tile.getMatrix("blue");
 				
 				for (int h=0; h<subh; h++){
 					for (int w=0; w<subw; w++){
 						
 						//place section in the final image
-						redPixels[h+offsetH][w+offsetW]= RMatrix [h][w];
-						greenPixels[h+offsetH][w+offsetW]= GMatrix [h][w];
-						bluePixels[h+offsetH][w+offsetW]= BMatrix [h][w];
+						redPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("red") [h][w];
+						greenPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("green") [h][w];
+						bluePixels[h+offsetH][w+offsetW]= render_tile.getMatrix("blue") [h][w];
 												
 						offsetH=subh*r;
 						offsetW=subw*c;
@@ -635,6 +599,13 @@ public class StatFilter {
 		}//rows
 		
 		Tile imgout = new Tile();
+		
+		if(RGBrescale) {
+			redPixels = this.rescaleRGB(redPixels, 0, 255);
+			greenPixels = this.rescaleRGB(greenPixels, 0, 255);
+			bluePixels  = this.rescaleRGB(bluePixels, 0, 255);
+			
+		}
 		
 		imgout.setMatrix("red", redPixels);
 		imgout.setMatrix("green", greenPixels);
