@@ -1,6 +1,6 @@
 # Stat Filters
 
-Status: v0.2  
+Status: v0.3  
 
 ![statFilters](https://github.com/Kerbonaut-TS/StatFilters/assets/122178043/98437bc3-1d31-418e-9d38-19d8a08456bc)
 
