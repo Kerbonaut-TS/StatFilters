@@ -612,9 +612,9 @@ public class Tile {
 
 	}//end getPixels
 		
-	public Dictionary getStats() {
+	public Dictionary<String,Double> getStats() {
 		
-		   Dictionary stats = new Hashtable();
+		   Dictionary<String,Double> stats = new Hashtable();
 		   
 		   double mean = (this.mean()[0]+this.mean()[1]+this.mean()[2])/3;
 		   
@@ -622,9 +622,9 @@ public class Tile {
 		   stats.put("mean", mean);
 		   stats.put("std.dev", this.std_dev());
 		   stats.put("entropy", this.entropy());
-		   stats.put("avg.red", this.mean()[0]);
-		   stats.put("avg.green", this.mean()[1]);
-		   stats.put("avg.blue", this.mean()[2]);
+		   stats.put("avg.red", (double) this.mean()[0]);
+		   stats.put("avg.green",(double)  this.mean()[1]);
+		   stats.put("avg.blue", (double) this.mean()[2]);
 		   stats.put("hue", this.hue());
 		   stats.put("saturation", this.saturation());
 		   stats.put("brightness", this.brightness());
