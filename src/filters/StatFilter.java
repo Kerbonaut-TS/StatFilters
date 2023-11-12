@@ -17,7 +17,6 @@ public class StatFilter {
 	Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 	int[][] indexList; 		// the tile index displayed
 		
-	double [][] M; 			//measures matrix	
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
 		
@@ -154,72 +153,85 @@ public class StatFilter {
 
 	//SORT TILES  ==============================================================================
 	
-	public int[] sortTilesBy(String measure, Boolean ascending) throws IOException{
+	public int[] sortTiles(String measure, Boolean ascending) throws IOException{
 		
-		//I matrix contains the quantity of Information for each section		
-	    M = new double [tiles.length][tiles[0].length];
+		int k =  ( ascending == true) ? 1 : -1;
 		
+		// storing tile index, measure in array
+	    double[][] measures = new double [sortedTiles.length][2]; 
+	    int avgs[]= null;
 	   
-		//Populate the I matrix 
-		for (int r=0; r<tiles.length; r++){
-			for (int c=0; c<tiles[0].length; c++){
+		//create a list of indexes and measures
+		for (int t = 0; t<sortedTiles.length; t++){
 				
-				 int[] avg  = tiles[r][c].mean();
-
 				switch(measure) {
+				
 				  case "entropy":
-					  M[r][c]=tiles[r][c].entropy();
+					  measures[t][0] = t;
+					  measures[t][1] = this.getTile(t).entropy();
 					  break;
 					  
 				  case "mean":
-					  M[r][c]=  (avg[0]+avg[1]+avg[2])/3 ;
+					  measures[t][0] = t;
+					  avgs = this.getTile(t).mean();
+					  measures[t][1] = (double) avgs[0]+avgs[1]+avgs[2]/3;
 					  break;
 					  
 				  case "brightness":
-					  M[r][c]= tiles[r][c].brightness();
+					  measures[t][0]=t;
+					  measures[t][1]=this.getTile(t).brightness();
 					  break;
 					  
 				  case "saturation":
-					  M[r][c]=  tiles[r][c].saturation() ;
+					  measures[t][0]=t;
+					  measures[t][1]=this.getTile(t).saturation();
 					  break;
 					  
 				  case "hue":
-					  M[r][c]=  tiles[r][c].hue() ;
+					  measures[t][0]=t;
+					  measures[t][1]=this.getTile(t).hue();
 					  break;
 					  
 					  
 				  case "std.dev":
-					  M[r][c]=tiles[r][c].std_dev();
+					  measures[t][0]=t;
+					  measures[t][1]=this.getTile(t).std_dev();
 					  break;
 					  
 				  case "red":
-					  M[r][c]=  avg[0] ;
+					  measures[t][0] = t;
+					  avgs = this.getTile(t).mean();
+					  measures[t][1] = (double) avgs[0];
 					  break;
 					  
 				  case "green":
-					  M[r][c]=  avg[1] ;
+					  measures[t][0] = t;
+					  avgs = this.getTile(t).mean();
+					  measures[t][1] = (double) avgs[1];
 					  break;
 					  
 				  case "blue":
-					  M[r][c]=  avg[2] ;
-					  break;
+					  measures[t][0] = t;
+					  avgs = this.getTile(t).mean();
+					  measures[t][1] = (double) avgs[2];
 					  
 				  default:
 					  break;
 				}//end switch
-				
-			}//for columns
-		}//for rows
+		}		
+
 		
-		this.sortedTiles= this.sortTiles(ascending);
-		//this.log(this.sortedTiles);
-		return  this.sortedTiles;
+		// Sorting based on the second column (index 1)
+		Arrays.sort(measures, Comparator.comparingDouble(row -> row[1]*k));
+		for (int i=0; i<this.sortedTiles.length; i++)  this.sortedTiles[i] =  (int) measures[i][0];
+		
+		return this.sortedTiles;
 		
 	} //end 
 
 	public BufferedImage percentileMask(String metric, double[] intervals) throws IOException {
 		
-		int[] id_array = this.sortTilesBy(metric, false);
+		int[] id_array = this.sortTiles(metric, false);
 		double I = intervals.length; //number of intervals
 		double T = id_array.length; //number of Tiles
 		
@@ -679,7 +691,6 @@ public class StatFilter {
 	}// end resizeToRGB
 	
 
-	//Tools ========================================================================================
 	
 	
 	private void writeFile(String filepath, String content) {
@@ -725,37 +736,7 @@ public class StatFilter {
 		
 	}
 	
- 	private int[] sortTiles(Boolean ascending) throws IOException {
 
-		
-		//prepare list
-		int i =0;
-		int n = M.length * M[0].length;
-		double[][] rankedList = new double [n][3]; //   (measure, row, column)
-		
-		int m =  ( ascending == true) ? 1 : -1;
-		
-		
-		//copy I matrix and coordinates
-		for (int r=0; r<M.length; r++){
-			for (int c=0; c<M[0].length; c++){	
-				
-			    rankedList[i][0] = r;
-				rankedList[i][1] = c;
-				rankedList[i][2] = M[r][c] * m;
-				i++;
-				
-			}//for columns
-		}//for rows
-		
-		Arrays.sort(rankedList, Comparator.comparingDouble(row -> row[2]));
-		
-		
-		for (int t=0; t<n; t++) this.sortedTiles[t] =  this.getTileIndex( (int) rankedList[t][0], (int) rankedList[t][1] );
-
-		return sortedTiles;
-		
-		}
 	
     private static int getMaxValue(int[][] numbers) {
     	int maxValue = numbers[0][0];
