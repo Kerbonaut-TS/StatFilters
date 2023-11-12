@@ -170,9 +170,24 @@ public class StatFilter {
 				  case "entropy":
 					  M[r][c]=tiles[r][c].entropy();
 					  break;
+					  
 				  case "mean":
 					  M[r][c]=  (avg[0]+avg[1]+avg[2])/3 ;
 					  break;
+					  
+				  case "brightness":
+					  M[r][c]= tiles[r][c].brightness();
+					  break;
+					  
+				  case "saturation":
+					  M[r][c]=  tiles[r][c].saturation() ;
+					  break;
+					  
+				  case "hue":
+					  M[r][c]=  tiles[r][c].hue() ;
+					  break;
+					  
+					  
 				  case "std.dev":
 					  M[r][c]=tiles[r][c].std_dev();
 					  break;
@@ -202,33 +217,48 @@ public class StatFilter {
 		
 	} //end 
 
-	public BufferedImage [] getSortedTiles() {
+	public BufferedImage percentileMask(String metric, double[] intervals) throws IOException {
 		
-		BufferedImage [] output;
-		int H = tiles.length;
-		int W = tiles[0].length;
-		output = new BufferedImage[H*W];
+		int[] id_array = this.sortTilesBy(metric, false);
+		double I = intervals.length; //number of intervals
+		double T = id_array.length; //number of Tiles
+		
+		int interval_begins = 0;
+		int interval_end = 0;
 		
 		
-		int n = sortedTiles.length;
-		
-		// stitching all tiles together
-		for (int t=0; t<n; t++){
+		for (int i=0 ; i<I; i++) {
+			
+			int value =(int)  Math.floor(intervals[i]*255);
+			interval_end = (int)  Math.floor(intervals[i]*T);
+			
+			System.out.println("Checking Interval "+intervals[i]+" from "+interval_begins+" to " + interval_end+ " of "+T +" setting values of " + value);
+			for (int t = interval_begins; t<interval_end; t++ ) {
 				
-				//tile coordinate
-				int r = (int) this.getTileCoordinates(sortedTiles[t])[0];
-				int c = (int) this.getTileCoordinates(sortedTiles[t])[1];
-
-				output[t] = tiles[r][c].getBufferedImage();
+				Tile tile = this.getTile(id_array[t]);
+				tile.setMatrix("red", 255-value);
+				tile.setMatrix("blue", 255-value);
+				tile.setMatrix("green", 255-value);
 				
-		}
+				
+			}//for each tile in interval
+			
+			interval_begins = interval_end;
+			
+			
+		}//for each interval
 		
-		return output;
+		
+		Tile composedImg = this.composeImage(false, true);		
+		
+		return composedImg.getBufferedImage();
+		
 		
 	}
 	
-
+	
 	//POOLING OPERATIONS  ====================================================================================
+	
 	public void applyOperation(String operation, int tile) {
 		
 		 int r = this.getTileCoordinates(tile)[0];
@@ -253,6 +283,7 @@ public class StatFilter {
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
 				break;
+				
 		
 		
 		//transformations				
@@ -324,8 +355,10 @@ public class StatFilter {
 	}
 	
 
+	
+
 	//IMAGE OPERATIONS (EXP) ====================================================================================
-	private Tile optimiseSection(Tile section, int direction) {
+ 	private Tile optimiseSection(Tile section, int direction) {
 		
 		
 		double info,infoL, infoS;
@@ -543,6 +576,7 @@ public class StatFilter {
 		
 		
 	}
+	
 	
 	 	
 	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
