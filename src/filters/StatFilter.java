@@ -117,40 +117,25 @@ public class StatFilter {
 	
 	public void createTiles(String pixelWindow){
 		
-		
-		String[] dimensions = pixelWindow.split("x");
-		  try {
-			  
-			  
-              int n1 = Integer.parseInt(dimensions[0]);
-              int n2 = Integer.parseInt(dimensions[1]);
+			  int[] dimensions  = this.calculateDimensions(pixelWindow);
               
-              if (n1 != n2){
+              if (dimensions[0] != dimensions[1]){
             	  
             	  System.out.println("Error: Invalid size. Only square windows suported");
             	  
               } else {
             	  
-            	  int rows = (int) Math.floor(image.getHeight()/n1);
-            	  int columns = (int) Math.floor(image.getWidth()/n1);
+            	  int rows = (int) Math.floor(image.getHeight()/dimensions[0]);
+            	  int columns = (int) Math.floor(image.getWidth()/dimensions[0]);
            	  
             	  this.createTiles(rows,columns);
               }
-              
-              
-          } catch (NumberFormatException e) {
-        	  
-              System.out.println("Error: Invalid input format");
-          }
-		  
-		  
-
-		
-		
-
-	}//end setResolution
 
 
+	}//end create Tiles
+
+	
+	
 	//SORT TILES  ==============================================================================
 	
 	public int[] sortTiles(String measure, Boolean ascending) throws IOException{
@@ -370,113 +355,92 @@ public class StatFilter {
 	
 
 	//IMAGE OPERATIONS (EXP) ====================================================================================
- 	private Tile optimiseSection(Tile section, int direction) {
-		
-		
-		double info,infoL, infoS;
-		double gradL, gradS;
-
-		Tile larger;
-		Tile smaller;
-		
-		larger=null;
-		smaller=null;
-		
-		//speed of change
-		int delta;
-		delta =(int) Math.round(0.05*Math.min(section.getHeight(), section.getWidth()));
-		
-		if(delta%2!=0) delta=delta-1; //if odd
-		
-		gradL=0;
-		gradS=0;
-		
-		
-		//calculate direction gradient (if direction=0 calculate both) 
-		info=section.entropy();
-		if(direction>=0){
-			larger=this.resizeSection(section, delta);
-			infoL=larger.entropy();
-			gradL=infoL-info;
-		}
-		if(direction<=0){
-			smaller=this.resizeSection(section, (-1)*delta);
-			infoS=smaller.entropy();
-			gradS=infoS-info;
-		}
-		
-		
-		if(gradL>=gradS){
-			//increase the section
-			if(gradL>0){
-				return this.optimiseSection(larger, 1);
+ 	public BufferedImage findTile(String metric, String operator,  String size) {
+ 		
+ 		int step =10;
+ 		
+ 		//height and width of sub matrixes
+		int[] dimensions = this.calculateDimensions(size);
 				
-			}else{
-				//optimal (largest gradient is negative)
-				return section;
-			}
-		}else {
-			//shrink the section
-			if(gradS>0){
-				//System.out.println("shrinking..");
-				return this.optimiseSection(smaller, -1);
-			}else{
-				//optimal (largest gradient is negative)
-				return section;
-			}
-
-		}
-
+		int H= dimensions [0];
+		int W= dimensions [1];
+ 		
+		int horizontal_shifts = (this.image.width - W)/step;
+		int vertical_shifts = (this.image.height - H)/step;
 		
-	}//end optimise section
+ 		int n = horizontal_shifts * vertical_shifts;
+ 		double [][] metrics = new double [n][3];    //  tlx, tly, value
+
+		int i = 0;
+ 		
+		//for each  offset
+		for (int tlx = 0; tlx <horizontal_shifts; tlx=tlx+step){
+			for (int tly = 0; tly < vertical_shifts;  tly=tly+step){
+				
+				
+				Tile tile = this.build_Tile(tlx, tly,  W,H);
+				metrics[i][0] = (double) tlx;
+				metrics[i][1] = (double) tly;
+				metrics[i][2] = tile.brightness();
+				i++;
+				System.out.print(i+ " of "+n);
+				System.out.print("\r");
+				
+			}//end 
+		}//end offsets
+		
+		//sorting
+		Arrays.sort(metrics, Comparator.comparingDouble(row -> row[2]));
+		
+		int optimal_tlx = (int) metrics[0][0];
+		int optimal_tly = (int) metrics[0][1];
+
+		Tile output = this.build_Tile(optimal_tlx, optimal_tly, W, H);
+		return output.getBufferedImage();
+		
+		
+	}
+ 	
+ 	
+ 	private Tile build_Tile(int tlx, int tly, int width,int height) {
+
+		int [][] tempR = new int[height][width];
+		int [][] tempG = new int[height][width];
+		int [][] tempB = new int[height][width];
+		int [][] tempA = new int [height][width];
+ 		
+ 		Tile t = new Tile();
+ 		
+ 		//copy tile
+		for (int h=0; h<height; h++){
+			for (int w=0; w<width; w++){
 	
-	private Tile resizeSection(Tile section, int delta){
-		
-		
-		Tile resSection = new Tile();
-
-
-		//calculate new coordinates
-		int offsetH = Math.max(section.getTly()- (int) (delta/2),0);
-		int offsetW = Math.max(section.getTlx()-(int) (delta/2),0);	
-		
-		int maxh = Math.min(section.getHeight()+delta, image.height-offsetH-1);
-		int maxw = Math.min(section.getHeight()+delta, image.width-offsetW-1);
-		
-		
-		int [][] tempR = new int[maxh][maxw];
-		int [][] tempG = new int[maxh][maxw];
-		int [][] tempB = new int[maxh][maxw];
-		int [][] tempA = new int[maxh][maxw];
-		
+				tempR[h][w]= image.getMatrix("red")[tly+w][tlx+h];
+				tempG[h][w]= image.getMatrix("green")[tly+w][tlx+h];;
+				tempB[h][w]= image.getMatrix("blue")[tly+w][tlx+h];;
+				tempA[h][w]= image.getMatrix("alpha")[tly+w][tlx+h];;
 				
-		for (int h=0; h<maxh; h++){
-			for (int w=0; w<maxw; w++){
-								
-				tempR[h][w]= image.getMatrix("red")[offsetH+h][offsetW+w];
-				tempG[h][w]= image.getMatrix("green")[offsetH+h][offsetW+w];
-				tempB[h][w]= image.getMatrix("blue")[offsetH+h][offsetW+w];
-				tempA[h][w]= image.getMatrix("alpha")[offsetH+h][offsetW+w];
-
 			}	//end height
 		}//end width
 		
-		resSection.setMatrix("red", tempR);
-		resSection.setMatrix("green", tempG);
-		resSection.setMatrix("blue", tempB);
-		resSection.setMatrix("alpha", 255);
-		
-		resSection.setTly(offsetH);
-		resSection.setTlx(offsetW);
+		t = new Tile();		
+		t.setMatrix("red", tempR);
+		t.setMatrix("green", tempG);
+		t.setMatrix("blue", tempB);
+		t.setMatrix("alpha", tempA);
+		t.setTlx(tlx); 
+		t.setTly(tly);
+ 		
 		
 		tempR=null;
 		tempG=null;
 		tempB=null;
 		tempA=null;
 		
-		return resSection;
+ 		return t;
+ 		
+ 	} 
 		
-	}
 	
 	public BufferedImage merge(BufferedImage img, String operation) {
 		
@@ -589,8 +553,6 @@ public class StatFilter {
 		
 	}
 	
-	
-	 	
 	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
 		
 		/*** Buffered Image stitching all tiles together in one image ***/ 
@@ -668,6 +630,9 @@ public class StatFilter {
 	}
 	
 	
+	
+	//TOOLS ===================================================================================
+	
 	private int [][] rescaleRGB (int[][] zmatrix, int newmin, int newmax){
 		
 			
@@ -689,9 +654,6 @@ public class StatFilter {
 		return RGBmatrix;
 		
 	}// end resizeToRGB
-	
-
-	
 	
 	private void writeFile(String filepath, String content) {
 		
@@ -736,7 +698,7 @@ public class StatFilter {
 		
 	}
 	
-
+	
 	
     private static int getMaxValue(int[][] numbers) {
     	int maxValue = numbers[0][0];
@@ -790,7 +752,21 @@ public class StatFilter {
 		return index;
 	}
 
+	private int[] calculateDimensions(String pixelWindow) throws NumberFormatException {
+		
+		int[] dimensions = new int[2];
+		String[] s = pixelWindow.split("x");
+	  
+		  
+		dimensions[0] = Integer.parseInt(s[0]);
+        dimensions[1] = Integer.parseInt(s[1]);
 	
+        return dimensions;
+		
+         
+        
+	}
+    
     private void log(int[] list) {
 		
 		System.out.print("{");
