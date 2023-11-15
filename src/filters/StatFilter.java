@@ -134,7 +134,53 @@ public class StatFilter {
 
 	}//end create Tiles
 
-	
+ 	public BufferedImage findTile(String measure, String operator,  String size, int stride) {
+ 		
+ 		int k =  ( operator == "min") ? 1 : -1;
+ 		
+ 		//height and width of sub matrixes
+		int[] dimensions = this.calculateDimensions(size);
+				
+		int H = dimensions [0];
+		int W = dimensions [1];
+ 		
+		int horizontal_shifts = (int) Math.floor((this.image.width - W)/stride)+1;
+		int vertical_shifts = (int)Math.floor((this.image.height - H)/stride)+1;
+		
+ 		int n = horizontal_shifts * vertical_shifts;
+ 		double [][] metrics = new double [n][3];    //  tlx, tly, value
+
+		int i = 0;
+		
+		// convolution
+		for (int tly = 0; tly < (this.image.height - H);  tly=tly+stride){
+			for (int tlx = 0; tlx < (this.image.width - W); tlx=tlx+stride){
+			
+
+				
+				Tile tile = this.build_Tile(tlx, tly,  W, H);
+				metrics[i][0] = (double) tlx;
+				metrics[i][1] = (double) tly;
+				metrics[i][2] = this.get_measure(tile, measure);
+				i++;
+
+				
+			}//end 
+
+		}//end offsets
+		
+		//sorting
+		Arrays.sort(metrics, Comparator.comparingDouble(row -> row[2]*k));
+		int optimal_tlx = (int) metrics[0][0];
+		int optimal_tly = (int) metrics[0][1];
+
+		Tile output = this.build_Tile(optimal_tlx, optimal_tly, W, H);
+		return output.getBufferedImage();
+		
+		
+	}
+ 	
+ 	
 	
 	//SORT TILES  ==============================================================================
 	
@@ -147,72 +193,76 @@ public class StatFilter {
 	    int avgs[]= null;
 	   
 		//create a list of indexes and measures
-		for (int t = 0; t<sortedTiles.length; t++){
-				
-				switch(measure) {
-				
-				  case "entropy":
-					  measures[t][0] = t;
-					  measures[t][1] = this.getTile(t).entropy();
-					  break;
-					  
-				  case "mean":
-					  measures[t][0] = t;
-					  avgs = this.getTile(t).mean();
-					  measures[t][1] = (double) avgs[0]+avgs[1]+avgs[2]/3;
-					  break;
-					  
-				  case "brightness":
-					  measures[t][0]=t;
-					  measures[t][1]=this.getTile(t).brightness();
-					  break;
-					  
-				  case "saturation":
-					  measures[t][0]=t;
-					  measures[t][1]=this.getTile(t).saturation();
-					  break;
-					  
-				  case "hue":
-					  measures[t][0]=t;
-					  measures[t][1]=this.getTile(t).hue();
-					  break;
-					  
-					  
-				  case "std.dev":
-					  measures[t][0]=t;
-					  measures[t][1]=this.getTile(t).std_dev();
-					  break;
-					  
-				  case "red":
-					  measures[t][0] = t;
-					  avgs = this.getTile(t).mean();
-					  measures[t][1] = (double) avgs[0];
-					  break;
-					  
-				  case "green":
-					  measures[t][0] = t;
-					  avgs = this.getTile(t).mean();
-					  measures[t][1] = (double) avgs[1];
-					  break;
-					  
-				  case "blue":
-					  measures[t][0] = t;
-					  avgs = this.getTile(t).mean();
-					  measures[t][1] = (double) avgs[2];
-					  
-				  default:
-					  break;
-				}//end switch
-		}		
-
+		for (int t = 0; t<sortedTiles.length; t++){			
+			measures[t][0] = t;	
+			measures[t][1] = this.get_measure(this.getTile(t), measure);
+		}
 		
 		// Sorting based on the second column (index 1)
 		Arrays.sort(measures, Comparator.comparingDouble(row -> row[1]*k));
 		for (int i=0; i<this.sortedTiles.length; i++)  this.sortedTiles[i] =  (int) measures[i][0];
-		
+		this.log(this.sortedTiles);
 		return this.sortedTiles;
 		
 	} //end 
+	
+	private double get_measure(Tile t, String measure) {
+		
+		int[] avgs = null;
+		double value = 0;
+		
+		switch(measure) {
+		
+		  case "entropy":
+			  value = t.entropy();
+			  break;
+			  
+		  case "mean":
+			  avgs = t.mean();
+			  value = (double) avgs[0]+avgs[1]+avgs[2]/3;
+			  break;
+			  
+		  case "brightness":
+			  value=t.brightness();
+			  break;
+			  
+		  case "saturation":	  
+			  value=t.saturation();
+			  break;
+			  
+		  case "hue": 
+			  value=t.hue();
+			  break;
+			  
+			  
+		  case "std.dev":
+			  value=t.std_dev();
+			  break;
+			  
+		  case "red":
+			  avgs = t.mean();
+			  value = (double) avgs[0];
+			  break;
+			  
+		  case "green":
+			 
+			  avgs = t.mean();
+			  value = (double) avgs[1];
+			  break;
+			  
+		  case "blue":
+			  avgs = t.mean();
+			  value = (double) avgs[2];
+			  
+		  default:
+			  break;
+		}//end switch
+		
+		return value;
+		
+		
+		
+	}
 
 	public BufferedImage percentileMask(String metric, double[] intervals) throws IOException {
 		
@@ -351,95 +401,9 @@ public class StatFilter {
 	
 	}
 	
-
-	
-
 	//IMAGE OPERATIONS (EXP) ====================================================================================
- 	public BufferedImage findTile(String metric, String operator,  String size) {
- 		
- 		int step =10;
- 		
- 		//height and width of sub matrixes
-		int[] dimensions = this.calculateDimensions(size);
-				
-		int H= dimensions [0];
-		int W= dimensions [1];
- 		
-		int horizontal_shifts = (this.image.width - W)/step;
-		int vertical_shifts = (this.image.height - H)/step;
-		
- 		int n = horizontal_shifts * vertical_shifts;
- 		double [][] metrics = new double [n][3];    //  tlx, tly, value
 
-		int i = 0;
- 		
-		//for each  offset
-		for (int tlx = 0; tlx <horizontal_shifts; tlx=tlx+step){
-			for (int tly = 0; tly < vertical_shifts;  tly=tly+step){
-				
-				
-				Tile tile = this.build_Tile(tlx, tly,  W,H);
-				metrics[i][0] = (double) tlx;
-				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.brightness();
-				i++;
-				System.out.print(i+ " of "+n);
-				System.out.print("\r");
-				
-			}//end 
-		}//end offsets
-		
-		//sorting
-		Arrays.sort(metrics, Comparator.comparingDouble(row -> row[2]));
-		
-		int optimal_tlx = (int) metrics[0][0];
-		int optimal_tly = (int) metrics[0][1];
 
-		Tile output = this.build_Tile(optimal_tlx, optimal_tly, W, H);
-		return output.getBufferedImage();
-		
-		
-	}
- 	
- 	
- 	private Tile build_Tile(int tlx, int tly, int width,int height) {
-
-		int [][] tempR = new int[height][width];
-		int [][] tempG = new int[height][width];
-		int [][] tempB = new int[height][width];
-		int [][] tempA = new int [height][width];
- 		
- 		Tile t = new Tile();
- 		
- 		//copy tile
-		for (int h=0; h<height; h++){
-			for (int w=0; w<width; w++){
-	
-				tempR[h][w]= image.getMatrix("red")[tly+w][tlx+h];
-				tempG[h][w]= image.getMatrix("green")[tly+w][tlx+h];;
-				tempB[h][w]= image.getMatrix("blue")[tly+w][tlx+h];;
-				tempA[h][w]= image.getMatrix("alpha")[tly+w][tlx+h];;
-				
-			}	//end height
-		}//end width
-		
-		t = new Tile();		
-		t.setMatrix("red", tempR);
-		t.setMatrix("green", tempG);
-		t.setMatrix("blue", tempB);
-		t.setMatrix("alpha", tempA);
-		t.setTlx(tlx); 
-		t.setTly(tly);
- 		
-		
-		tempR=null;
-		tempG=null;
-		tempB=null;
-		tempA=null;
-		
- 		return t;
- 		
- 	} 
 		
 	
 	public BufferedImage merge(BufferedImage img, String operation) {
@@ -655,6 +619,46 @@ public class StatFilter {
 		
 	}// end resizeToRGB
 	
+	
+ 	private Tile build_Tile(int tlx, int tly, int width,int height) {
+
+		int [][] tempR = new int[height][width];
+		int [][] tempG = new int[height][width];
+		int [][] tempB = new int[height][width];
+		int [][] tempA = new int [height][width];
+ 		
+ 		Tile t = new Tile();
+ 		
+ 		//copy tile from image
+		for (int h=0; h<height; h++){
+			for (int w=0; w<width; w++){
+	
+				tempR[h][w]= image.getMatrix("red")[tly+h][tlx+w];
+				tempG[h][w]= image.getMatrix("green")[tly+h][tlx+w];;
+				tempB[h][w]= image.getMatrix("blue")[tly+h][tlx+w];;
+				tempA[h][w]= image.getMatrix("alpha")[tly+h][tlx+w];;
+				
+			}	//end height
+		}//end width
+		
+		t = new Tile();		
+		t.setMatrix("red", tempR);
+		t.setMatrix("green", tempG);
+		t.setMatrix("blue", tempB);
+		t.setMatrix("alpha", tempA);
+		t.setTlx(tlx); 
+		t.setTly(tly);
+ 		
+		
+		tempR=null;
+		tempG=null;
+		tempB=null;
+		tempA=null;
+		
+ 		return t;
+ 		
+ 	} 
+	
 	private void writeFile(String filepath, String content) {
 		
         int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
@@ -776,5 +780,21 @@ public class StatFilter {
 		System.out.println("}");
 
 	}
+    
+    private void log(double[][] list) {
+		
+  		System.out.print("{");
 
+  		for (int i=0; i<list.length; i++) {  
+  			for (int y=0; y<list[0].length; y++) {
+  				
+  				System.out.print(list[i][y]+",");
+  				
+  			}
+  			
+				System.out.println("|");
+
+  		}
+  		
+    }
 }//end class
