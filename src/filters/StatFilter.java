@@ -14,13 +14,12 @@ public class StatFilter {
 	
 	BufferedImage original;
 	Tile image;
-	Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
+	public Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 	int[][] indexList; 		// the tile index displayed
 		
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
-		
-			
+
 	}//end constructor
 	
 	
@@ -30,7 +29,6 @@ public class StatFilter {
 		this.image = new Tile();
 		image.setImageFromFile(filepath);
 		this.original = image.getBufferedImage();
-		
 		this.createTiles(1, 1);
 			
 		
@@ -455,6 +453,13 @@ public class StatFilter {
 		
 	}
 	
+	public void  saveTiles (String filepath) throws IOException {
+		
+		this.saveTiles(filepath, this.sortedTiles);
+					
+		}
+	
+	
 	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
 		
 		File file = new File(filepath);
@@ -468,7 +473,7 @@ public class StatFilter {
 			int r = (int) this.getTileCoordinates(i)[0];
 			int c = (int) this.getTileCoordinates(i)[1];
 		
-			tiles[r][c].savetoFile(path+"\\"+name+"-"+r+"-"+c+".png", "PNG");
+			tiles[r][c].savetoFile(path+File.separator+name+"-"+r+"-"+c+".png", "PNG");
 			this.saveJson(filepath, i );
 					
 		}
@@ -512,7 +517,7 @@ public class StatFilter {
 		content = content + "]";
 
 
-		this.writeFile(path+"\\"+name+"-"+r+"-"+c+".json", content);
+		this.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
 		
 		
 	}
@@ -730,7 +735,7 @@ public class StatFilter {
     
     }
 
-    private int[] getTileCoordinates(int index) {
+    public int[] getTileCoordinates(int index) {
 				
 		int[] rc = new int[2];
 		
