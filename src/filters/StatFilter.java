@@ -132,6 +132,24 @@ public class StatFilter {
 
 	}//end create Tiles
 
+	public Tile select_tile_by_coordinates(int x, int y, int width, int height){
+
+		Tile tile = new Tile();
+
+		for (int h=0; h<height;h++) {
+			for (int w = 0; w < width; w++) {
+				for (String c : this.image.channels) {
+					tile.setMatrix(c, this.image.getMatrix(c)[h+y][w+x]);
+				}
+			}
+		}
+
+		tile.setTlx(x);
+		tile.setTly(y);
+
+		return tile;
+	}
+
  	public BufferedImage findTile(String measure, String operator,  String size, int stride) {
  		
  		int k =  ( operator == "min") ? 1 : -1;
