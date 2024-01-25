@@ -821,9 +821,26 @@ public class Tile {
 	
 	public int getWidth(){ return width;}
 	
-	public void setHeight(int h){ this.height=h;}
+	public void setHeight(int h){
+		height=h;
+
+		bluePixels= new int[height][width];
+		greenPixels= new int[height][width];
+		redPixels= new int[height][width];
+		alphaPixels	= new int[height][width];
+
+
+	}
 	
-	public void setWidth(int w){ this.width=w;}
+	public void setWidth(int w){
+		this.width=w;
+		bluePixels= new int[height][width];
+		greenPixels= new int[height][width];
+		redPixels= new int[height][width];
+		alphaPixels	= new int[height][width];
+
+
+	}
 	
 	public int getTlx(){ return this.tlx;}
 	

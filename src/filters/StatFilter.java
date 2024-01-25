@@ -135,14 +135,20 @@ public class StatFilter {
 	public Tile select_tile_by_coordinates(int x, int y, int width, int height){
 
 		Tile tile = new Tile();
+		tile.setHeight(height);
+		tile.setWidth(width);
 
 		for (int h=0; h<height;h++) {
 			for (int w = 0; w < width; w++) {
 				for (String c : this.image.channels) {
-					tile.setMatrix(c, this.image.getMatrix(c)[h+y][w+x]);
+					int value = this.image.getMatrix(c)[h+y][w+x];
+					tile.setPixel(c,  h,  w, value);
+
 				}
 			}
 		}
+
+		tile.setMatrix("alpha", 255);
 
 		tile.setTlx(x);
 		tile.setTly(y);
