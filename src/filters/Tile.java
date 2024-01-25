@@ -71,7 +71,7 @@ public class Tile {
 	}//end setImage
 	
 	//import a BufferedImage
-	public void setBufferedImage(BufferedImage image){
+	public void  setBufferedImage(BufferedImage image){
 		
 		if(image ==null) {
 			this.height=0;
@@ -185,10 +185,29 @@ public class Tile {
 		}
 				
 	}
-		
+
+	public void merge_with(Tile t2) {
+		/*overlays the tile T2 using its reference system [(tyx),(try)]
+		if omitting operation pixels from t2 will display on top of t1*/
+
+		int max_height = Math.min(height, t2.getHeight());
+		int max_width =  Math.min(width, t2.getWidth());
+
+		//get Image matrix
+		for (int h=t2.tly; h<max_height;h++){
+			for (int w=t2.tlx; w<max_width;w++){
+				for (String c: this.channels){
+
+					this.setPixel(c, h, w, t2.getMatrix(c)[h][w]);
+
+				}//end channels
+			}//end height
+		}// end width
+
+	}
+
 	public void merge_with(Tile t2, String operation) {
-		
-		
+		/*overlays the tile T2 using its reference system [(tyx),(try)]*/
 		//use dimensions of the smaller image
 		int max_height = Math.min(height, t2.getHeight());
 		int max_width =  Math.min(width, t2.getWidth());
@@ -612,9 +631,9 @@ public class Tile {
 
 	}//end getPixels
 		
-	public Dictionary getStats() {
+	public Dictionary<String,Double> getStats() {
 		
-		   Dictionary stats = new Hashtable();
+		   Dictionary<String,Double> stats = new Hashtable();
 		   
 		   double mean = (this.mean()[0]+this.mean()[1]+this.mean()[2])/3;
 		   
@@ -622,9 +641,9 @@ public class Tile {
 		   stats.put("mean", mean);
 		   stats.put("std.dev", this.std_dev());
 		   stats.put("entropy", this.entropy());
-		   stats.put("avg.red", this.mean()[0]);
-		   stats.put("avg.green", this.mean()[1]);
-		   stats.put("avg.blue", this.mean()[2]);
+		   stats.put("avg.red", (double) this.mean()[0]);
+		   stats.put("avg.green",(double)  this.mean()[1]);
+		   stats.put("avg.blue", (double) this.mean()[2]);
 		   stats.put("hue", this.hue());
 		   stats.put("saturation", this.saturation());
 		   stats.put("brightness", this.brightness());
@@ -802,9 +821,26 @@ public class Tile {
 	
 	public int getWidth(){ return width;}
 	
-	public void setHeight(int h){ this.height=h;}
+	public void setHeight(int h){
+		height=h;
+
+		bluePixels= new int[height][width];
+		greenPixels= new int[height][width];
+		redPixels= new int[height][width];
+		alphaPixels	= new int[height][width];
+
+
+	}
 	
-	public void setWidth(int w){ this.width=w;}
+	public void setWidth(int w){
+		this.width=w;
+		bluePixels= new int[height][width];
+		greenPixels= new int[height][width];
+		redPixels= new int[height][width];
+		alphaPixels	= new int[height][width];
+
+
+	}
 	
 	public int getTlx(){ return this.tlx;}
 	
