@@ -22,7 +22,7 @@ public class StatFilter {
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v3");
+		System.out.println("StatFilter: loops v4");
 
 	}//end constructor
 	
@@ -34,11 +34,11 @@ public class StatFilter {
 		image.setImageFromFile(filepath);
 		this.original = image.getBufferedImage();
 		this.createTiles(1, 1);
-			
 		
 	}
 	
 	public void setImage(BufferedImage img) {
+
 		this.original = img;
 		this.image = new Tile();
 		image.setBufferedImage(img);
@@ -48,8 +48,7 @@ public class StatFilter {
 	}
 	
 	public BufferedImage reset() {
-		
-		
+
 		this.image = new Tile();
 		image.setBufferedImage(this.original);
 		this.createTiles(1, 1);
@@ -165,35 +164,29 @@ public class StatFilter {
 		int i = 0;
 		
 		// convolution
-		for (int tly = 0; tly < (this.image.height - H);  tly=tly+stride){
-			for (int tlx = 0; tlx < (this.image.width - W); tlx=tlx+stride){
-			
+		for (int tly = 0; tly < (this.image.height - H);  tly = tly+stride){
+			for (int tlx = 0; tlx < (this.image.width - W); tlx = tlx+stride){
 
-				
-				Tile tile = this.build_Tile(tlx, tly,  W, H);
+				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
 				metrics[i][2] = this.get_measure(tile, measure);
 				i++;
 
-				
-			}//end 
-
-		}//end offsets
+			}//end x
+		}//end y
 		
 		//sorting
 		Arrays.sort(metrics, Comparator.comparingDouble(row -> row[2]*k));
 		int optimal_tlx = (int) metrics[0][0];
 		int optimal_tly = (int) metrics[0][1];
 
-		Tile output = this.build_Tile(optimal_tlx, optimal_tly, W, H);
+		Tile output = this.select_tile_by_coordinates(optimal_tlx, optimal_tly, W, H);
 		return output.getBufferedImage();
 		
 		
 	}
- 	
- 	
-	
+
 	//SORT TILES  ==============================================================================
 	
 	public int[] sortTiles(String measure, Boolean ascending) throws IOException{
@@ -213,7 +206,7 @@ public class StatFilter {
 		// Sorting based on the second column (index 1)
 		Arrays.sort(measures, Comparator.comparingDouble(row -> row[1]*k));
 		for (int i=0; i<this.sortedTiles.length; i++)  this.sortedTiles[i] =  (int) measures[i][0];
-		this.log(this.sortedTiles);
+		Utils.logger(this.sortedTiles);
 		return this.sortedTiles;
 		
 	} //end 
@@ -563,12 +556,7 @@ public class StatFilter {
 				Tile render_tile =  new Tile();
 				render_tile.clone(tiles[r][c]);
 
-				if  (drawTiles) {	
-					int x = render_tile.get_center_x(false);
-					int y = render_tile.get_center_y(false);
-					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
-					render_tile.drawSquare();				
-				}
+				if  (drawTiles) render_tile.mark( Color.RED,String.valueOf(i), 24);
 
 				for (String channel : this.image.channels) {
 					for (int h = 0; h < subh; h++) {
@@ -595,49 +583,7 @@ public class StatFilter {
 	
 	
 	//TOOLS ===================================================================================
-	
 
-	
-	
- 	private Tile build_Tile(int tlx, int tly, int width,int height) {
-
-		int [][] tempR = new int[height][width];
-		int [][] tempG = new int[height][width];
-		int [][] tempB = new int[height][width];
-		int [][] tempA = new int [height][width];
- 		
- 		Tile t = new Tile();
- 		
- 		//copy tile from image
-		for (int h=0; h<height; h++){
-			for (int w=0; w<width; w++){
-	
-				tempR[h][w]= image.getMatrix("red")[tly+h][tlx+w];
-				tempG[h][w]= image.getMatrix("green")[tly+h][tlx+w];;
-				tempB[h][w]= image.getMatrix("blue")[tly+h][tlx+w];;
-				tempA[h][w]= image.getMatrix("alpha")[tly+h][tlx+w];;
-				
-			}	//end height
-		}//end width
-		
-		t = new Tile();		
-		t.setMatrix("red", tempR);
-		t.setMatrix("green", tempG);
-		t.setMatrix("blue", tempB);
-		t.setMatrix("alpha", tempA);
-		t.setTlx(tlx); 
-		t.setTly(tly);
- 		
-		
-		tempR=null;
-		tempG=null;
-		tempB=null;
-		tempA=null;
-		
- 		return t;
- 		
- 	} 
-	
 	private void writeFile(String filepath, String content) {
 		
         int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
@@ -671,14 +617,14 @@ public class StatFilter {
 		
 		
 	}
-	
+
 	private String getFilename(String filepath) {
-		
+
 				File f = new File(filepath);
 				String fn = f.getName();
 				String [] name = fn.split("\\.");
 				return name[0];
-		
+
 	}
 	
 
@@ -686,13 +632,11 @@ public class StatFilter {
     public int[] getTileCoordinates(int index) {
 				
 		int[] rc = new int[2];
-		
 		int cols = this.tiles[0].length;
 	
 		int r = (int) Math.floor( index/cols ) ;
 		int c = index-r*cols;
-		
-		
+
 		rc[0] = r;
 		rc[1] = c;
 		
@@ -719,35 +663,8 @@ public class StatFilter {
         dimensions[1] = Integer.parseInt(s[1]);
 
         return dimensions;
-		
-         
         
 	}
     
-    private void log(int[] list) {
-		
-		System.out.print("{");
 
-		for (int i=0; i<list.length; i++)  System.out.print(list[i]+",");
-		
-		System.out.println("}");
-
-	}
-    
-    private void log(double[][] list) {
-		
-  		System.out.print("{");
-
-  		for (int i=0; i<list.length; i++) {  
-  			for (int y=0; y<list[0].length; y++) {
-  				
-  				System.out.print(list[i][y]+",");
-  				
-  			}
-  			
-				System.out.println("|");
-
-  		}
-  		
-    }
 }//end class

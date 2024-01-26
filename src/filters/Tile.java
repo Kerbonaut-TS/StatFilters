@@ -1,5 +1,7 @@
 package filters;
 
+import org.w3c.dom.Text;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -59,12 +61,7 @@ public class Tile {
 
 			this.setMatrix(c, ih.getMatrix(c));
 
-			
 		}
-
-
-	
-
 	}//end setImage
 	
 	//import a BufferedImage
@@ -75,14 +72,9 @@ public class Tile {
 			this.width=0;
 		}else{
 			
-			height=image.getHeight();
-			width=image.getWidth();
-			
-			bluePixels= new int[height][width];
-			greenPixels= new int[height][width];
-			redPixels= new int[height][width];
-			alphaPixels	= new int[height][width];
-			
+			this.setHeight( image.getHeight());
+			this.setWidth(image.getWidth());
+
 			//get Image matrix
 			for (int h=0; h<height;h++){
 				for (int w=0; w<width;w++){
@@ -108,12 +100,7 @@ public class Tile {
 	//import image from a linear RGB array
 	public void setImgFromVector(int[] array ){
 		
-		//linear format is R1,G1,B1, R2,G2,B2, R3..... 
-		
-		bluePixels= new int[height][width];
-		greenPixels= new int[height][width];
-		redPixels= new int[height][width];
-		alphaPixels	= new int[height][width];
+		//linear format is R1,G1,B1, R2,G2,B2, R3.....
 		
 		int count =0;
 		
@@ -183,25 +170,6 @@ public class Tile {
 				
 	}
 
-	public void merge_with(Tile t2) {
-		/*overlays the tile T2 using its reference system [(tyx),(try)]
-		if omitting operation pixels from t2 will display on top of t1*/
-
-		int max_height = Math.min(height, t2.getHeight());
-		int max_width =  Math.min(width, t2.getWidth());
-
-		//get Image matrix
-		for (int h=t2.tly; h<max_height;h++){
-			for (int w=t2.tlx; w<max_width;w++){
-				for (String c: this.channels){
-
-					this.setPixel(c, h, w, t2.getMatrix(c)[h][w]);
-
-				}//end channels
-			}//end height
-		}// end width
-
-	}
 
 	public void merge_with(Tile t2, String operation) {
 		/*overlays the tile T2 using its reference system [(tyx),(try)]*/
@@ -223,6 +191,26 @@ public class Tile {
 			}//end height			
 		}// end width
 		
+	}
+
+	public void merge_with(Tile t2) {
+		/*overlays the tile T2 using its reference system [(tyx),(try)]
+		if omitting operation pixels from t2 will display on top of t1*/
+
+		int max_height = Math.min(height, t2.getHeight());
+		int max_width =  Math.min(width, t2.getWidth());
+
+		//get Image matrix
+		for (int h=t2.tly; h<max_height;h++){
+			for (int w=t2.tlx; w<max_width;w++){
+				for (String c: this.channels){
+
+					this.setPixel(c, h, w, t2.getMatrix(c)[h][w]);
+
+				}//end channels
+			}//end height
+		}// end width
+
 	}
 	
 	//==== PIXEL FUNCTIONS/TRANSFORM ==================================================================
@@ -251,8 +239,7 @@ public class Tile {
 	}//end standardize
 
 	public void log() {
-		
-		
+
 		for (int h=0; h<this.height;h++){
 			for (int w=0; w<this.width;w++){			
 				redPixels[h][w] = (redPixels[h][w] == 0) ?  (int) Math.log(redPixels[h][w]+1) :  (int) Math.log(redPixels[h][w]);
@@ -559,37 +546,7 @@ public class Tile {
 	   return resizedIMG;
 	  
 	}
-	
- 	public void drawSquare() {
- 		
- 		 for (int h=0; h<this.height;h++) {
- 			 
- 			redPixels[h][0] = 255;
- 		    redPixels[h][this.width-1] = 255;
- 		    
- 		    greenPixels[h][0] = 0;
- 		    greenPixels[h][this.width-1] = 0;
-		    
-	 		bluePixels[h][0] = 0;
-	 		bluePixels[h][this.width-1] = 0;
- 		 }
- 		 
- 		 
- 		 for (int w=0; w<this.width;w++) {
- 			 
- 			redPixels[0][w] = 255;
- 		    redPixels[this.height-1][w] = 255;
- 		    
- 		    greenPixels[0][w] = 0;
- 		    greenPixels[this.height-1][w] = 0;
-		    
-	 		bluePixels[0][w] = 0;
-	 		bluePixels[this.height-1][w] = 0;
- 		 }
- 		 
- 		
- 	}
-	
+
 	//=== EXPORT  ==============================================================================
 	
 	public String get1Pixel(){
@@ -753,19 +710,19 @@ public class Tile {
 		
 		switch(channel) {
 		  case "red":
-			  redPixels=this.copyMatrix(RGBmatrix);
+			  redPixels=Utils.copyMatrix(RGBmatrix);
 			  break;
 		    
 		  case "green":
-			  greenPixels=this.copyMatrix(RGBmatrix);
+			  greenPixels=Utils.copyMatrix(RGBmatrix);
 			  break;
 			
 		  case "blue":
-			  bluePixels=this.copyMatrix(RGBmatrix);
+			  bluePixels=Utils.copyMatrix(RGBmatrix);
 			  break;
 			  
 		  case "alpha":
-			  alphaPixels=this.copyMatrix(RGBmatrix);
+			  alphaPixels=Utils.copyMatrix(RGBmatrix);
 			  break;
 			  
 		  default:
@@ -868,25 +825,31 @@ public class Tile {
 	
 	//=== additional tools ========================================================================
 	
-	public void add_text(String text, int size, Color mycolor, int x, int y) {
-		
+	public void mark(Color mycolor, String text, int fontsize) {
 
 		//output Img		
 		BufferedImage imgWithText = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = imgWithText.createGraphics();
 
 		// draw Text
-		Font font = new Font("Arial", Font.BOLD, size);
+		Font font = new Font("Arial", Font.BOLD, fontsize);
 		g2d.setFont(font);
 		g2d.setColor(mycolor);
-		
+
 		Rectangle2D bounds;
 		bounds=font.getStringBounds(text, g2d.getFontRenderContext());
 		int stringWidth= (int) bounds.getWidth();
-		
-		//offset if exceeding margin
+
+
+		//Text Location
+		int x = this.get_center_x(false);
+		int y = this.get_center_y(false);
+
 		if(x+stringWidth>=width) x= x-((x+stringWidth)-width);
 		if(x<0) x= 0;
+
+		//draw Rectangles
+		this.drawSquare();
 		
 		g2d.drawImage(this.getBufferedImage(), 0, 0, null);
 		g2d.drawString(text, x, y);
@@ -896,17 +859,37 @@ public class Tile {
 	
 
 	}//end write image
-		
-	private int[][] copyMatrix(int[][] matrix){
-		
-		int[][] output=new int[matrix.length][matrix[0].length];
-		
-		for(int i=0; i<matrix.length;i++){
-			for(int j=0; j<matrix[0].length; j++) output[i][j]=matrix[i][j];
+
+	public void drawSquare() {
+
+		for (int h=0; h<this.height;h++) {
+
+			redPixels[h][0] = 255;
+			redPixels[h][this.width-1] = 255;
+
+			greenPixels[h][0] = 0;
+			greenPixels[h][this.width-1] = 0;
+
+			bluePixels[h][0] = 0;
+			bluePixels[h][this.width-1] = 0;
 		}
-		
-		return output;
-	}//end copyMatrix
+
+
+		for (int w=0; w<this.width;w++) {
+
+			redPixels[0][w] = 255;
+			redPixels[this.height-1][w] = 255;
+
+			greenPixels[0][w] = 0;
+			greenPixels[this.height-1][w] = 0;
+
+			bluePixels[0][w] = 0;
+			bluePixels[this.height-1][w] = 0;
+		}
+
+
+	}
+
 		
 	private double averageMatrix(int [][] matrix){
 		
