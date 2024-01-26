@@ -1,4 +1,6 @@
  package filters;
+import com.sun.source.tree.NewArrayTree;
+
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -19,6 +21,8 @@ public class StatFilter {
 		
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
+
+		System.out.println("StatFilter: loops v3");
 
 	}//end constructor
 	
@@ -57,58 +61,44 @@ public class StatFilter {
 	//CREATE TILES & SORTING  ==============================================================================
 
 	public void createTiles(int rows, int columns ){
-		
+
 		//height and width of sub matrixes
 		int hs,ws;
-				
+
 		hs= (int) Math.floor(image.getHeight()/rows);
 		ws= (int) Math.floor(image.getWidth()/columns);
-		
+
 		tiles = new Tile [rows][columns];
 		this.sortedTiles = new int [rows*columns];
-		
+
 		int t = 0;
-		
+
 		//for each  tile  c=columns r=rows
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
-				
-				int [][] tempR = new int[hs][ws];
-				int [][] tempG = new int[hs][ws];
-				int [][] tempB = new int[hs][ws];
-				int [][] tempA = new int[hs][ws];
-				
-				for (int h=0; h<hs; h++){
-					for (int w=0; w<ws; w++){
-						
-						int offsetH = (r)*hs;
-						int offsetW = (c)*ws;		
-						
-						tempR[h][w]= image.getMatrix("red")[offsetH+h][offsetW+w];
-						tempG[h][w]= image.getMatrix("green")[offsetH+h][offsetW+w];
-						tempB[h][w]= image.getMatrix("blue")[offsetH+h][offsetW+w];
-						tempA[h][w]= image.getMatrix("alpha")[offsetH+h][offsetW+w];
-						
-					}	//end height
-				}//end width
-				
-				tiles[r][c]=new Tile();		
-				tiles[r][c].setMatrix("red", tempR);
-				tiles[r][c].setMatrix("green", tempG);
-				tiles[r][c].setMatrix("blue", tempB);
-				tiles[r][c].setMatrix("alpha", tempA);
-				
-				tiles[r][c].setTlx((c)*ws); //-1 because the matrix is indexed from 0
-				tiles[r][c].setTly((r)*hs);
-							
+
+					tiles[r][c] = new Tile();
+					tiles[r][c].setHeight(hs);
+					tiles[r][c].setWidth(ws);
+					tiles[r][c].setTlx((c) * ws); //-1 because the matrix is indexed from 0
+					tiles[r][c].setTly((r) * hs);
+
+				for (String channel : this.image.channels) {
+					for (int h = 0; h < hs; h++) {
+						for (int w = 0; w < ws; w++) {
+
+							int offsetH = (r) * hs;
+							int offsetW = (c) * ws;
+							int value = image.getMatrix(channel)[offsetH + h][offsetW + w];
+							tiles[r][c].setPixel(channel, h, w, value);
+
+						}//end width
+					}//end height
+				}// for each channel
+
 				this.sortedTiles[t] = t;
-				
-				tempR=null;
-				tempG=null;
-				tempB=null;
-				tempA=null;
-				
 				t++;
+
 			}//end rows
 		}//end columns
 	}
@@ -548,7 +538,7 @@ public class StatFilter {
 	
 	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
 		
-		/*** Buffered Image stitching all tiles together in one image ***/ 
+		/*** Buffered Image stitching all tiles together in one single image Tile ***/
 		
 		int rows = tiles.length;
 		int columns = tiles[0].length;
@@ -560,65 +550,45 @@ public class StatFilter {
 	
 		
 		//final image
-		int [][] redPixels = new int [subh*rows][subw*columns];
-		int [][] greenPixels = new int [subh*rows][subw*columns];
-		int [][] bluePixels = new int [subh*rows][subw*columns];
-		
+		Tile out =  new Tile();
+		out.setHeight(subh*rows);
+		out.setWidth(subw*columns);
+
 		int i=0;
 			
 		// stitching all tiles together
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
-				
-				Tile render_tile = new Tile();
+
+				Tile render_tile =  new Tile();
 				render_tile.clone(tiles[r][c]);
-				
+
 				if  (drawTiles) {	
 					int x = render_tile.get_center_x(false);
 					int y = render_tile.get_center_y(false);
 					render_tile.add_text(String.valueOf(i), 24, Color.RED,x,y);
 					render_tile.drawSquare();				
 				}
-				
-				
-				for (int h=0; h<subh; h++){
-					for (int w=0; w<subw; w++){
-						
-						//place section in the final image
-						redPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("red") [h][w];
-						greenPixels[h+offsetH][w+offsetW]= render_tile.getMatrix("green") [h][w];
-						bluePixels[h+offsetH][w+offsetW]= render_tile.getMatrix("blue") [h][w];
-												
-						offsetH=subh*r;
-						offsetW=subw*c;
-				
-					}//width
-				}//height 
-				
-				i++;
+
+				for (String channel : this.image.channels) {
+					for (int h = 0; h < subh; h++) {
+						for (int w = 0; w < subw; w++) {
+
+							//place tile pixels in the final image
+							int value = render_tile.getMatrix(channel)[h][w];
+							out.setPixel(channel, h + offsetH, w + offsetW, value);
+							offsetH = subh * r;
+							offsetW = subw * c;
+
+						}//width
+					}//height
+				}//for each channel
+
 			}//columns
 		}//rows
-		
-		Tile imgout = new Tile();
-		
-		if(RGBrescale) {
-			redPixels = this.rescaleRGB(redPixels, 0, 255);
-			greenPixels = this.rescaleRGB(greenPixels, 0, 255);
-			bluePixels  = this.rescaleRGB(bluePixels, 0, 255);
-			
-		}
-		
-		imgout.setMatrix("red", redPixels);
-		imgout.setMatrix("green", greenPixels);
-		imgout.setMatrix("blue", bluePixels);
-		imgout.setMatrix("alpha", 255);
-		
-		
-		redPixels=null;
-		greenPixels=null;
-		bluePixels=null;
-		
-		return imgout;
+		if(RGBrescale) out.rescaleRGB(0,255);
+
+		return out;
 	
 	}
 	
@@ -626,27 +596,7 @@ public class StatFilter {
 	
 	//TOOLS ===================================================================================
 	
-	private int [][] rescaleRGB (int[][] zmatrix, int newmin, int newmax){
-		
-			
-		//resize z variable to 0-255
-		int max = getMaxValue(zmatrix);
-		int min = getMinValue(zmatrix);
-		
-		double range = max-min ==0 ? 1 : max-min;
-		
 
-		int[][] RGBmatrix = new int [zmatrix.length][zmatrix[0].length];
-		
-		for(int j=0; j<RGBmatrix.length;j++){
-			for(int i=0;i<RGBmatrix[0].length;i++){			
-				RGBmatrix[j][i]=(int) (newmin + ((zmatrix[j][i]-min)/range)* (newmax - newmin));
-			}//i
-		}//j
-		
-		return RGBmatrix;
-		
-	}// end resizeToRGB
 	
 	
  	private Tile build_Tile(int tlx, int tly, int width,int height) {
@@ -731,33 +681,7 @@ public class StatFilter {
 		
 	}
 	
-	
-	
-    private static int getMaxValue(int[][] numbers) {
-    	int maxValue = numbers[0][0];
-        for (int j = 0; j < numbers.length; j++) {
-            for (int i = 0; i < numbers[j].length; i++) {
-                if (numbers[j][i] > maxValue) {
-                    maxValue = numbers[j][i];
-                }
-            }
-        }
-        return maxValue;
-    }
 
-    private static int getMinValue(int[][] numbers) {
-    	int minValue = numbers[0][0];
-        
-        for (int j = 0; j < numbers.length; j++) {
-            for (int i = 0; i < numbers[j].length; i++) {
-                if (numbers[j][i] < minValue ) {
-                    minValue = numbers[j][i];
-                }
-            }
-        }
-        return minValue ;
-    
-    }
 
     public int[] getTileCoordinates(int index) {
 				
@@ -793,7 +717,7 @@ public class StatFilter {
 		  
 		dimensions[0] = Integer.parseInt(s[0]);
         dimensions[1] = Integer.parseInt(s[1]);
-	
+
         return dimensions;
 		
          

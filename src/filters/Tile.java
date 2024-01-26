@@ -33,7 +33,7 @@ public class Tile {
 	int tlx;
 	int tly;
 	
-	String [] channels = {"red","green","blue"};
+	String [] channels = {"red","green","blue", "alpha"};
 		
 	public Tile()  {
 		
@@ -52,20 +52,17 @@ public class Tile {
 	//import image from another RGBHolder Object
 	public void clone(Tile ih){
 		
-		this.height=ih.getHeight();
-		this.width=ih.getWidth();
-		
-		bluePixels= new int[height][width];
-		greenPixels= new int[height][width];
-		redPixels= new int[height][width];
-		alphaPixels	= new int[height][width];
-		
+		this.setHeight(ih.getHeight());
+		this.setWidth(ih.getWidth());
+
 		for(String c: this.channels) {
-			
-			int[][] matrix = this.copyMatrix(ih.getMatrix(c));
-			this.setMatrix(c, matrix);
+
+			this.setMatrix(c, ih.getMatrix(c));
+
 			
 		}
+
+
 	
 
 	}//end setImage
@@ -658,7 +655,6 @@ public class Tile {
 	
 	public BufferedImage getBufferedImage() {
 		
-		
 		//prepare the buffered output image
 		BufferedImage imgBuf = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);;
 		
@@ -752,8 +748,8 @@ public class Tile {
 		
 	public void setMatrix(String channel, int [][] RGBmatrix) {
 		
-		this.setHeight(RGBmatrix.length);
-		this.setWidth(RGBmatrix[0].length);
+		//this.setHeight(RGBmatrix.length);
+		//this.setWidth(RGBmatrix[0].length);
 		
 		switch(channel) {
 		  case "red":
@@ -822,7 +818,7 @@ public class Tile {
 	public int getWidth(){ return width;}
 	
 	public void setHeight(int h){
-		height=h;
+		this.height=h;
 
 		bluePixels= new int[height][width];
 		greenPixels= new int[height][width];
@@ -955,11 +951,35 @@ public class Tile {
 		return colour;
 		
 	}//end getpixelcolour
-	
-	
+	public void rescaleRGB (int newmin, int newmax){
+
+		for (String c: this.channels){
+
+			//resize z variable to 0-255
+			int max = Utils.getMaxValue(this.getMatrix(c));
+			int min = Utils.getMinValue(this.getMatrix(c));
+
+			double range = max-min ==0 ? 1 : max-min;
+
+			for(int h=0; h<this.getHeight();h++){
+				for(int w=0;w<this.getWidth();w++){
+
+					int value =(int) (newmin + ((this.getMatrix(c)[h][w]-min)/range)* (newmax - newmin));
+					this.setPixel(c, h, w, value);
+
+				}//i
+			}//j
+		}
+
+	}// end resizeToRGB
+
+
+
+
 }//end class
-	
-	
+
+
+
 	
 
 
