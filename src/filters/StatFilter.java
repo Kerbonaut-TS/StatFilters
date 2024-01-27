@@ -291,10 +291,7 @@ public class StatFilter {
 		//pooling operations
 		
 			case "mean":
-				int[] rgb = tiles[r][c].mean();
-				tiles[r][c].setMatrix("red", rgb[0]);
-				tiles[r][c].setMatrix("green", rgb[1]);
-				tiles[r][c].setMatrix("blue", rgb[2]);
+				tiles[r][c].mean();
 				break;
 				
 			case "std.dev":
@@ -303,9 +300,7 @@ public class StatFilter {
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
 				break;
-				
-		
-		
+
 		//transformations				
 			case "log":
 				tiles[r][c].log();

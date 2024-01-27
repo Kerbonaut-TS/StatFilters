@@ -33,10 +33,10 @@ public class Utils
     public static int getMinValue(int[][] numbers) {
         int minValue = numbers[0][0];
 
-        for (int j = 0; j < numbers.length; j++) {
-            for (int i = 0; i < numbers[j].length; i++) {
-                if (numbers[j][i] < minValue ) {
-                    minValue = numbers[j][i];
+        for (int[] number : numbers) {
+            for (int j : number) {
+                if (j < minValue) {
+                    minValue = j;
                 }
             }
         }

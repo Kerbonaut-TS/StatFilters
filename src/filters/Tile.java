@@ -209,7 +209,7 @@ public class Tile {
 			for (int w=0; w<width;w++){
 				for (String c : this.channels) {
 					int value = 255 - this.getMatrix(c)[h][w];
-					this.setPixel(tlx,  h, w, value );
+					this.setPixel(c,  h, w, value );
 				}
 			}//end height			
 		}// end width
@@ -234,54 +234,30 @@ public class Tile {
 	// POOLING FILTERS  ========================================================================
 	
 	public void sqrt() {
-		
-		
-		for (int h=0; h<this.height;h++){
-			for (int w=0; w<this.width;w++){			
-				redPixels[h][w] = (int) Math.sqrt(redPixels[h][w]);
-				greenPixels[h][w] =(int) Math.sqrt(greenPixels[h][w]);
-				bluePixels[h][w]=(int) Math.sqrt(bluePixels[h][w]);
-			}//end width
+
+		for (String c :this.channels){
+			Stats.transform("sqrt", this.getMatrix(c));
 		}//end height 
 		
 	}
 		
-	public int[] mean() {
+	public void mean() {
+
+		for (String c :this.channels){
+			 int value = Stats.calculate("mean", this.getMatrix(c));
+			 this.setMatrix(c,value);
+
+		}//end height
 			
-			int[] rgbAVG = new int[3];	
-			
-			double sumR=0;
-			double sumG=0;
-			double sumB=0;
-			
-			double n = this.height*this.width;
-			
-			for (int h=0; h<this.height;h++){
-				for (int w=0; w<this.width;w++){			
-					sumR=sumR+redPixels[h][w];
-					sumG=sumG+greenPixels[h][w];
-					sumB=sumB+bluePixels[h][w];			
-				}//end width
-			}//end height 
-			
-		
-			rgbAVG[0] = (int) Math.round((sumR)/n);
-			rgbAVG[1] = (int) Math.round((sumG)/n);
-			rgbAVG[2] = (int) Math.round((sumB)/n);
-			
-			return rgbAVG;
-			
-		}
+	}
     
 	public double hue() {
-		
-		int[] rgbAVG = this.mean();
-		
+
 		float rp,gp,bp, max,min,hue;
 		
-		rp = rgbAVG[0]/255f;
-		gp = rgbAVG[1]/255f;
-		bp = rgbAVG[2]/255f;
+		rp = Stats.calculate("mean", this.getMatrix("red"))/255f;
+		gp = Stats.calculate("mean", this.getMatrix("green"))/255f;
+		bp = Stats.calculate("mean", this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
 		min = Math.min(Math.min(rp,gp),bp);
@@ -296,13 +272,11 @@ public class Tile {
 	
 	public double saturation(){
 		
-		int[] rgbAVG = this.mean();
-		
 		float rp,gp,bp, max,min,saturation;
-		
-		rp = rgbAVG[0]/255f;
-		gp = rgbAVG[1]/255f;
-		bp = rgbAVG[2]/255f;
+
+		rp = Stats.calculate("mean", this.getMatrix("red"))/255f;
+		gp = Stats.calculate("mean", this.getMatrix("green"))/255f;
+		bp = Stats.calculate("mean", this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
 		min = Math.min(Math.min(rp,gp),bp);
@@ -317,14 +291,14 @@ public class Tile {
 	}
 	
 	public double brightness() {
-		
-		int[] rgbAVG = this.mean();
-		
+
 		float  max, brightness;
 
+		int rp = Stats.calculate("mean", this.getMatrix("red"));
+		int gp = Stats.calculate("mean", this.getMatrix("green"));
+		int bp = Stats.calculate("mean", this.getMatrix("blue"));
 		
-		max = Math.max(Math.max(rgbAVG[0],rgbAVG[1]),rgbAVG[2]);
-		
+		max = Math.max(Math.max(rp,gp),bp);
 		brightness = max/255f *100 ;
 		
 		
@@ -524,25 +498,28 @@ public class Tile {
 		
 	public Dictionary<String,Double> getStats() {
 		
-		   Dictionary<String,Double> stats = new Hashtable();
-		   
-		   double mean = (this.mean()[0]+this.mean()[1]+this.mean()[2])/3;
-		   
-           // put() method
-		   stats.put("mean", mean);
-		   stats.put("std.dev", this.std_dev());
-		   stats.put("entropy", this.entropy());
-		   stats.put("red", (double) this.mean()[0]);
-		   stats.put("green",(double)  this.mean()[1]);
-		   stats.put("blue", (double) this.mean()[2]);
-		   stats.put("hue", this.hue());
-		   stats.put("saturation", this.saturation());
-		   stats.put("brightness", this.brightness());
+		Dictionary<String,Double> stats = new Hashtable();
 
+		double avgR = Stats.calculate("mean", this.getMatrix("red"));
+		double avgG = Stats.calculate("mean", this.getMatrix("green"));
+		double avgB = Stats.calculate("mean", this.getMatrix("blue"));
 
-           //print out Hashtable out
-           //System.out.println(stats);
-           
+		double avg = (avgR+avgG+avgB)/3;
+
+		// put() method
+		stats.put("mean", avg);
+		stats.put("std.dev", this.std_dev());
+		stats.put("entropy", this.entropy());
+		stats.put("red", avgR);
+		stats.put("green", avgG);
+		stats.put("blue", avgB);
+		stats.put("hue", this.hue());
+		stats.put("saturation", this.saturation());
+		stats.put("brightness", this.brightness());
+
+		//print out Hashtable out
+		//System.out.println(stats);
+
            
 		return stats;
 	}
