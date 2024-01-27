@@ -158,7 +158,7 @@ public class StatFilter {
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = this.get_measure(tile, measure);
+				metrics[i][2] = tile.getStats().get(measure);
 				i++;
 
 			}//end x
@@ -225,74 +225,18 @@ public class StatFilter {
 		//create a list of indexes and measures
 		for (int t = 0; t<sortedTiles.length; t++){			
 			measures[t][0] = t;	
-			measures[t][1] = this.get_measure(this.getTile(t), measure);
+			measures[t][1] = this.getTile(t).getStats().get(measure);
 		}
 		
 		// Sorting based on the second column (index 1)
 		Arrays.sort(measures, Comparator.comparingDouble(row -> row[1]*k));
 		for (int i=0; i<this.sortedTiles.length; i++)  this.sortedTiles[i] =  (int) measures[i][0];
-		Utils.logger(this.sortedTiles);
+		//Utils.logger(this.sortedTiles);
 		return this.sortedTiles;
 		
 	} //end 
 	
-	private double get_measure(Tile t, String measure) {
-		
-		int[] avgs = null;
-		double value = 0;
-		
-		switch(measure) {
-		
-		  case "entropy":
-			  value = t.entropy();
-			  break;
-			  
-		  case "mean":
-			  avgs = t.mean();
-			  value = (double) avgs[0]+avgs[1]+avgs[2]/3;
-			  break;
-			  
-		  case "brightness":
-			  value=t.brightness();
-			  break;
-			  
-		  case "saturation":	  
-			  value=t.saturation();
-			  break;
-			  
-		  case "hue": 
-			  value=t.hue();
-			  break;
-			  
-			  
-		  case "std.dev":
-			  value=t.std_dev();
-			  break;
-			  
-		  case "red":
-			  avgs = t.mean();
-			  value = (double) avgs[0];
-			  break;
-			  
-		  case "green":
-			 
-			  avgs = t.mean();
-			  value = (double) avgs[1];
-			  break;
-			  
-		  case "blue":
-			  avgs = t.mean();
-			  value = (double) avgs[2];
-			  
-		  default:
-			  break;
-		}//end switch
-		
-		return value;
-		
-		
-		
-	}
+
 
 	public BufferedImage percentileMask(String metric, double[] intervals) throws IOException {
 		
@@ -309,7 +253,6 @@ public class StatFilter {
 			int value =(int)  Math.floor(intervals[i]*255);
 			interval_end = (int)  Math.floor(intervals[i]*T);
 			
-			System.out.println("Checking Interval "+intervals[i]+" from "+interval_begins+" to " + interval_end+ " of "+T +" setting values of " + value);
 			for (int t = interval_begins; t<interval_end; t++ ) {
 				
 				Tile tile = this.getTile(id_array[t]);

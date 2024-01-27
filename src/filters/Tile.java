@@ -179,7 +179,8 @@ public class Tile {
 		
 		
 		for(int j=0; j<height;j++){
-			for(int i=0;i<width;i++){							
+			for(int i=0;i<width;i++){
+
 				redPixels[j][i]= (int) Math.round((redPixels[j][i]-avgR)/stddevR);	
 				greenPixels[j][i]= (int) Math.round((greenPixels[j][i]-avgG)/stddevG);
 				bluePixels[j][i]= (int) Math.round((bluePixels[j][i]-avgB)/stddevB);
@@ -202,23 +203,20 @@ public class Tile {
 	}
 
 	public void invert( ){
-		
-		
+
 		//get Image matrix
 		for (int h=0; h<height;h++){
 			for (int w=0; w<width;w++){
-				redPixels[h][w]=255-redPixels[h][w];
-				greenPixels[h][w]=255-greenPixels[h][w];
-				bluePixels[h][w]=255-bluePixels[h][w];
-							
+				for (String c : this.channels) {
+					int value = 255 - this.getMatrix(c)[h][w];
+					this.setPixel(tlx,  h, w, value );
+				}
 			}//end height			
 		}// end width
-		
-		
+
 	}
 	
 	public void multiply( double multiplier){
-		
 
 		//get Image matrix
 		for (int h=0; h<height;h++){
@@ -534,9 +532,9 @@ public class Tile {
 		   stats.put("mean", mean);
 		   stats.put("std.dev", this.std_dev());
 		   stats.put("entropy", this.entropy());
-		   stats.put("avg.red", (double) this.mean()[0]);
-		   stats.put("avg.green",(double)  this.mean()[1]);
-		   stats.put("avg.blue", (double) this.mean()[2]);
+		   stats.put("red", (double) this.mean()[0]);
+		   stats.put("green",(double)  this.mean()[1]);
+		   stats.put("blue", (double) this.mean()[2]);
 		   stats.put("hue", this.hue());
 		   stats.put("saturation", this.saturation());
 		   stats.put("brightness", this.brightness());
@@ -668,10 +666,7 @@ public class Tile {
 			  System.out.println("Invalid: set red, green, blue or alpha");
 		
 		}
-		
-	
-	
-		
+
 	}
 	
 	public void setPixel(String channel, int h, int w, int value){
