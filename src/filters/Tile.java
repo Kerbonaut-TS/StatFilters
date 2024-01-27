@@ -386,51 +386,7 @@ public class Tile {
 	}
 	
 	// === IMG OPERATIONS ======================================================================
-	
-	public void crop(double percent) {
-			
-			int newH = (int) Math.round(this.height*percent);
-			int newW = (int) Math.round(this.width*percent);
-			
-			int dh = height-newH;
-			int dw =width-newW;
-			
-			this.setTlx(Math.round(dw/2));
-			this.setTly(Math.round(dh/2));
-	
-			int[][] newred;
-			int[][] newgreen;
-			int[][] newblue;
-			int[][] newalpha;
-			
-			
-			newblue		= new int[newH][newW];
-			newgreen	= new int[newH][newW];
-			newred		= new int[newH][newW];
-			newalpha	= new int[newH][newW];
-			
-			
-	
-			for(int j=tly; j<(height-dh/2);j++){
-				for(int i=tlx;i<(width-dw/2);i++){							
-					newred[j-dh/2][i-dw/2]= redPixels[j][i];	
-					newgreen[j-dh/2][i-dw/2]= greenPixels[j][i];
-					newblue[j-dh/2][i-dw/2]= bluePixels[j][i];
-					newalpha[j-dh/2][i-dw/2]= alphaPixels[j][i];
-	
-				}//i
-			}//j
-			
-			this.setHeight(newH);
-			this.setWidth(newW);
-			
-			this.setMatrix("green", newgreen);
-			this.setMatrix("red", newred);
-			this.setMatrix("blue", newblue);
-			this.setMatrix("alpha",newalpha);
-			
-		}
-	
+
  	public Tile resize (int newHeight, int newWidth) throws IOException{
 		
 		BufferedImage img = this.getBufferedImage();	

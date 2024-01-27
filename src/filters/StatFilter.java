@@ -408,7 +408,22 @@ public class StatFilter {
 		return tiles[r][c];
 		
 	}
-			
+
+	public Tile crop(double percent) {
+
+		Tile current = this.composeImage(false, true);
+
+		int newH = (int) Math.round(current.height*percent);
+		int newW = (int) Math.round(current.width*percent);
+
+		int tlx = Math.round((current.height-newH)/2);
+		int tly = Math.round((current.width-newW)/2);
+
+		return this.select_tile_by_coordinates(tlx,tly, newW, newH);
+
+	}
+
+
 	public void  saveImage (String filepath, String format) throws IOException {
 		
 		this.composeImage(false, true).savetoFile(filepath, format);
