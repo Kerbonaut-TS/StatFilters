@@ -166,56 +166,27 @@ public class Tile {
 	//==== PIXEL FUNCTIONS/TRANSFORM ==================================================================
 	
 	public void standardise(){
-		
-		//calculate z variable
-		double avgR = this.averageMatrix(redPixels);
-		double stddevR = this.stdDevMatrix(redPixels);
-		
-		double avgG = this.averageMatrix(greenPixels);
-		double stddevG = this.stdDevMatrix(greenPixels);
-		
-		double avgB = this.averageMatrix(bluePixels);
-		double stddevB = this.stdDevMatrix(bluePixels);
-		
-		
-		for(int j=0; j<height;j++){
-			for(int i=0;i<width;i++){
-
-				redPixels[j][i]= (int) Math.round((redPixels[j][i]-avgR)/stddevR);	
-				greenPixels[j][i]= (int) Math.round((greenPixels[j][i]-avgG)/stddevG);
-				bluePixels[j][i]= (int) Math.round((bluePixels[j][i]-avgB)/stddevB);
-			}//i
-		}//j
-		
+		for (String c: this.channels) Stats.standardise(this.getMatrix(c));
 	}//end standardize
 
 	public void log() {
-
-		for (int h=0; h<this.height;h++){
-			for (int w=0; w<this.width;w++){			
-				redPixels[h][w] = (redPixels[h][w] == 0) ?  (int) Math.log(redPixels[h][w]+1) :  (int) Math.log(redPixels[h][w]);
-				greenPixels[h][w] = (greenPixels[h][w] == 0) ?  (int) Math.log(greenPixels[h][w]+1) :  (int) Math.log(greenPixels[h][w]);
-				bluePixels[h][w] = (bluePixels[h][w] == 0) ?  (int) Math.log(bluePixels[h][w]+1) :  (int) Math.log(bluePixels[h][w]);
-			}//end width
-		}//end height 
-		
-		
+		for (String c: this.channels) Stats.transform("log", this.getMatrix(c));
 	}
 
 	public void invert( ){
-
-		//get Image matrix
-		for (int h=0; h<height;h++){
-			for (int w=0; w<width;w++){
-				for (String c : this.channels) {
-					int value = 255 - this.getMatrix(c)[h][w];
-					this.setPixel(c,  h, w, value );
-				}
-			}//end height			
-		}// end width
-
+		for (String c: this.channels) Stats.transform("invert", this.getMatrix(c));
 	}
-	
+
+	public void sqrt() {
+		for (String c :this.channels) Stats.transform("sqrt", this.getMatrix(c));
+	}
+
+	public void  mean() {
+
+		for (String c : channels) this.setMatrix(c, Stats.mean(this.getMatrix(c)));
+	}
+
+
 	public void multiply( double multiplier){
 
 		//get Image matrix
@@ -224,40 +195,82 @@ public class Tile {
 				redPixels[h][w] = (int) Math.floor(  redPixels[h][w] * multiplier);
 				greenPixels[h][w] = (int) Math.floor(  greenPixels[h][w] * multiplier);
 				bluePixels[h][w] = (int) Math.floor(  bluePixels[h][w] * multiplier);
-			}//end height			
+			}//end height
 		}// end width
-		
-		
+
+
 	}
-		
+	public void sobel() {
 
-	// POOLING FILTERS  ========================================================================
-	
-	public void sqrt() {
 
-		for (String c :this.channels){
-			Stats.transform("sqrt", this.getMatrix(c));
-		}//end height 
-		
-	}
-		
-	public void mean() {
+		int sx[][] = new int[][]
+				{
+						{-1,0,1},
+						{-2,0,2},
+						{-1,0,1}
+				};
 
-		for (String c :this.channels){
-			 int value = Stats.calculate("mean", this.getMatrix(c));
-			 this.setMatrix(c,value);
+		int sy[][] = new int[][]
+				{
+						{-1,-2,-1},
+						{0,0,0},
+						{1,2,1}
+				};
 
+		int gx,gy,G;
+
+		gx = 0;
+		gy = 0;
+		G = 0;
+
+		//iterate in the 3x3 tile
+		for (int h=0; h<this.height;h++){
+			for (int w=0; w<this.width;w++){
+				int pixel = (int) Math.floor((redPixels[h][w]+greenPixels[h][w] +bluePixels[h][w])/3) ;
+
+				gx = gx + pixel *sx[h][w];
+				gy = gy + pixel *sy[h][w];
+
+			}//end width
 		}//end height
-			
+
+		G = Math.min( (int) Math.sqrt( Math.pow((double) gx, 2) + Math.pow((double) gy, 2)), 255);
+
+
+		//set pixels equal to gradient
+		for (int h=0; h<this.height;h++){
+			for (int w=0; w<this.width;w++){
+
+				redPixels[h][w] = G;
+				greenPixels[h][w] = G;
+				bluePixels[h][w] = G;
+
+			}//end width
+		}//end height
+
+
 	}
+
+
+	// TILE STATISTICS  ========================================================================
+
+	public double avg() {
+
+		double avgR =  Stats.mean( this.getMatrix("red"));
+		double avgG = Stats.mean( this.getMatrix("green"));
+		double avgB = Stats.mean( this.getMatrix("blue"));
+
+		return (avgR+avgG+avgB)/3;
+	}
+
     
 	public double hue() {
 
 		float rp,gp,bp, max,min,hue;
-		
-		rp = Stats.calculate("mean", this.getMatrix("red"))/255f;
-		gp = Stats.calculate("mean", this.getMatrix("green"))/255f;
-		bp = Stats.calculate("mean", this.getMatrix("blue"))/255f;
+
+		rp = Stats.mean( this.getMatrix("red"))/255f;
+		gp = Stats.mean( this.getMatrix("green"))/255f;
+		bp = Stats.mean( this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
 		min = Math.min(Math.min(rp,gp),bp);
@@ -274,9 +287,9 @@ public class Tile {
 		
 		float rp,gp,bp, max,min,saturation;
 
-		rp = Stats.calculate("mean", this.getMatrix("red"))/255f;
-		gp = Stats.calculate("mean", this.getMatrix("green"))/255f;
-		bp = Stats.calculate("mean", this.getMatrix("blue"))/255f;
+		rp = Stats.mean( this.getMatrix("red"))/255f;
+		gp = Stats.mean( this.getMatrix("green"))/255f;
+		bp = Stats.mean( this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
 		min = Math.min(Math.min(rp,gp),bp);
@@ -286,33 +299,31 @@ public class Tile {
 		saturation = saturation*100;
 		
 		return Math.floor(saturation);
-		
-		
+
 	}
 	
 	public double brightness() {
 
 		float  max, brightness;
 
-		int rp = Stats.calculate("mean", this.getMatrix("red"));
-		int gp = Stats.calculate("mean", this.getMatrix("green"));
-		int bp = Stats.calculate("mean", this.getMatrix("blue"));
+		float rp = Stats.mean( this.getMatrix("red"))/255f;
+		float gp = Stats.mean( this.getMatrix("green"))/255f;
+		float bp = Stats.mean( this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
 		brightness = max/255f *100 ;
 		
 		
 		return Math.floor(brightness);
-		
-		
+
 	}
 	
 	public double std_dev(){
 		
 		double sigmar, sigmag, sigmab;
-		sigmar=this.stdDevMatrix(redPixels);
-		sigmag=this.stdDevMatrix(greenPixels);
-		sigmab=this.stdDevMatrix(bluePixels);
+		sigmar = Stats.std_dev( this.getMatrix("red"));
+		sigmag = Stats.std_dev( this.getMatrix("green"));
+		sigmab = Stats.std_dev( this.getMatrix("blue"));
 		
 		return sigmar+sigmag+sigmab;
 	
@@ -320,6 +331,7 @@ public class Tile {
 	
 	public  double entropy() {
         // Create a map to count the frequency of each color
+
         Map<Color, Integer> colorCounts = new HashMap<>();
         int [][] red = this.getMatrix("red");
         int [][] blue = this.getMatrix("blue");
@@ -346,57 +358,32 @@ public class Tile {
         return entropy;
     }
 
-	public void sobel() {
-	
-			
-			int sx[][] = new int[][]
-			{ 
-				  {-1,0,1},
-		          {-2,0,2},
-		          {-1,0,1}
-			};
-			
-			int sy[][] = new int[][]
-			{ 
-				  {-1,-2,-1},
-		          {0,0,0},
-		          {1,2,1}
-		    };
-		    
-		    int gx,gy,G;
-		    
-		    gx = 0;
-		    gy = 0;
-		    G = 0;
-		    
-		    //iterate in the 3x3 tile
-			for (int h=0; h<this.height;h++){
-				for (int w=0; w<this.width;w++){			
-					int pixel = (int) Math.floor((redPixels[h][w]+greenPixels[h][w] +bluePixels[h][w])/3) ;
-					
-				      gx = gx + pixel *sx[h][w];
-				      gy = gy + pixel *sy[h][w];
+	public Dictionary<String,Double> getStats() {
 
-				}//end width
-			}//end height 
-			
-		     G = Math.min( (int) Math.sqrt( Math.pow((double) gx, 2) + Math.pow((double) gy, 2)), 255);
+		Dictionary<String,Double> stats = new Hashtable();
 
-		     
-			//set pixels equal to gradient
-			for (int h=0; h<this.height;h++){
-				for (int w=0; w<this.width;w++){			
+		double avgR =  Stats.mean( this.getMatrix("red"));
+		double avgG = Stats.mean( this.getMatrix("green"));
+		double avgB = Stats.mean( this.getMatrix("blue"));
 
-				     redPixels[h][w] = G;
-				     greenPixels[h][w] = G;
-				     bluePixels[h][w] = G;
-					
-				}//end width
-			}//end height 
-			
-		    
-	}	   
-		
+		double avg = (avgR+avgG+avgB)/3;
+
+		// put() method
+		stats.put("mean", avg);
+		stats.put("std.dev", this.std_dev());
+		stats.put("entropy", this.entropy());
+		stats.put("red", avgR);
+		stats.put("green", avgG);
+		stats.put("blue", avgB);
+		stats.put("hue", this.hue());
+		stats.put("saturation", this.saturation());
+		stats.put("brightness", this.brightness());
+
+		//print out Hashtable out
+		//System.out.println(stats);
+
+		return stats;
+	}
 	
 	// === IMG OPERATIONS ======================================================================
 	
@@ -410,8 +397,6 @@ public class Tile {
 			
 			this.setTlx(Math.round(dw/2));
 			this.setTly(Math.round(dh/2));
-			
-			
 	
 			int[][] newred;
 			int[][] newgreen;
@@ -443,8 +428,6 @@ public class Tile {
 			this.setMatrix("red", newred);
 			this.setMatrix("blue", newblue);
 			this.setMatrix("alpha",newalpha);
-	
-			
 			
 		}
 	
@@ -496,33 +479,7 @@ public class Tile {
 
 	}//end getPixels
 		
-	public Dictionary<String,Double> getStats() {
-		
-		Dictionary<String,Double> stats = new Hashtable();
 
-		double avgR = Stats.calculate("mean", this.getMatrix("red"));
-		double avgG = Stats.calculate("mean", this.getMatrix("green"));
-		double avgB = Stats.calculate("mean", this.getMatrix("blue"));
-
-		double avg = (avgR+avgG+avgB)/3;
-
-		// put() method
-		stats.put("mean", avg);
-		stats.put("std.dev", this.std_dev());
-		stats.put("entropy", this.entropy());
-		stats.put("red", avgR);
-		stats.put("green", avgG);
-		stats.put("blue", avgB);
-		stats.put("hue", this.hue());
-		stats.put("saturation", this.saturation());
-		stats.put("brightness", this.brightness());
-
-		//print out Hashtable out
-		//System.out.println(stats);
-
-           
-		return stats;
-	}
 	
 	public BufferedImage getBufferedImage() {
 		
@@ -650,28 +607,28 @@ public class Tile {
 		
 		
 		if ( (value >= 0) && (value<=255)  ) {
-			
+
 			switch(channel) {
 			  case "red":
 				  redPixels[h][w] = value ;
 				  break;
-			    
+
 			  case "green":
 				   greenPixels[h][w] = value;
 				   break;
-				
+
 			  case "blue":
 				   bluePixels[h][w] = value;
 				   break;
-				  
+
 			  case "alpha":
 				   alphaPixels[h][w] = value;
 				   break;
-				  
+
 			  default:
 				  System.out.println("ERROR. Invalid channel: " + channel);
 				  System.exit(0);
-			
+
 			}//end switch
 		}else {
 			
@@ -719,8 +676,6 @@ public class Tile {
 		int offset = (absolute) ? this.tlx :  0; 
 		
 		return  offset + (int) ((float) width * 0.5);
-		
-		
 		
 	}
 	
@@ -801,44 +756,6 @@ public class Tile {
 
 	}
 
-		
-	private double averageMatrix(int [][] matrix){
-		
-		double sum=0;
-		
-		for(int j=0; j<matrix.length;j++){
-			for(int i=0;i<matrix[0].length;i++){
-				
-				sum=sum+matrix[j][i];
-						
-			}//i
-		}//j
-		
-		int n=matrix.length*matrix[0].length;
-		return sum/n;
-		
-	}//end average
-	
-	private double stdDevMatrix(int [][] matrix){
-		
-		double avg= this.averageMatrix(matrix);
-		double sum=0;
-		
-		for(int j=0; j<matrix.length;j++){
-			for(int i=0;i<matrix[0].length;i++){
-				
-				sum=sum + Math.pow(matrix[j][i]-avg, 2);
-						
-			}//i
-		}//j
-		
-		double n = matrix[0].length*matrix.length;
-		
-		return Math.sqrt(sum/n);
-		
-	
-	}//end standard deviation
-		
 	private Color getPixelColour(BufferedImage image, int x, int y){
 		
 		Color colour = new Color(image.getRGB(x, y));

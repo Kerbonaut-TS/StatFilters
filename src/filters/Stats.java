@@ -2,17 +2,19 @@ package filters;
 
 import java.awt.print.Printable;
 
-public class Stats {
+ final class Stats {
+
+     final static String[]  channels = {"red", "green", "blue"};
 
     public static int apply(String operator, int pixelA, int pixelB) {
-        /* applies an operator to two pixel values*/
+        /* applies an operator to two pixel values   int-> int */
 
         return switch (operator) {
-            case "diff" -> Stats.pixel_diff(pixelA, pixelB);
-            case "add" -> Stats.pixel_add(pixelA, pixelB);
-            case "avg" -> Stats.pixel_avg(pixelA, pixelB);
-            case "max" -> Stats.pixel_max(pixelA, pixelB);
-            case "min" -> Stats.pixel_min(pixelA, pixelB);
+            case "diff" -> (int) Math.max(pixelA - pixelB, 0);
+            case "add" ->  (int) Math.min(pixelA + pixelB, 255);
+            case "avg" ->  (int) Math.floor((pixelA + pixelB) * 0.5);
+            case "max" ->  (int) Math.max(pixelA, pixelB);
+            case "min" ->  (int) Math.min(pixelA, pixelB);
 
 
             default -> {
@@ -25,84 +27,47 @@ public class Stats {
 
     public static void transform(String function, int[][] matrix) {
         /* transform int[][] -> int[][] using the specified function*/
-
-        switch (function) {
-
-            case "sqrt" -> Stats.sqrt(matrix);
-
-            default -> {
-                System.out.println("Invalid operation: not recognized");
-            }
-
-        }
-        ;
-    }
-
-    public static int calculate(String function, int[][] matrix) {
-        /* aggregation function: calculates int[][] -> Y  */
-
-        return switch (function) {
-
-            case "mean" -> Stats.mean(matrix);
-
-            default -> {
-                System.out.println("Invalid operation: not recognized");
-                yield 0;
-            }
-
-        };
-    }
-
-
-    static private int pixel_diff(int pixelA, int pixelB) {
-
-        return (int) Math.max(pixelA - pixelB, 0);
-    }
-
-    static private int pixel_add(int pixelA, int pixelB) {
-
-        return (int) Math.min(pixelA + pixelB, 255);
-    }
-
-    static private int pixel_avg(int pixelA, int pixelB) {
-
-        return (int) Math.floor((pixelA + pixelB) * 0.5);
-    }
-
-    static private int pixel_max(int pixelA, int pixelB) {
-
-        return (int) Math.max(pixelA, pixelB);
-    }
-
-    static private int pixel_min(int pixelA, int pixelB) {
-
-        return (int) Math.min(pixelA, pixelB);
-    }
-
-
-    // POOLING FILTERS  ========================================================================
-
-    public static void sqrt(int[][] matrix) {
-
         for (int h = 0; h < matrix.length; h++) {
             for (int w = 0; w < matrix[0].length; w++) {
+                    switch (function) {
 
-                matrix[h][w] = (int) Math.sqrt(matrix[h][w]);
-
-            }//end width
-        }//end height
-
+                        case "sqrt" -> matrix[h][w] = (int) Math.sqrt(matrix[h][w]);
+                        case "log" -> matrix[h][w] = (matrix[h][w] == 0) ? (int) Math.log(matrix[h][w] + 1) : (int) Math.log(matrix[h][w]);
+                        case "invert" -> matrix[h][w] = 255 - matrix[h][w];
+                        default -> {
+                            System.out.println("Invalid operation: not recognized");
+                        }//end default
+                    }//end switch
+            }//end w
+        }//endh
     }
 
-    public static int mean(int[][] matrix) {
+     static public void standardise(int[][] matrix){
+
+         //calculate z variable
+         double avg = Stats.mean(matrix);
+         double stddev = Stats.std_dev(matrix);
+
+         for(int h=0; h<matrix.length; h++){
+             for(int w=0; w<matrix[0].length; w++){
+                 matrix[h][w]= (int) Math.round((matrix[h][w]-avg)/stddev);
+
+             }//i
+         }//j
+
+     }//end standardize
+
+     // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
+
+     static public int mean(int[][] matrix) {
 
         double sum = 0;
 
         double n = matrix.length * matrix[0].length;
 
         //sum
-        for (int h = 0; h < matrix.length; h++) {
-            for (int w = 0; w < matrix[0].length; w++) {
+         for (int h = 0; h < matrix.length; h++) {
+             for (int w = 0; w < matrix[0].length; w++) {
 
                 sum = sum + matrix[h][w];
 
@@ -112,7 +77,23 @@ public class Stats {
 
     }
 
+     static public double std_dev(int [][] matrix){
 
+         int avg= Stats.mean(matrix);
+         double sum=0;
+
+         for(int j=0; j<matrix.length;j++){
+             for(int i=0;i<matrix[0].length;i++){
+
+                 sum=sum + Math.pow(matrix[j][i]-avg, 2);
+
+             }//i
+         }//j
+
+         double n = matrix[0].length*matrix.length;
+         return Math.sqrt(sum/n);
+
+     }//end standard deviation
 
 
 }

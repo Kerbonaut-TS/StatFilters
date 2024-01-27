@@ -297,8 +297,8 @@ public class StatFilter {
 			case "std.dev":
 				value  = tiles[r][c].std_dev();
 				tiles[r][c].setMatrix("red",value);
-				tiles[r][c].setMatrix("green", value); 
-				tiles[r][c].setMatrix("blue", value);	
+				tiles[r][c].setMatrix("green", value);
+				tiles[r][c].setMatrix("blue", value);
 				break;
 
 		//transformations				
