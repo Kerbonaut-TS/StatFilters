@@ -1,10 +1,8 @@
  package filters;
-import com.sun.source.tree.NewArrayTree;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -18,11 +16,11 @@ public class StatFilter {
 	Tile image;
 	public Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 	int[][] indexList; 		// the tile index displayed
-		
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
+
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v5");
+		System.out.println("StatFilter: loops v7");
 
 	}//end constructor
 	
@@ -44,7 +42,6 @@ public class StatFilter {
 		image.setBufferedImage(img);
 		this.createTiles(1, 1);
 
-		
 	}
 	
 	public BufferedImage reset() {
@@ -61,7 +58,8 @@ public class StatFilter {
 
 	public void createTiles(int rows, int columns ){
 
-		//height and width of sub matrixes
+		/*** creates matrix of tiles using the source image ***/
+
 		int hs,ws;
 
 		hs= (int) Math.floor(image.getHeight()/rows);
@@ -103,7 +101,12 @@ public class StatFilter {
 
 	}//end create Tiles
 
+
+
+
 	public Tile select_tile_by_coordinates(int x, int y, int width, int height){
+
+		/*** selects a width X height tile with its top left corner at coordinates X,Y ***/
 
 		Tile tile = new Tile();
 		tile.setTlx(x);
@@ -125,9 +128,14 @@ public class StatFilter {
 		return tile;
 	}
 
+
+
  	public BufferedImage findTile(String measure, String operator,  String size, int stride) {
- 		
- 		int k =  ( operator == "min") ? 1 : -1;
+
+		/*** Finds the tile that is  maximising/minimizing  a particular Stats
+		 * the convolution operation will use a pixel window and stride specified in the parameters ***/
+
+		int k =  ( operator == "min") ? 1 : -1;
  		
  		//height and width of sub matrixes
 		int[] dimensions = this.calculateDimensions(size);
@@ -167,8 +175,45 @@ public class StatFilter {
 		
 	}
 
+
+	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
+
+		/*** Returns a Buffered Image stitching all tiles together in one single image Tile
+		 * (reverse operation of createTiles) ***/
+
+		int rows = tiles.length;
+		int columns = tiles[0].length;
+		int subh= tiles[0][0].getHeight();
+		int subw = tiles[0][0].getWidth();
+
+		//final image
+		Tile imageout =  new Tile();
+		imageout.setHeight(subh*rows);
+		imageout.setWidth(subw*columns);
+
+		int i=0;
+
+		// stitching all tiles together
+		for (int r=0; r<rows; r++){
+			for (int c=0; c<columns; c++){
+
+				Tile render_tile =  new Tile();
+				render_tile.clone(tiles[r][c]);
+
+				if  (drawTiles) render_tile.mark( Color.RED,String.valueOf(i), 24);
+
+				imageout.place(render_tile, tiles[r][c].tlx, tiles[r][c].tly);
+				i++;
+
+			}//columns
+		}//rows
+		if(RGBrescale) imageout.rescaleRGB(0,255);
+
+		return imageout;
+
+	}
+
 	//SORT TILES  ==============================================================================
-	
 	public int[] sortTiles(String measure, Boolean ascending) throws IOException{
 		
 		int k =  ( ascending == true) ? 1 : -1;
@@ -508,59 +553,7 @@ public class StatFilter {
 		
 		
 	}
-	
-	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
-		
-		/*** Buffered Image stitching all tiles together in one single image Tile ***/
-		
-		int rows = tiles.length;
-		int columns = tiles[0].length;
-				
-		int subh= tiles[0][0].getHeight();
-		int subw = tiles[0][0].getWidth();
-		int offsetH=0;
-		int offsetW=0;
-	
-		
-		//final image
-		Tile out =  new Tile();
-		out.setHeight(subh*rows);
-		out.setWidth(subw*columns);
 
-		int i=0;
-			
-		// stitching all tiles together
-		for (int r=0; r<rows; r++){
-			for (int c=0; c<columns; c++){
-
-				Tile render_tile =  new Tile();
-				render_tile.clone(tiles[r][c]);
-
-				if  (drawTiles) render_tile.mark( Color.RED,String.valueOf(i), 24);
-
-				for (String channel : this.image.channels) {
-					for (int h = 0; h < subh; h++) {
-						for (int w = 0; w < subw; w++) {
-
-							//place tile pixels in the final image
-							int value = render_tile.getMatrix(channel)[h][w];
-							out.setPixel(channel, h + offsetH, w + offsetW, value);
-							offsetH = subh * r;
-							offsetW = subw * c;
-
-						}//width
-					}//height
-				}//for each channel
-
-			}//columns
-		}//rows
-		if(RGBrescale) out.rescaleRGB(0,255);
-
-		return out;
-	
-	}
-	
-	
 	
 	//TOOLS ===================================================================================
 

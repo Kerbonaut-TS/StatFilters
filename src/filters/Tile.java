@@ -118,57 +118,8 @@ public class Tile {
 	
 	
 	//==== TILES MERGE FILTERS ========================================================================
-	
-	private int pixel_diff(int pixelA, int pixelB) {
-		
-		return (int) Math.max(pixelA - pixelB, 0);
-	}
-	
-	private int pixel_add(int pixelA, int pixelB) {
-		
-		return (int)  Math.min(pixelA + pixelB, 255);
-	}
-	
-	private int pixel_avg(int pixelA, int pixelB) {
-		
-		return (int)  Math.floor((pixelA + pixelB)*0.5);	
-	}
-	
-	private int pixel_max(int pixelA, int pixelB) {
-		
-		return (int)  Math.max(pixelA, pixelB);	
-	}
-	
-	private int pixel_min(int pixelA, int pixelB) {
-		
-		return (int)  Math.min(pixelA, pixelB);		
-	}
-	
-	private int use_operator(int pixelA, int pixelB, String operation){
-		
-		switch(operation) {
-		  case "diff":
-			  return this.pixel_diff(pixelA, pixelB);		
-		    
-		  case "add":
-			  return this.pixel_add(pixelA, pixelB);
-			
-		  case "avg":
-			  return this.pixel_avg(pixelA, pixelB);
-			  
-		  case "max":
-			  return this.pixel_max(pixelA, pixelB);
-			  
-		  case "min":
-			  return this.pixel_min(pixelA, pixelB);
-			  
-		  default:
-			  System.out.println("Invalid operation: not recognized");
-			  return 0;
-		
-		}
-				
-	}
+
+
 
 
 	public void merge_with(Tile t2, String operation) {
@@ -184,7 +135,7 @@ public class Tile {
 					
 					int pixelA = this.getMatrix(c)[h][w];
 					int pixelB = t2.getMatrix(c)[h][w];
-					int value = this.use_operator(pixelA, pixelB, operation );
+					int value = Stats.apply(operation, pixelA, pixelB);
 					this.setPixel(c, h, w, value); 
 					
 				}//end channels
@@ -193,16 +144,16 @@ public class Tile {
 		
 	}
 
-	public void merge_with(Tile t2) {
-		/*overlays the tile T2 using its reference system [(tyx),(try)]
-		if omitting operation pixels from t2 will display on top of t1*/
+	public void place(Tile t2, int X, int Y) {
 
+		/*place the tile T2 in at coordinates X, Y.
+		If this falls outside this tile it will stop the loop*/
+		System.out.println("Placing tile at coordinates:" + X+","+Y);
 		int max_height = Math.min(height, t2.getHeight());
 		int max_width =  Math.min(width, t2.getWidth());
 
-		//get Image matrix
-		for (int h=t2.tly; h<max_height;h++){
-			for (int w=t2.tlx; w<max_width;w++){
+		for (int h=Y; h<max_height;h++){
+			for (int w=X; w<max_width;w++){
 				for (String c: this.channels){
 
 					this.setPixel(c, h, w, t2.getMatrix(c)[h][w]);
@@ -549,19 +500,8 @@ public class Tile {
 
 	//=== EXPORT  ==============================================================================
 	
-	public String get1Pixel(){
-	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
-	
-		String pixel;
-			
-		pixel =  "["+ redPixels[0][0]+","+greenPixels[0][0]+","+bluePixels[0][0]+"]";
-		
 
-		return pixel;
-
-	}//end getPixel
-	
-	public String getPixels(){
+	public String vectorize(){
 	 	//** exports 0-255 RGB array stating from top left corner R1,G1,B1, R2,G2,B2....
 		
 		StringBuffer sb= null;
