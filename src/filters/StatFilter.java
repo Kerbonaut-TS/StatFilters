@@ -22,7 +22,7 @@ public class StatFilter {
 	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v4");
+		System.out.println("StatFilter: loops v5");
 
 	}//end constructor
 	
@@ -76,25 +76,7 @@ public class StatFilter {
 		for (int r=0; r<rows; r++){
 			for (int c=0; c<columns; c++){
 
-					tiles[r][c] = new Tile();
-					tiles[r][c].setHeight(hs);
-					tiles[r][c].setWidth(ws);
-					tiles[r][c].setTlx((c) * ws); //-1 because the matrix is indexed from 0
-					tiles[r][c].setTly((r) * hs);
-
-				for (String channel : this.image.channels) {
-					for (int h = 0; h < hs; h++) {
-						for (int w = 0; w < ws; w++) {
-
-							int offsetH = (r) * hs;
-							int offsetW = (c) * ws;
-							int value = image.getMatrix(channel)[offsetH + h][offsetW + w];
-							tiles[r][c].setPixel(channel, h, w, value);
-
-						}//end width
-					}//end height
-				}// for each channel
-
+				tiles[r][c] = select_tile_by_coordinates((c) * ws, (r) * hs, ws, hs);
 				this.sortedTiles[t] = t;
 				t++;
 
@@ -124,8 +106,11 @@ public class StatFilter {
 	public Tile select_tile_by_coordinates(int x, int y, int width, int height){
 
 		Tile tile = new Tile();
+		tile.setTlx(x);
+		tile.setTly(y);
 		tile.setHeight(height);
 		tile.setWidth(width);
+
 
 		for (int h=0; h<height;h++) {
 			for (int w = 0; w < width; w++) {
@@ -136,11 +121,6 @@ public class StatFilter {
 				}
 			}
 		}
-
-		tile.setMatrix("alpha", 255);
-
-		tile.setTlx(x);
-		tile.setTly(y);
 
 		return tile;
 	}
@@ -471,7 +451,7 @@ public class StatFilter {
 		
 		File file = new File(filepath);
 		String path = file.getParent();
-		String name = this.getFilename(filepath);
+		String name = Utils.getFilename(filepath);
 		
 		
 		//cycle through tiles
@@ -505,7 +485,7 @@ public class StatFilter {
 		File file = new File(filepath);
 		String path = file.getParent();
 		String filename = file.getName();
-		String name = this.getFilename(filepath);
+		String name = Utils.getFilename(filepath);
 	
 		String content = "[";
 							
@@ -524,7 +504,7 @@ public class StatFilter {
 		content = content + "]";
 
 
-		this.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
+		Utils.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
 		
 		
 	}
@@ -584,49 +564,6 @@ public class StatFilter {
 	
 	//TOOLS ===================================================================================
 
-	private void writeFile(String filepath, String content) {
-		
-        int lastSeparatorIndex = filepath.lastIndexOf(File.separator);
-        String folder = filepath.substring(0, lastSeparatorIndex);
-        String filename = filepath.substring(lastSeparatorIndex + 1);
-
-		
-        File directory = new File(folder);
-        if (!directory.exists()) {
-            if (directory.mkdirs()) {
-                System.out.println("Directory created successfully.");
-            } else {
-                System.out.println("Failed to create the directory.");
-                return;
-            }
-        }
-		
-		try {
-			 FileWriter myWriter = new FileWriter(filepath);
-		     myWriter.write(content);
-		     myWriter.close();
-		     
-			} catch (IOException e) {
-			      System.out.println("An error occurred.");
-			      System.out.println(folder);
-			      System.out.println(filename);
-
-			      
-			      e.printStackTrace();
-			}
-		
-		
-	}
-
-	private String getFilename(String filepath) {
-
-				File f = new File(filepath);
-				String fn = f.getName();
-				String [] name = fn.split("\\.");
-				return name[0];
-
-	}
-	
 
 
     public int[] getTileCoordinates(int index) {
