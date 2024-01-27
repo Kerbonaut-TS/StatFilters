@@ -20,7 +20,7 @@ public class StatFilter {
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v8");
+		System.out.println("StatFilter: loops v9");
 
 	}//end constructor
 	
