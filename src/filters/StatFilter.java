@@ -20,7 +20,7 @@ public class StatFilter {
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v7");
+		System.out.println("StatFilter: loops v8");
 
 	}//end constructor
 	
@@ -190,7 +190,6 @@ public class StatFilter {
 		Tile imageout =  new Tile();
 		imageout.setHeight(subh*rows);
 		imageout.setWidth(subw*columns);
-
 		int i=0;
 
 		// stitching all tiles together
@@ -207,7 +206,8 @@ public class StatFilter {
 
 			}//columns
 		}//rows
-		if(RGBrescale) imageout.rescaleRGB(0,255);
+
+		if(RGBrescale)  imageout.rescaleRGB(0,255);
 
 		return imageout;
 
@@ -409,8 +409,7 @@ public class StatFilter {
 	public BufferedImage applyOperation(String operation, int[] tileList) {
 		
 		int n = tileList.length;
-		
-						
+
 		//for each tile
 		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
 		
@@ -425,10 +424,8 @@ public class StatFilter {
 	public BufferedImage applyOperation(String operation) {
 		
 		if(operation.contains("sobel")) this.createTiles("3x3");
+	    return this.applyOperation(operation, sortedTiles);
 
-	    return this.applyOperation(operation, sortedTiles);				
-	    
-	
 	}
 	
 	//IMAGE OPERATIONS (EXP) ====================================================================================
@@ -454,7 +451,7 @@ public class StatFilter {
 	
 	public BufferedImage showTiles() {
 		
-		return this.composeImage(true, true).getBufferedImage();
+		return this.composeImage(true, false).getBufferedImage();
 		
 	}//end ShowTiles
 	

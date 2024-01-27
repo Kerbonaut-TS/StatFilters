@@ -148,15 +148,14 @@ public class Tile {
 
 		/*place the tile T2 in at coordinates X, Y.
 		If this falls outside this tile it will stop the loop*/
-		System.out.println("Placing tile at coordinates:" + X+","+Y);
-		int max_height = Math.min(height, t2.getHeight());
-		int max_width =  Math.min(width, t2.getWidth());
+		int max_height = Math.min(height-Y-1, t2.getHeight());
+		int max_width =  Math.min(width-X-1, t2.getWidth());
 
-		for (int h=Y; h<max_height;h++){
-			for (int w=X; w<max_width;w++){
+		for (int h=0; h<max_height;h++){
+			for (int w=0; w<max_width;w++){
 				for (String c: this.channels){
 
-					this.setPixel(c, h, w, t2.getMatrix(c)[h][w]);
+					this.setPixel(c, h+Y, w+X, t2.getMatrix(c)[h][w]);
 
 				}//end channels
 			}//end height
