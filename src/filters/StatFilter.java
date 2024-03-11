@@ -130,7 +130,7 @@ public class StatFilter {
 
 
 
- 	public BufferedImage findTile(String measure, String operator,  String size, int stride) {
+ 	public Tile findTile(String measure, String operator,  String size, int stride) {
 
 		/*** Finds the tile that is  maximising/minimizing  a particular Stats
 		 * the convolution operation will use a pixel window and stride specified in the parameters ***/
@@ -170,7 +170,7 @@ public class StatFilter {
 		int optimal_tly = (int) metrics[0][1];
 
 		Tile output = this.select_tile_by_coordinates(optimal_tlx, optimal_tly, W, H);
-		return output.getBufferedImage();
+		return output;
 		
 		
 	}
@@ -482,7 +482,7 @@ public class StatFilter {
 		String filename = file.getName();
 		String name = Utils.getFilename(filepath);
 	
-		String content = "[";
+		String content = "";
 							
 					//tile coordinates
 					content = content +"{ \"img\":\""+filename+"\", \"Rank\":"+i+", \"Y\":"+ r + ", \"X\":"+ c;
@@ -496,7 +496,7 @@ public class StatFilter {
 					content = content + "}";
 					
 						
-		content = content + "]";
+		content = content + "";
 
 
 		Utils.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
