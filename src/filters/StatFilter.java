@@ -427,86 +427,42 @@ public class StatFilter {
 	public void  saveImage (String filepath, String format) throws IOException {
 		
 		this.composeImage(false, true).savetoFile(filepath, format);
-		
-		//json File
-		String json_path = filepath.replace(".jpeg", ".json").replace(".jpg", ".json").replace(".png", ".json");
-		
-		this.saveJson(json_path, 0);
-		
+
 	}
 	
 	public void  saveTiles (String filepath) throws IOException {
-		
+
 		this.saveTiles(filepath, this.sortedTiles);
 					
-		}
+	}
 	
 	
 	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
-		
+
+		/*exports all tiles statistics in a single json file TODO MOVE within Tile*/
+
 		File file = new File(filepath);
 		String path = file.getParent();
 		String name = Utils.getFilename(filepath);
-		
+		String json_out = "{";
 		
 		//cycle through tiles
-		for (int i : listTiles){	
-			
-			int r = (int) this.getTileCoordinates(i)[0];
-			int c = (int) this.getTileCoordinates(i)[1];
-		
-			tiles[r][c].savetoFile(path+File.separator+name+"-"+r+"-"+c+".png", "PNG");
-			this.saveJson(filepath, i );
-					
-		}
-		
-				
+		for (int i : listTiles){
 
-			
+			json_out = json_out + "\"tile_id\" : " + i +", \"stats\" : " +  this.getTile(i).getJson() + ", ";
+
+		}
+
+		json_out = json_out +  "\"tile_id\" : \"end\" }";
+
+		Utils.writeFile(filepath, json_out);
+
+
 	}//end saveTiles
 		
-	public void saveJson(String filepath) throws IOException{
-		
-		this.saveJson(filepath, 0);
-		
-		
-	}
-	
-	public void saveJson(String filepath, int i) throws IOException{
-		
-		int r = (int) this.getTileCoordinates(i)[0];
-		int c = (int) this.getTileCoordinates(i)[1];
-		
-		File file = new File(filepath);
-		String path = file.getParent();
-		String filename = file.getName();
-		String name = Utils.getFilename(filepath);
-	
-		String content = "";
-							
-					//tile coordinates
-					content = content +"{ \"img\":\""+filename+"\", \"Rank\":"+i+", \"Y\":"+ r + ", \"X\":"+ c;
-					
-					// statistics to String
-					Dictionary stats = tiles[r][c].getStats();
-					String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");			
-					
-					//tile stats
-					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string;
-					content = content + "}";
-					
-						
-		content = content + "";
-
-
-		Utils.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
-		
-		
-	}
 
 	
 	//TOOLS ===================================================================================
-
 
 
     public int[] getTileCoordinates(int index) {
