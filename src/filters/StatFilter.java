@@ -437,7 +437,7 @@ public class StatFilter {
 	}
 	
 	
-	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
+	public void  saveTiles  (String filepath,  int[] listTiles ) throws IOException {
 
 		/*exports all tiles statistics in a single json file TODO MOVE within Tile*/
 
@@ -449,12 +449,11 @@ public class StatFilter {
 		//cycle through tiles
 		for (int i : listTiles){
 
-			json_out = json_out + "\"tile_id\" : " + i +", \"stats\" : " +  this.getTile(i).getJson() + ", ";
+			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson() + ", ";
 
 		}
 
-		json_out = json_out +  "\"tile_id\" : \"end\" }";
-
+		json_out = json_out +  "}";
 		Utils.writeFile(filepath, json_out);
 
 
