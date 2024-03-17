@@ -369,6 +369,10 @@ public class Tile {
 		double avg = (avgR+avgG+avgB)/3;
 
 		// put() method
+		stats.put("tlx", (double) this.tlx);
+		stats.put("tly", (double) this.tly);
+		stats.put("height", (double)  this.height);
+		stats.put("width", (double)  this.width);
 		stats.put("mean", avg);
 		stats.put("std.dev", this.std_dev());
 		stats.put("entropy", this.entropy());
@@ -382,9 +386,26 @@ public class Tile {
 		//print out Hashtable out
 		//System.out.println(stats);
 
+
+
+
 		return stats;
+
+
 	}
-	
+
+	public String getJson(){
+
+		// statistics to String
+		Dictionary stats =this.getStats();
+		String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
+
+		//tile stats
+		String json_string = "{ " +  stats_string + " }";
+
+		return json_string;
+	}
+
 	// === IMG OPERATIONS ======================================================================
 
  	public Tile resize (int newHeight, int newWidth) throws IOException{
