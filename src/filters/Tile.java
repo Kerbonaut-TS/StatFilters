@@ -263,24 +263,32 @@ public class Tile {
 		return (avgR+avgG+avgB)/3;
 	}
 
-    
+
 	public double hue() {
+		float rp, gp, bp, max, min, hue;
 
-		float rp,gp,bp, max,min,hue;
+		rp = Stats.mean(this.getMatrix("red")) / 255f;
+		gp = Stats.mean(this.getMatrix("green")) / 255f;
+		bp = Stats.mean(this.getMatrix("blue")) / 255f;
 
-		rp = Stats.mean( this.getMatrix("red"))/255f;
-		gp = Stats.mean( this.getMatrix("green"))/255f;
-		bp = Stats.mean( this.getMatrix("blue"))/255f;
-		
-		max = Math.max(Math.max(rp,gp),bp);
-		min = Math.min(Math.min(rp,gp),bp);
-		
-		// each colour takes a 60 degree segment
-		hue = 360 * (max -min)/6f + rp-gp/(max - min);
-		
-		
+		max = Math.max(Math.max(rp, gp), bp);
+		min = Math.min(Math.min(rp, gp), bp);
+
+		// Check if max and min are equal (pixel is grey)
+		if (max == min) {
+			// Return -1 to represent grey
+			return -1;
+		}
+
+		// Calculate hue colour wheel
+		hue = (float) Math.toDegrees(Math.atan2(Math.sqrt(3) * (gp - bp), 2 * rp - gp - bp));
+
+		// Normalize hue to be within the range of 0 to 360 degrees
+		if (hue < 0) {
+			hue += 360;
+		}
+
 		return Math.floor(hue);
-		
 	}
 	
 	public double saturation(){
