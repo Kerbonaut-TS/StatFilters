@@ -1,4 +1,4 @@
-package filters;
+package com.babelcoding.StatFilters;
 
 import java.io.File;
 import java.io.FileWriter;

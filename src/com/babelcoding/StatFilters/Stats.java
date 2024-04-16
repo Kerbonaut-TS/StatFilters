@@ -1,8 +1,6 @@
-package filters;
+package com.babelcoding.StatFilters;
 
-import java.awt.print.Printable;
-
- final class Stats {
+final class Stats {
 
      final static String[]  channels = {"red", "green", "blue"};
 

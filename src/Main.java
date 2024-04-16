@@ -1,12 +1,5 @@
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-
-import filters.StatFilter;
-
-
-
-
-
+import com.babelcoding.StatFilters.StatFilter;
 
 public class Main {
 

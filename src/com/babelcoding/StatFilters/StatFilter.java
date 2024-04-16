@@ -1,4 +1,4 @@
- package filters;
+ package com.babelcoding.StatFilters;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -6,11 +6,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Dictionary;
 
 
-
-public class StatFilter {
+ public class StatFilter {
 	
 	BufferedImage original;
 	Tile image;

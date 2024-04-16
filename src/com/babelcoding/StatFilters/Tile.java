@@ -1,6 +1,4 @@
-package filters;
-
-import org.w3c.dom.Text;
+package com.babelcoding.StatFilters;
 
 import java.awt.Color;
 import java.awt.Font;
