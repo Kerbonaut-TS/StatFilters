@@ -317,7 +317,7 @@ public class Tile {
 		float bp = Stats.mean( this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
-		brightness = max/255f *100 ;
+		brightness = max *100 ;
 		
 		
 		return Math.floor(brightness);
