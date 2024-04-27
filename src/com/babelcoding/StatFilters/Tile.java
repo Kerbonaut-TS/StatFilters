@@ -1,6 +1,4 @@
-package filters;
-
-import org.w3c.dom.Text;
+package com.babelcoding.StatFilters;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -263,24 +261,32 @@ public class Tile {
 		return (avgR+avgG+avgB)/3;
 	}
 
-    
+
 	public double hue() {
+		float rp, gp, bp, max, min, hue;
 
-		float rp,gp,bp, max,min,hue;
+		rp = Stats.mean(this.getMatrix("red")) / 255f;
+		gp = Stats.mean(this.getMatrix("green")) / 255f;
+		bp = Stats.mean(this.getMatrix("blue")) / 255f;
 
-		rp = Stats.mean( this.getMatrix("red"))/255f;
-		gp = Stats.mean( this.getMatrix("green"))/255f;
-		bp = Stats.mean( this.getMatrix("blue"))/255f;
-		
-		max = Math.max(Math.max(rp,gp),bp);
-		min = Math.min(Math.min(rp,gp),bp);
-		
-		// each colour takes a 60 degree segment
-		hue = 360 * (max -min)/6f + rp-gp/(max - min);
-		
-		
+		max = Math.max(Math.max(rp, gp), bp);
+		min = Math.min(Math.min(rp, gp), bp);
+
+		// Check if max and min are equal (pixel is grey)
+		if (max == min) {
+			// Return -1 to represent grey
+			return -1;
+		}
+
+		// Calculate hue colour wheel
+		hue = (float) Math.toDegrees(Math.atan2(Math.sqrt(3) * (gp - bp), 2 * rp - gp - bp));
+
+		// Normalize hue to be within the range of 0 to 360 degrees
+		if (hue < 0) {
+			hue += 360;
+		}
+
 		return Math.floor(hue);
-		
 	}
 	
 	public double saturation(){
@@ -311,7 +317,7 @@ public class Tile {
 		float bp = Stats.mean( this.getMatrix("blue"))/255f;
 		
 		max = Math.max(Math.max(rp,gp),bp);
-		brightness = max/255f *100 ;
+		brightness = max *100 ;
 		
 		
 		return Math.floor(brightness);
@@ -369,6 +375,10 @@ public class Tile {
 		double avg = (avgR+avgG+avgB)/3;
 
 		// put() method
+		stats.put("tlx", (double) this.tlx);
+		stats.put("tly", (double) this.tly);
+		stats.put("height", (double)  this.height);
+		stats.put("width", (double)  this.width);
 		stats.put("mean", avg);
 		stats.put("std.dev", this.std_dev());
 		stats.put("entropy", this.entropy());
@@ -382,9 +392,26 @@ public class Tile {
 		//print out Hashtable out
 		//System.out.println(stats);
 
+
+
+
 		return stats;
+
+
 	}
-	
+
+	public String getJson(){
+
+		// statistics to String
+		Dictionary stats =this.getStats();
+		String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
+
+		//tile stats
+		String json_string = "{ " +  stats_string + " }";
+
+		return json_string;
+	}
+
 	// === IMG OPERATIONS ======================================================================
 
  	public Tile resize (int newHeight, int newWidth) throws IOException{

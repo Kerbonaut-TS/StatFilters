@@ -1,4 +1,4 @@
- package filters;
+ package com.babelcoding.StatFilters;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -6,11 +6,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Dictionary;
 
 
-
-public class StatFilter {
+ public class StatFilter {
 	
 	BufferedImage original;
 	Tile image;
@@ -130,7 +128,7 @@ public class StatFilter {
 
 
 
- 	public BufferedImage findTile(String measure, String operator,  String size, int stride) {
+ 	public Tile findTile(String measure, String operator,  String size, int stride) {
 
 		/*** Finds the tile that is  maximising/minimizing  a particular Stats
 		 * the convolution operation will use a pixel window and stride specified in the parameters ***/
@@ -170,7 +168,7 @@ public class StatFilter {
 		int optimal_tly = (int) metrics[0][1];
 
 		Tile output = this.select_tile_by_coordinates(optimal_tlx, optimal_tly, W, H);
-		return output.getBufferedImage();
+		return output;
 		
 		
 	}
@@ -427,86 +425,41 @@ public class StatFilter {
 	public void  saveImage (String filepath, String format) throws IOException {
 		
 		this.composeImage(false, true).savetoFile(filepath, format);
-		
-		//json File
-		String json_path = filepath.replace(".jpeg", ".json").replace(".jpg", ".json").replace(".png", ".json");
-		
-		this.saveJson(json_path, 0);
-		
+
 	}
 	
 	public void  saveTiles (String filepath) throws IOException {
-		
+
 		this.saveTiles(filepath, this.sortedTiles);
 					
-		}
+	}
 	
 	
-	public void  saveTiles (String filepath,  int[] listTiles ) throws IOException {
-		
+	public void  saveTiles  (String filepath,  int[] listTiles ) throws IOException {
+
+		/*exports all tiles statistics in a single json file TODO MOVE within Tile*/
+
 		File file = new File(filepath);
 		String path = file.getParent();
 		String name = Utils.getFilename(filepath);
-		
+		String json_out = "{";
 		
 		//cycle through tiles
-		for (int i : listTiles){	
-			
-			int r = (int) this.getTileCoordinates(i)[0];
-			int c = (int) this.getTileCoordinates(i)[1];
-		
-			tiles[r][c].savetoFile(path+File.separator+name+"-"+r+"-"+c+".png", "PNG");
-			this.saveJson(filepath, i );
-					
-		}
-		
-				
+		for (int i : listTiles){
 
-			
+			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson() + ", ";
+
+		}
+
+		json_out = json_out +  "}";
+		Utils.writeFile(filepath, json_out);
+
+
 	}//end saveTiles
 		
-	public void saveJson(String filepath) throws IOException{
-		
-		this.saveJson(filepath, 0);
-		
-		
-	}
-	
-	public void saveJson(String filepath, int i) throws IOException{
-		
-		int r = (int) this.getTileCoordinates(i)[0];
-		int c = (int) this.getTileCoordinates(i)[1];
-		
-		File file = new File(filepath);
-		String path = file.getParent();
-		String filename = file.getName();
-		String name = Utils.getFilename(filepath);
-	
-		String content = "[";
-							
-					//tile coordinates
-					content = content +"{ \"img\":\""+filename+"\", \"Rank\":"+i+", \"Y\":"+ r + ", \"X\":"+ c;
-					
-					// statistics to String
-					Dictionary stats = tiles[r][c].getStats();
-					String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");			
-					
-					//tile stats
-					content = content  + ", \"height\":"+tiles[r][c].getHeight()+", \"width\":"+tiles[r][c].getWidth() +","+stats_string;
-					content = content + "}";
-					
-						
-		content = content + "]";
-
-
-		Utils.writeFile(path+File.separator+name+"-"+r+"-"+c+".json", content);
-		
-		
-	}
 
 	
 	//TOOLS ===================================================================================
-
 
 
     public int[] getTileCoordinates(int index) {
