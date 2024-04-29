@@ -19,7 +19,7 @@ import java.util.Comparator;
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: speed 9.3");
+		System.out.println("StatFilter: speed 9.32");
 
 	}//end constructor
 	
@@ -49,8 +49,24 @@ import java.util.Comparator;
 		return original;
 		
 	}
-	
-	
+
+
+	public void resize(int newHeight, int newWidth) throws IOException {
+
+		this.master = this.master.resize(newHeight, newWidth);
+		this.createTiles(1, 1);
+
+	}
+
+	 public void resize(float percentage) throws IOException {
+
+		int newHeight =  Math.round(this.master.getHeight() * percentage);
+		int newWidth =  Math.round(this.master.getWidth() * percentage);
+		this.resize(newHeight, newWidth);
+
+	 }
+
+
 	//CREATE TILES & SORTING  ==============================================================================
 
 	public void createTiles(int rows, int columns ){
@@ -127,7 +143,7 @@ import java.util.Comparator;
 				}
 			}
 		}
-
+		tile.refresh_channel_stats();
 		return tile;
 	}
 
@@ -161,7 +177,7 @@ import java.util.Comparator;
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.getStats().get(measure);
+				metrics[i][2] = tile.getStats(new String[] {measure}).get(measure);
 				i++;
 
 			}//end x
@@ -209,6 +225,7 @@ import java.util.Comparator;
 
 			}//columns
 		}//rows
+
 
 		if(RGBrescale)  imageout.rescaleRGB(0,255);
 
@@ -435,14 +452,28 @@ import java.util.Comparator;
 	
 	public void  saveTiles (String filepath) throws IOException {
 
-		this.saveTiles(filepath, this.tileRanks);
+		this.saveTiles(filepath, this.tileRanks, this.master.metrics);
 					
 	}
-	
-	
-	public void  saveTiles  (String filepath,  int[] listTiles ) throws IOException {
 
-		/*exports all tiles statistics in a single json file TODO MOVE within Tile*/
+	 public void  saveTiles (String filepath, int[] listTiles) throws IOException {
+
+
+		 this.saveTiles(filepath, listTiles, this.master.metrics);
+
+	 }
+
+	 public void  saveTiles (String filepath, String[] metrics) throws IOException {
+
+
+		 this.saveTiles(filepath, this.tileRanks, metrics);
+
+	 }
+
+
+	 public void  saveTiles  (String filepath,  int[] listTiles , String[] metrics ) throws IOException {
+
+		/*exports all tiles statistics in a single json file*/
 
 		File file = new File(filepath);
 		String path = file.getParent();
@@ -452,7 +483,7 @@ import java.util.Comparator;
 		//cycle through tiles
 		for (int i : listTiles){
 
-			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson() + ", ";
+			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson(metrics) + ", ";
 
 		}
 
