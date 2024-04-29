@@ -19,7 +19,7 @@ import java.util.Comparator;
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: speed 9.32");
+		System.out.println("StatFilter: speed 9.33");
 
 	}//end constructor
 	
@@ -143,7 +143,7 @@ import java.util.Comparator;
 				}
 			}
 		}
-		tile.refresh_channel_stats();
+		//tile.refresh_channel_stats();
 		return tile;
 	}
 
@@ -177,7 +177,7 @@ import java.util.Comparator;
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.getStats(new String[] {measure}).get(measure);
+				metrics[i][2] = tile.getStats(measure);
 				i++;
 
 			}//end x
@@ -315,7 +315,7 @@ import java.util.Comparator;
 				break;
 				
 			case "std.dev":
-				value  = tiles[r][c].std_dev();
+				value  = tiles[r][c].getStats("std.dev");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value);
 				tiles[r][c].setMatrix("blue", value);
@@ -335,7 +335,7 @@ import java.util.Comparator;
 				break;
 				
 			case "entropy":
-				value  = tiles[r][c].entropy();
+				value  = tiles[r][c].getStats("entropy");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	

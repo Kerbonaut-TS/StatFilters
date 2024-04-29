@@ -84,7 +84,6 @@ public class Tile {
             }// end width
         }//end else
 
-        this.refresh_channel_stats();
     }//end
 
     //import Image from file
@@ -113,7 +112,6 @@ public class Tile {
                 count = count + 3;
             }//end width
         }//end height
-        this.refresh_channel_stats();
     }
 
     //==== TILES OPERATIONS ========================================================================
@@ -138,7 +136,6 @@ public class Tile {
             }//end height
         }// end width
 
-        this.refresh_channel_stats();
     }
 
     public void place(Tile t2, int X, int Y) {
@@ -157,7 +154,6 @@ public class Tile {
                 }//end channels
             }//end height
         }// end width
-        this.refresh_channel_stats();
     }
 
     public void mark(Color mycolor, String text, int fontsize) {
@@ -246,7 +242,6 @@ public class Tile {
             }//j
         }
 
-        this.refresh_channel_stats();
 
     }// end resizeToRGB
 
@@ -344,14 +339,6 @@ public class Tile {
 
     // TILE METRICS/STATS  ========================================================================
 
-    public void refresh_channel_stats(){
-
-        this.meanR = Stats.mean(this.getMatrix("red"));
-        this.meanG = Stats.mean(this.getMatrix("green"));
-        this.meanB = Stats.mean(this.getMatrix("blue"));
-
-
-    }
 
 
 
@@ -388,20 +375,26 @@ public class Tile {
     public int get_center_y(Boolean absolute) {
 
         int offset = (absolute) ? this.tly : 0;
-
         return offset + (int) ((float) height * 0.5);
 
 
     }
+    private void calculate_avgs(){
+
+        this.meanR = Stats.mean(this.getMatrix("red"));
+        this.meanG = Stats.mean(this.getMatrix("green"));
+        this.meanB = Stats.mean(this.getMatrix("blue"));
+
+    }
 
 
-    public double avg() {
+    private double avg() {
 
         return (this.meanR + this.meanG + this.meanB) / 3;
     }
 
 
-    public double hue() {
+    private double hue() {
         double rp, gp, bp, max, min, hue;
 
         rp = this.meanR/ 255f;
@@ -428,7 +421,7 @@ public class Tile {
         return Math.floor(hue);
     }
 
-    public double saturation() {
+    private double saturation() {
 
         double rp, gp, bp, max, min, saturation;
 
@@ -447,7 +440,7 @@ public class Tile {
 
     }
 
-    public double brightness() {
+    private double brightness() {
 
         double max, brightness;
 
@@ -464,7 +457,7 @@ public class Tile {
 
     }
 
-    public double std_dev() {
+    private double std_dev() {
 
         double sigmar, sigmag, sigmab;
         sigmar = Stats.std_dev(this.getMatrix("red"), this.meanR);
@@ -475,7 +468,7 @@ public class Tile {
 
     }//end getinfo
 
-    public double entropy() {
+    private double entropy() {
         // Create a map to count the frequency of each color
 
         Map<Color, Integer> colorCounts = new HashMap<>();
@@ -506,9 +499,17 @@ public class Tile {
 
 
     public Dictionary<String, Double> getStats() {
-        //if unspecified export all
 
+        //if unspecified export all
         return this.getStats(this.metrics);
+
+    }
+
+    public double getStats(String metric) {
+
+        //if unspecified export all
+        Dictionary<String, Double> json_result = this.getStats(new String[] {metric});
+        return json_result.get(metric);
 
     }
 
@@ -516,6 +517,7 @@ public class Tile {
     public Dictionary<String, Double> getStats(String[] metrics) {
 
         Dictionary<String, Double> stats = new Hashtable();
+        this.calculate_avgs();
 
         for (String m : metrics) {
             switch (m) {
@@ -641,7 +643,7 @@ public class Tile {
     public String getJson(String[] metrics) {
 
         // statistics to String
-        Dictionary stats = this.getStats(metrics);
+        Dictionary stats = this.get(metrics);
         String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
 
         //tile stats
