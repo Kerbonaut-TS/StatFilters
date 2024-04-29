@@ -28,11 +28,10 @@ public class Tile {
     int[][] redPixels;
     int[][] greenPixels;
     int[][] bluePixels;
-    int[][] alphaPixels;
 
     //channel averages
     double  meanR,meanG,meanB;
-    String[] channels = {"red", "green", "blue", "alpha"};
+    String[] channels = {"red", "green", "blue"};
     public String[] metrics = new String[] {"tlx", "tly", "height","width","mean","std.dev","entropy","red","blue", "green", "hue", "saturation", "brightness"};
 
     public Tile() {
@@ -79,7 +78,6 @@ public class Tile {
                     redPixels[h][w] = this.getPixelColour(image, w, h).getRed();
                     greenPixels[h][w] = this.getPixelColour(image, w, h).getGreen();
                     bluePixels[h][w] = this.getPixelColour(image, w, h).getBlue();
-                    alphaPixels[h][w] = this.getPixelColour(image, w, h).getAlpha();
                 }//end height
             }// end width
         }//end else
@@ -108,7 +106,6 @@ public class Tile {
                 redPixels[h][w] = array[count];
                 greenPixels[h][w] = array[count + 1];
                 bluePixels[h][w] = array[count + 2];
-                alphaPixels[h][w] = 255;
                 count = count + 3;
             }//end width
         }//end height
@@ -599,11 +596,9 @@ public class Tile {
             case "blue":
                 return bluePixels;
 
-            case "alpha":
-                return alphaPixels;
 
             default:
-                System.out.println("Invalid: set red, green, blue or alpha. ");
+                System.out.println("Invalid: set red, green, blue. ");
                 System.exit(0);
                 return null;
 
@@ -619,7 +614,7 @@ public class Tile {
 
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                int rgb = (((int) alphaPixels[h][w] << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
+                int rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
                 imgBuf.setRGB(w, h, rgb);
             }//end h
         }//end w
@@ -685,15 +680,9 @@ public class Tile {
                 }
                 break;
 
-            case "alpha":
-                alphaPixels = new int[height][width];
-                for (int i = 0; i < alphaPixels.length; i++) {
-                    for (int j = 0; j < alphaPixels[0].length; j++) alphaPixels[i][j] = (int) constant;
-                }
-                break;
 
             default:
-                System.out.println("Invalid: set red, green, blue or alpha");
+                System.out.println("Invalid: set red, green, blue");
 
         }
 
@@ -718,12 +707,9 @@ public class Tile {
                 bluePixels = Utils.copyMatrix(RGBmatrix);
                 break;
 
-            case "alpha":
-                alphaPixels = Utils.copyMatrix(RGBmatrix);
-                break;
 
             default:
-                System.out.println("Invalid: set red, green, blue or alpha");
+                System.out.println("Invalid: set red, green, blue");
 
         }
 
@@ -747,10 +733,6 @@ public class Tile {
                     bluePixels[h][w] = value;
                     break;
 
-                case "alpha":
-                    alphaPixels[h][w] = value;
-                    break;
-
                 default:
                     System.out.println("ERROR. Invalid channel: " + channel);
                     System.exit(0);
@@ -771,7 +753,6 @@ public class Tile {
         bluePixels = new int[height][width];
         greenPixels = new int[height][width];
         redPixels = new int[height][width];
-        alphaPixels = new int[height][width];
 
 
     }
@@ -781,7 +762,6 @@ public class Tile {
         bluePixels = new int[height][width];
         greenPixels = new int[height][width];
         redPixels = new int[height][width];
-        alphaPixels = new int[height][width];
 
 
     }
