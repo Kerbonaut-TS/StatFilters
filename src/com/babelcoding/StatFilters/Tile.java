@@ -220,6 +220,26 @@ public class Tile {
 
 
     }
+    public Tile resize(int newHeight, int newWidth) throws IOException {
+
+        BufferedImage img = this.getBufferedImage();
+        Image newImage = img.getScaledInstance(newWidth, newHeight, Image.SCALE_DEFAULT);
+
+        // Create a buffered image with transparency
+        BufferedImage bimage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+
+        // Draw the image on to the buffered image
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(newImage, 0, 0, null);
+        bGr.dispose();
+
+        //return resized IMG
+        Tile resizedIMG = new Tile();
+        resizedIMG.setBufferedImage(bimage);
+
+        return resizedIMG;
+
+    }
 
 
     public void rescaleRGB(int newmin, int newmax) {
@@ -338,9 +358,6 @@ public class Tile {
 
 
     // TILE METRICS/STATS  ========================================================================
-
-
-
 
     private Color getPixelColour(BufferedImage image, int x, int y) {
 
@@ -570,30 +587,6 @@ public class Tile {
 
     // === IMG OPERATIONS ======================================================================
 
-    public Tile resize(int newHeight, int newWidth) throws IOException {
-
-        BufferedImage img = this.getBufferedImage();
-        Image newImage = img.getScaledInstance(newWidth, newHeight, Image.SCALE_DEFAULT);
-
-        // Create a buffered image with transparency
-        BufferedImage bimage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-
-        // Draw the image on to the buffered image
-        Graphics2D bGr = bimage.createGraphics();
-        bGr.drawImage(newImage, 0, 0, null);
-        bGr.dispose();
-
-        //return resized IMG
-        Tile resizedIMG = new Tile();
-        resizedIMG.setBufferedImage(bimage);
-
-        return resizedIMG;
-
-    }
-
-    //=== EXPORT  ==============================================================================
-
-
     public int[][] getMatrix(String channel) {
 
         switch (channel) {
@@ -643,7 +636,7 @@ public class Tile {
     public String getJson(String[] metrics) {
 
         // statistics to String
-        Dictionary stats = this.get(metrics);
+        Dictionary stats = this.getStats(metrics);
         String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
 
         //tile stats
