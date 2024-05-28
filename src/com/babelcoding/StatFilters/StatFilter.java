@@ -26,17 +26,30 @@ import java.util.Comparator;
 	
 	//IMPORT ========================================================================================
 	public void setSource(String filepath) throws IOException {
-		
-		this.master = new Tile();
-		master.setImageFromFile(filepath);
-		this.createTiles(1, 1);
+
+		Boolean monochrome = false; // default option
+		this.setSource(filepath, monochrome);
 		
 	}
-	
-	public void setImage(BufferedImage img) {
+
+	 public void setSource(String filepath,  Boolean monochrome) throws IOException {
+
+		 this.master = new Tile();
+		 master.setImageFromFile(filepath,monochrome);
+		 this.createTiles(1, 1);
+
+	 }
+
+
+	 public void setImage(BufferedImage img) {
+		 Boolean monochrome = false; // default option
+		 this.setImage(img, monochrome);
+	 }
+
+	public void setImage(BufferedImage img, Boolean monochrome) {
 
 		this.master = new Tile();
-		this.master.setBufferedImage(img);
+		this.master.setBufferedImage(img, monochrome);
 		this.createTiles(1, 1);
 
 	}
@@ -395,7 +408,7 @@ import java.util.Comparator;
 		
 		Tile t1 = this.composeImage(false, false);
 		Tile t2 = new Tile();
-		t2.setBufferedImage(img);
+		t2.setBufferedImage(img, t1.monochrome);
 		
 		t1.merge_with(t2, operation );
 		

@@ -31,6 +31,7 @@ public class Tile {
 
     //channel averages
     double  meanR,meanG,meanB;
+    Boolean monochrome;
     String[] channels = {"red", "green", "blue"};
     public String[] metrics = new String[] {"tlx", "tly", "height","width","mean","std.dev","entropy","red","blue", "green", "hue", "saturation", "brightness"};
 
@@ -46,6 +47,11 @@ public class Tile {
 
     }//end constructor
 
+    public void setChannels(String[] channels) {
+        this.channels = channels;
+        this.monochrome = channels.length>1?  false : true;
+    }
+
     //=== IMPORT METHODS =====================================================================
 
     //import image from another RGBHolder Object
@@ -53,6 +59,7 @@ public class Tile {
 
         this.setHeight(ih.getHeight());
         this.setWidth(ih.getWidth());
+        this.setChannels(ih.channels);
 
         for (String c : this.channels) {
 
@@ -62,7 +69,7 @@ public class Tile {
     }//end setImage
 
     //import a BufferedImage
-    public void setBufferedImage(BufferedImage image) {
+    public void setBufferedImage(BufferedImage image, Boolean monochrome) {
 
         if (image == null) {
             this.height = 0;
@@ -75,22 +82,34 @@ public class Tile {
             //get Image matrix
             for (int h = 0; h < height; h++) {
                 for (int w = 0; w < width; w++) {
-                    redPixels[h][w] = this.getPixelColour(image, w, h).getRed();
-                    greenPixels[h][w] = this.getPixelColour(image, w, h).getGreen();
-                    bluePixels[h][w] = this.getPixelColour(image, w, h).getBlue();
+
+                    Color colour =  this.getPixelColour(image, w, h);
+
+                    if (monochrome){
+                        redPixels[h][w] = (colour.getRed() +colour.getGreen() + colour.getBlue())/3;
+                    } else{
+                        redPixels[h][w] = colour.getRed();
+                        greenPixels[h][w] = colour.getGreen();
+                        bluePixels[h][w] = colour.getBlue();
+                    }
+
                 }//end height
             }// end width
+
+            if(monochrome) this.setChannels( new String[] {"red"});
+
+
         }//end else
 
     }//end
 
     //import Image from file
-    public void setImageFromFile(String imgpath) throws IOException {
+    public void setImageFromFile(String imgpath, Boolean monochrome) throws IOException {
 
         File myImg = new File(imgpath);
         BufferedImage image = ImageIO.read(myImg);
 
-        this.setBufferedImage(image);
+        this.setBufferedImage(image, monochrome);
 
     } //end
 
@@ -136,6 +155,8 @@ public class Tile {
     }
 
     public void place(Tile t2, int X, int Y) {
+
+        this.setChannels(t2.channels);
 
 		/*place the tile T2 in at coordinates X, Y.
 		If this falls outside this tile it will stop the loop*/
@@ -183,7 +204,7 @@ public class Tile {
         g2d.drawString(text, x, y);
         g2d.dispose();
 
-        this.setBufferedImage(imgWithText);
+        this.setBufferedImage(imgWithText, this.monochrome);
 
 
     }//end mark
@@ -232,7 +253,7 @@ public class Tile {
 
         //return resized IMG
         Tile resizedIMG = new Tile();
-        resizedIMG.setBufferedImage(bimage);
+        resizedIMG.setBufferedImage(bimage, this.monochrome);
 
         return resizedIMG;
 
@@ -610,11 +631,15 @@ public class Tile {
 
         //prepare the buffered output image
         BufferedImage imgBuf = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-        ;
 
+        int rgb;
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                int rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
+                if(this.monochrome) {
+                    rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) redPixels[h][w]) << 8 | ((int) redPixels[h][w]));
+                } else {
+                    rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
+                }
                 imgBuf.setRGB(w, h, rgb);
             }//end h
         }//end w
