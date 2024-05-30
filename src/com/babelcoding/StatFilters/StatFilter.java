@@ -10,74 +10,109 @@ import java.util.Comparator;
 
  public class StatFilter {
 	
-	BufferedImage original;
-	Tile image;
+	Tile master;				// single master image on import
 	public Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
+
+	int tileRanks[];		// list of tiles indexes ranked by metric
 	int[][] indexList; 		// the tile index displayed
-	int sortedTiles[];		//list of tiles coordinates ranked by values in Matrix M	
+
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: loops v9");
+		System.out.println("StatFilter: speed 9.33");
 
 	}//end constructor
 	
 	
 	//IMPORT ========================================================================================
 	public void setSource(String filepath) throws IOException {
-		
-		this.image = new Tile();
-		image.setImageFromFile(filepath);
-		this.original = image.getBufferedImage();
-		this.createTiles(1, 1);
+
+		Boolean monochrome = false; // default option
+		this.setSource(filepath, monochrome);
 		
 	}
-	
-	public void setImage(BufferedImage img) {
 
-		this.original = img;
-		this.image = new Tile();
-		image.setBufferedImage(img);
-		this.createTiles(1, 1);
+	 public void setSource(String filepath,  Boolean monochrome) throws IOException {
+
+		 this.master = new Tile();
+		 master.setImageFromFile(filepath,monochrome);
+		 this.subdivide(1, 1);
+
+	 }
+
+
+	 public void setImage(BufferedImage img) {
+		 Boolean monochrome = false; // default option
+		 this.setImage(img, monochrome);
+	 }
+
+	public void setImage(BufferedImage img, Boolean monochrome) {
+
+		this.master = new Tile();
+		this.master.setBufferedImage(img, monochrome);
+		this.subdivide(1, 1);
 
 	}
 	
 	public BufferedImage reset() {
+		BufferedImage original = this.master.getBufferedImage();
+		this.setImage(original);
+		this.subdivide(1, 1);
 
-		this.image = new Tile();
-		image.setBufferedImage(this.original);
-		this.createTiles(1, 1);
-		return this.showImage();
+		return original;
 		
 	}
-	
-	
+
+
+	public void resize(int newHeight, int newWidth) throws IOException {
+
+		this.master = this.master.resize(newHeight, newWidth);
+		this.subdivide(1, 1);
+
+	}
+
+	 public void resize(float percentage) throws IOException {
+
+		int newHeight =  Math.round(this.master.getHeight() * percentage);
+		int newWidth =  Math.round(this.master.getWidth() * percentage);
+		this.resize(newHeight, newWidth);
+
+	 }
+
+
 	//CREATE TILES & SORTING  ==============================================================================
 
-	public void createTiles(int rows, int columns ){
+	public void subdivide(int rows, int columns ){
 
 		/*** creates matrix of tiles using the source image ***/
 
 		int hs,ws;
 
-		hs= (int) Math.floor(image.getHeight()/rows);
-		ws= (int) Math.floor(image.getWidth()/columns);
+		hs= (int) Math.floor(master.getHeight()/rows);
+		ws= (int) Math.floor(master.getWidth()/columns);
 
 		tiles = new Tile [rows][columns];
-		this.sortedTiles = new int [rows*columns];
+		this.tileRanks = new int [rows*columns];
 
 		int t = 0;
 
-		//for each  tile  c=columns r=rows
-		for (int r=0; r<rows; r++){
-			for (int c=0; c<columns; c++){
+		if(rows == 1 && columns ==1){
 
-				tiles[r][c] = select_tile_by_coordinates((c) * ws, (r) * hs, ws, hs);
-				this.sortedTiles[t] = t;
-				t++;
+			tiles[0][0] = this.master;
 
-			}//end rows
-		}//end columns
+		} else {
+			//for each  tile  c=columns r=rows
+			for (int r=0; r<rows; r++){
+				for (int c=0; c<columns; c++){
+
+					tiles[r][c] = select_tile_by_coordinates((c) * ws, (r) * hs, ws, hs);
+					this.tileRanks[t] = t;
+					t++;
+
+				}//end rows
+			}//end columns
+
+		}
 	}
 	
 	public void createTiles(String pixelWindow){
@@ -90,10 +125,10 @@ import java.util.Comparator;
             	  
               } else {
             	  
-            	  int rows = (int) Math.floor(image.getHeight()/dimensions[0]);
-            	  int columns = (int) Math.floor(image.getWidth()/dimensions[0]);
+            	  int rows = (int) Math.floor(master.getHeight()/dimensions[0]);
+            	  int columns = (int) Math.floor(master.getWidth()/dimensions[0]);
            	  
-            	  this.createTiles(rows,columns);
+            	  this.subdivide(rows,columns);
               }
 
 
@@ -102,9 +137,8 @@ import java.util.Comparator;
 
 
 
-	public Tile select_tile_by_coordinates(int x, int y, int width, int height){
-
-		/*** selects a width X height tile with its top left corner at coordinates X,Y ***/
+	 /*** selects a width X height tile with its top left corner at coordinates X,Y ***/
+	 public Tile select_tile_by_coordinates(int x, int y, int width, int height){
 
 		Tile tile = new Tile();
 		tile.setTlx(x);
@@ -115,14 +149,14 @@ import java.util.Comparator;
 
 		for (int h=0; h<height;h++) {
 			for (int w = 0; w < width; w++) {
-				for (String c : this.image.channels) {
-					int value = this.image.getMatrix(c)[h+y][w+x];
+				for (String c : this.master.channels) {
+					int value = this.master.getMatrix(c)[h+y][w+x];
 					tile.setPixel(c,  h,  w, value);
 
 				}
 			}
 		}
-
+		//tile.refresh_channel_stats();
 		return tile;
 	}
 
@@ -141,8 +175,8 @@ import java.util.Comparator;
 		int H = dimensions [0];
 		int W = dimensions [1];
  		
-		int horizontal_shifts = (int) Math.floor((this.image.width - W)/stride)+1;
-		int vertical_shifts = (int)Math.floor((this.image.height - H)/stride)+1;
+		int horizontal_shifts = (int) Math.floor((this.master.width - W)/stride)+1;
+		int vertical_shifts = (int)Math.floor((this.master.height - H)/stride)+1;
 		
  		int n = horizontal_shifts * vertical_shifts;
  		double [][] metrics = new double [n][3];    //  tlx, tly, value
@@ -150,13 +184,13 @@ import java.util.Comparator;
 		int i = 0;
 		
 		// convolution
-		for (int tly = 0; tly < (this.image.height - H);  tly = tly+stride){
-			for (int tlx = 0; tlx < (this.image.width - W); tlx = tlx+stride){
+		for (int tly = 0; tly < (this.master.height - H);  tly = tly+stride){
+			for (int tlx = 0; tlx < (this.master.width - W); tlx = tlx+stride){
 
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.getStats().get(measure);
+				metrics[i][2] = tile.getStats(measure);
 				i++;
 
 			}//end x
@@ -205,6 +239,7 @@ import java.util.Comparator;
 			}//columns
 		}//rows
 
+
 		if(RGBrescale)  imageout.rescaleRGB(0,255);
 
 		return imageout;
@@ -217,20 +252,20 @@ import java.util.Comparator;
 		int k =  ( ascending == true) ? 1 : -1;
 		
 		// storing tile index, measure in array
-	    double[][] measures = new double [sortedTiles.length][2]; 
+	    double[][] measures = new double [tileRanks.length][2];
 	    int avgs[]= null;
 	   
 		//create a list of indexes and measures
-		for (int t = 0; t<sortedTiles.length; t++){			
+		for (int t = 0; t<tileRanks.length; t++){
 			measures[t][0] = t;	
 			measures[t][1] = this.getTile(t).getStats().get(measure);
 		}
 		
 		// Sorting based on the second column (index 1)
 		Arrays.sort(measures, Comparator.comparingDouble(row -> row[1]*k));
-		for (int i=0; i<this.sortedTiles.length; i++)  this.sortedTiles[i] =  (int) measures[i][0];
+		for (int i=0; i<this.tileRanks.length; i++)  this.tileRanks[i] =  (int) measures[i][0];
 		//Utils.logger(this.sortedTiles);
-		return this.sortedTiles;
+		return this.tileRanks;
 		
 	} //end 
 	
@@ -293,7 +328,7 @@ import java.util.Comparator;
 				break;
 				
 			case "std.dev":
-				value  = tiles[r][c].std_dev();
+				value  = tiles[r][c].getStats("std.dev");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value);
 				tiles[r][c].setMatrix("blue", value);
@@ -313,7 +348,7 @@ import java.util.Comparator;
 				break;
 				
 			case "entropy":
-				value  = tiles[r][c].entropy();
+				value  = tiles[r][c].getStats("entropy");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
@@ -360,7 +395,7 @@ import java.util.Comparator;
 	public BufferedImage applyOperation(String operation) {
 		
 		if(operation.contains("sobel")) this.createTiles("3x3");
-	    return this.applyOperation(operation, sortedTiles);
+	    return this.applyOperation(operation, tileRanks);
 
 	}
 	
@@ -373,7 +408,7 @@ import java.util.Comparator;
 		
 		Tile t1 = this.composeImage(false, false);
 		Tile t2 = new Tile();
-		t2.setBufferedImage(img);
+		t2.setBufferedImage(img, t1.monochrome);
 		
 		t1.merge_with(t2, operation );
 		
@@ -430,14 +465,28 @@ import java.util.Comparator;
 	
 	public void  saveTiles (String filepath) throws IOException {
 
-		this.saveTiles(filepath, this.sortedTiles);
+		this.saveTiles(filepath, this.tileRanks, this.master.metrics);
 					
 	}
-	
-	
-	public void  saveTiles  (String filepath,  int[] listTiles ) throws IOException {
 
-		/*exports all tiles statistics in a single json file TODO MOVE within Tile*/
+	 public void  saveTiles (String filepath, int[] listTiles) throws IOException {
+
+
+		 this.saveTiles(filepath, listTiles, this.master.metrics);
+
+	 }
+
+	 public void  saveTiles (String filepath, String[] metrics) throws IOException {
+
+
+		 this.saveTiles(filepath, this.tileRanks, metrics);
+
+	 }
+
+
+	 public void  saveTiles  (String filepath,  int[] listTiles , String[] metrics ) throws IOException {
+
+		/*exports all tiles statistics in a single json file*/
 
 		File file = new File(filepath);
 		String path = file.getParent();
@@ -447,7 +496,7 @@ import java.util.Comparator;
 		//cycle through tiles
 		for (int i : listTiles){
 
-			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson() + ", ";
+			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson(metrics) + ", ";
 
 		}
 
