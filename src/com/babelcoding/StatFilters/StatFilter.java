@@ -36,7 +36,7 @@ import java.util.Comparator;
 
 		 this.master = new Tile();
 		 master.setImageFromFile(filepath,monochrome);
-		 this.createTiles(1, 1);
+		 this.subdivide(1, 1);
 
 	 }
 
@@ -50,14 +50,14 @@ import java.util.Comparator;
 
 		this.master = new Tile();
 		this.master.setBufferedImage(img, monochrome);
-		this.createTiles(1, 1);
+		this.subdivide(1, 1);
 
 	}
 	
 	public BufferedImage reset() {
 		BufferedImage original = this.master.getBufferedImage();
 		this.setImage(original);
-		this.createTiles(1, 1);
+		this.subdivide(1, 1);
 
 		return original;
 		
@@ -67,7 +67,7 @@ import java.util.Comparator;
 	public void resize(int newHeight, int newWidth) throws IOException {
 
 		this.master = this.master.resize(newHeight, newWidth);
-		this.createTiles(1, 1);
+		this.subdivide(1, 1);
 
 	}
 
@@ -82,7 +82,7 @@ import java.util.Comparator;
 
 	//CREATE TILES & SORTING  ==============================================================================
 
-	public void createTiles(int rows, int columns ){
+	public void subdivide(int rows, int columns ){
 
 		/*** creates matrix of tiles using the source image ***/
 
@@ -128,7 +128,7 @@ import java.util.Comparator;
             	  int rows = (int) Math.floor(master.getHeight()/dimensions[0]);
             	  int columns = (int) Math.floor(master.getWidth()/dimensions[0]);
            	  
-            	  this.createTiles(rows,columns);
+            	  this.subdivide(rows,columns);
               }
 
 
