@@ -25,15 +25,15 @@ public class Tile {
     int tlx;
     int tly;
 
+    Boolean monochrome;
+    String[] channels = {"red", "green", "blue"};
+
     int[][] redPixels;
     int[][] greenPixels;
     int[][] bluePixels;
+    int[][] brightness;
 
-    //channel averages
-    double  meanR,meanG,meanB;
-    Boolean monochrome;
-    String[] channels = {"red", "green", "blue"};
-    public String[] metrics = new String[] {"tlx", "tly", "height","width","mean","std.dev","entropy","red","blue", "green", "hue", "saturation", "brightness"};
+    ImageStats imageStats;
 
     public Tile() {
 
@@ -44,6 +44,8 @@ public class Tile {
         //default reference system
         tlx = 0;
         tly = 0;
+
+        this.imageStats = new ImageStats();
 
     }//end constructor
 
@@ -145,7 +147,7 @@ public class Tile {
 
                     int pixelA = this.getMatrix(c)[h][w];
                     int pixelB = t2.getMatrix(c)[h][w];
-                    int value = Stats.apply(operation, pixelA, pixelB);
+                    int value = ImageStats.apply(operation, pixelA, pixelB);
                     this.setPixel(c, h, w, value);
 
                 }//end channels
@@ -286,27 +288,19 @@ public class Tile {
     //==== PIXEL TRANSFORMS ==================================================================
 
     public void standardise() {
-        for (String c : this.channels) Stats.standardise(this.getMatrix(c));
+        for (String c : this.channels) MatrixOps.standardise(this.getMatrix(c));
     }//end standardize
 
     public void log() {
-        for (String c : this.channels) Stats.transform("log", this.getMatrix(c));
+        for (String c : this.channels) ImageStats.transform("log", this.getMatrix(c));
     }
 
     public void invert() {
-        for (String c : this.channels) Stats.transform("invert", this.getMatrix(c));
+        for (String c : this.channels) ImageStats.transform("invert", this.getMatrix(c));
     }
 
     public void sqrt() {
-        for (String c : this.channels) Stats.transform("sqrt", this.getMatrix(c));
-    }
-
-    public void mean() {
-
-        this.setMatrix("red", this.meanR);
-        this.setMatrix("green", this.meanG);
-        this.setMatrix("blue", this.meanB);
-
+        for (String c : this.channels) ImageStats.transform("sqrt", this.getMatrix(c));
     }
 
 
@@ -412,196 +406,25 @@ public class Tile {
         int offset = (absolute) ? this.tly : 0;
         return offset + (int) ((float) height * 0.5);
 
-
-    }
-    private void calculate_avgs(){
-
-        this.meanR = Stats.mean(this.getMatrix("red"));
-        this.meanG = Stats.mean(this.getMatrix("green"));
-        this.meanB = Stats.mean(this.getMatrix("blue"));
-
     }
 
-
-    private double avg() {
-
-        return (this.meanR + this.meanG + this.meanB) / 3;
-    }
-
-
-    private double hue() {
-        double rp, gp, bp, max, min, hue;
-
-        rp = this.meanR/ 255f;
-        gp = this.meanG / 255f;
-        bp = this.meanB / 255f;
-
-        max = Math.max(Math.max(rp, gp), bp);
-        min = Math.min(Math.min(rp, gp), bp);
-
-        // Check if max and min are equal (pixel is grey)
-        if (max == min) {
-            // Return -1 to represent grey
-            return -1;
-        }
-
-        // Calculate hue colour wheel
-        hue = (float) Math.toDegrees(Math.atan2(Math.sqrt(3) * (gp - bp), 2 * rp - gp - bp));
-
-        // Normalize hue to be within the range of 0 to 360 degrees
-        if (hue < 0) {
-            hue += 360;
-        }
-
-        return Math.floor(hue);
-    }
-
-    private double saturation() {
-
-        double rp, gp, bp, max, min, saturation;
-
-        rp = this.meanR/ 255f;
-        gp = this.meanG / 255f;
-        bp = this.meanB / 255f;
-
-        max = Math.max(Math.max(rp, gp), bp);
-        min = Math.min(Math.min(rp, gp), bp);
-
-        saturation = (max == 0) ? 0 : ((max - min) / max);
-
-        saturation = saturation * 100;
-
-        return Math.floor(saturation);
-
-    }
-
-    private double brightness() {
-
-        double max, brightness;
-
-        double rp = this.meanR/ 255f;
-        double gp = this.meanG / 255f;
-        double bp = this.meanB / 255f;
-
-
-        max = Math.max(Math.max(rp, gp), bp);
-        brightness = max * 100;
-
-
-        return Math.floor(brightness);
-
-    }
-
-    private double std_dev() {
-
-        double sigmar, sigmag, sigmab;
-        sigmar = Stats.std_dev(this.getMatrix("red"), this.meanR);
-        sigmag = Stats.std_dev(this.getMatrix("green"), this.meanG);
-        sigmab = Stats.std_dev(this.getMatrix("blue"), this.meanB);
-
-        return sigmar + sigmag + sigmab;
-
-    }//end getinfo
-
-    private double entropy() {
-        // Create a map to count the frequency of each color
-
-        Map<Color, Integer> colorCounts = new HashMap<>();
-        int[][] red = this.getMatrix("red");
-        int[][] blue = this.getMatrix("blue");
-        int[][] green = this.getMatrix("green");
-
-
-        // Iterate over each pixel and count the occurrences of each color
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                Color pixel = new Color((int) red[i][j], (int) green[i][j], (int) blue[i][j]);
-                colorCounts.put(pixel, colorCounts.getOrDefault(pixel, 0) + 1);
-            }
-        }
-
-        // Calculate the entropy
-        double totalPixels = width * height;
-        double entropy = 0.0;
-
-        for (int count : colorCounts.values()) {
-            double probability = count / totalPixels;
-            entropy -= probability * Math.log(probability) / Math.log(2);
-        }
-
-        return entropy;
-    }
-
-
-    public Dictionary<String, Double> getStats() {
-
-        //if unspecified export all
-        return this.getStats(this.metrics);
+    public Dictionary<String, Double> getStats(String[] metrics) {
+        /* returns multiple metrics: Dictionary */
+        return this.imageStats.getStat(this, metrics);
 
     }
 
     public double getStats(String metric) {
-
-        //if unspecified export all
-        Dictionary<String, Double> json_result = this.getStats(new String[] {metric});
-        return json_result.get(metric);
+        /* returns single metric: Double*/
+        return this.imageStats.getStat(this, new String[] {metric}).get(metric);
 
     }
 
-
-    public Dictionary<String, Double> getStats(String[] metrics) {
-
-        Dictionary<String, Double> stats = new Hashtable();
-        this.calculate_avgs();
-
-        for (String m : metrics) {
-            switch (m) {
-
-                case "tlx":
-                    stats.put("tlx", (double) this.tlx);
-                    break;
-                case "height":
-                    stats.put("height", (double) this.height);
-                    break;
-                case "width":
-                    stats.put("width", (double) this.width);
-                    break;
-                case "mean":
-                    stats.put("mean", (double) this.avg());
-                    break;
-                case "std.dev":
-                    stats.put("std.dev", this.std_dev());
-                    break;
-                case "entropy":
-                    stats.put("entropy", this.entropy());
-                    break;
-                case "red":
-                    stats.put("red", this.meanR);
-                    break;
-                case "green":
-                    stats.put("green", this.meanG);
-                    break;
-                case "blue":
-                    stats.put("blue", this.meanB);
-                    break;
-                case "hue":
-                    stats.put("hue", this.hue());
-                    break;
-                case "saturation":
-                    stats.put("saturation", this.saturation());
-                    break;
-                case "brightness":
-                    stats.put("brightness", this.brightness());
-                    break;
-
-
-            }//end switch
-        }
-
-        return stats;
+    public Dictionary<String, Double> getStats() {
+        /* returns all metrics*/
+        return this.imageStats.getStat(this);
 
     }
-
 
     // === IMG OPERATIONS ======================================================================
 
@@ -649,8 +472,8 @@ public class Tile {
     }//end write image
 
     public String getJson() {
-
-     return getJson(this.metrics);
+     //if unspecified return all
+     return getJson(this.imageStats.metrics);
     }
 
     public String getJson(String[] metrics) {

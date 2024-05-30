@@ -324,7 +324,7 @@ import java.util.Comparator;
 		//pooling operations
 		
 			case "mean":
-				tiles[r][c].mean();
+				//tiles[r][c].mean();
 				break;
 				
 			case "std.dev":
