@@ -3,23 +3,23 @@ package com.babelcoding.StatFilters;
 import java.awt.*;
 import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 public class ImageStats {
 
-    Hashtable<String, Double> stats;
-    public String[] metrics = new String[] {"mean","std.dev","red","blue", "green", "hue", "saturation", "brightness","entropy"};
+    HashMap<String, Double> stats;
+    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy"};
 
     public ImageStats (){
-         this.stats = new Hashtable();
+         this.stats = new HashMap <String, Double> ();
     }
 
-    public Dictionary<String, Double> getStat(Tile tile, String[] metrics) {
+    public HashMap<String, Double> getStat(Tile tile, String[] metrics) {
 
-        Hashtable<String, Double> stats = new Hashtable();
+        HashMap<String, Double> stats = new HashMap<String, Double> ();
 
         for (String m : metrics) {
+
             if (this.stats.containsKey(m)){
 
                 //already calculated, do nothing
@@ -27,21 +27,20 @@ public class ImageStats {
             }else{
 
                 switch (m) {
-
+                    case "red":
+                        this.stats.get("red");
+                        break;
+                    case "green":
+                        this.stats.get("green");
+                        break;
+                    case "blue":
+                        this.stats.get("blue");
+                        break;
                     case "mean":
                         this.stats.put("mean", (double) this.mean(tile));
                         break;
                     case "std.dev":
                         this.stats.put("std.dev", this.std_dev(tile));
-                        break;
-                    case "red":
-                        this.mean(tile);
-                        break;
-                    case "green":
-                        this.mean(tile);
-                        break;
-                    case "blue":
-                        this.mean(tile);
                         break;
                     case "hue":
                         this.stats.put("hue", this.hue(tile));
@@ -67,38 +66,58 @@ public class ImageStats {
     }
 
 
-    public Dictionary<String, Double> getStat(Tile tile) {
+    public HashMap<String, Double> getStat(Tile tile) {
         /* option to return all metrics*/
-        Dictionary<String, Double> stats = new Hashtable();
+        HashMap<String, Double> stats = new HashMap<String, Double> ();
         return this.getStat(tile, this.metrics);
 
     }
 
-    private double mean(Tile tile) {
+    public void setStats(String key, double value){
 
-        double meanR = MatrixOps.mean(tile.getMatrix("red"));
-        double meanG = MatrixOps.mean(tile.getMatrix("green"));
-        double meanB = MatrixOps.mean(tile.getMatrix("blue"));
+        this.stats.put(key, value);
+    }
 
-        this.stats.put("red", meanR);
-        this.stats.put("green", meanG);
-        this.stats.put("blue", meanB);
+    public double refresh(Tile tile) {
+
+        this.stats = new HashMap<String, Double>();
+
+        for (String c: tile.channels){
+            this.stats.put(c, (double) MatrixOps.mean(tile.getMatrix(c)));
+
+        }
+    }
 
 
-        return (meanR + meanG + meanB) / 3;
+    public double mean(Tile tile) {
+
+        double sum = 0;
+        int count = 0;
+
+        for (String c: tile.channels) {
+            if(this.stats.containsKey(c)){
+                sum = sum = this.stats.get(c);
+            }else{
+                this.stats.put(c, (double) MatrixOps.mean(tile.getMatrix(c)));
+                sum = sum = this.stats.get(c);
+            }
+            count++;
+
+        }
+        return sum/count;
+
     }
 
 
 
     // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
-    private double hue(Tile tile) {
+    private double hue(int R, int G, int B) {
+
         double rp, gp, bp, max, min, hue;
 
-        if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) this.mean(tile);
-
-        rp = this.stats.get("red")/ 255f;
-        gp = this.stats.get("green") / 255f;
-        bp = this.stats.get("blue") / 255f;
+        rp = R/ 255f;
+        gp = G / 255f;
+        bp = B / 255f;
 
         max = Math.max(Math.max(rp, gp), bp);
         min = Math.min(Math.min(rp, gp), bp);
@@ -120,15 +139,13 @@ public class ImageStats {
         return Math.floor(hue);
     }
 
-    private double saturation(Tile tile) {
+    private double saturation(int R, int G, int B) {
 
         double rp, gp, bp, max, min, saturation;
 
-        if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) this.mean(tile);
-
-        rp = this.stats.get("red")/ 255f;
-        gp = this.stats.get("green") / 255f;
-        bp = this.stats.get("blue") / 255f;
+        rp = R / 255f;
+        gp = G / 255f;
+        bp = B / 255f;
 
         max = Math.max(Math.max(rp, gp), bp);
         min = Math.min(Math.min(rp, gp), bp);

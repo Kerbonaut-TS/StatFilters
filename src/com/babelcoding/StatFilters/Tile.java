@@ -31,9 +31,8 @@ public class Tile {
     int[][] redPixels;
     int[][] greenPixels;
     int[][] bluePixels;
-    int[][] brightness;
 
-    ImageStats imageStats;
+    ImageStats sampleStats;
 
     public Tile() {
 
@@ -69,9 +68,24 @@ public class Tile {
 
         }
     }//end setImage
+    public void setImageFromFile(String imgpath, Boolean monochrome) throws IOException {
+
+        File myImg = new File(imgpath);
+        BufferedImage image = ImageIO.read(myImg);
+
+        this.setBufferedImage(image, monochrome);
+
+    } //end
+
 
     //import a BufferedImage
     public void setBufferedImage(BufferedImage image, Boolean monochrome) {
+
+        int avgR, avgG, avgB,count;
+        avgR = 0;
+        avgG = 0;
+        avgB = 0;
+        count = 0;
 
         if (image == null) {
             this.height = 0;
@@ -93,10 +107,21 @@ public class Tile {
                         redPixels[h][w] = colour.getRed();
                         greenPixels[h][w] = colour.getGreen();
                         bluePixels[h][w] = colour.getBlue();
+
+                        avgR = avgR + colour.getRed();
+                        avgG = avgG + colour.getGreen();
+                        avgB = avgB + colour.getBlue();
+                        count =0;
+
                     }
 
                 }//end height
             }// end width
+
+
+            this.sampleStats.setStats("red", Math.round(avgR/count) );
+            this.sampleStats.setStats("green", Math.round(avgG/count));
+            this.sampleStats.setStats("blue", Math.round(avgB/count));
 
             if(monochrome) this.setChannels( new String[] {"red"});
 
@@ -106,14 +131,7 @@ public class Tile {
     }//end
 
     //import Image from file
-    public void setImageFromFile(String imgpath, Boolean monochrome) throws IOException {
 
-        File myImg = new File(imgpath);
-        BufferedImage image = ImageIO.read(myImg);
-
-        this.setBufferedImage(image, monochrome);
-
-    } //end
 
     //import image from a linear RGB array
     public void setImgFromVector(int[] array) {
@@ -240,6 +258,7 @@ public class Tile {
 
 
     }
+
     public Tile resize(int newHeight, int newWidth) throws IOException {
 
         BufferedImage img = this.getBufferedImage();
