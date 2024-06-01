@@ -13,7 +13,7 @@ import java.util.Comparator;
 	Tile master;				// single master image on import
 	public Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
 
-	int tileRanks[];		// list of tiles indexes ranked by metric
+	int[] tileRanks;		// list of tiles indexes ranked by metric
 	int[][] indexList; 		// the tile index displayed
 
 
@@ -88,8 +88,8 @@ import java.util.Comparator;
 
 		int hs,ws;
 
-		hs= (int) Math.floor(master.getHeight()/rows);
-		ws= (int) Math.floor(master.getWidth()/columns);
+		hs= (int) Math.floor((float) master.getHeight()/rows);
+		ws= (int) Math.floor((float) master.getWidth()/columns);
 
 		tiles = new Tile [rows][columns];
 		this.tileRanks = new int [rows*columns];
@@ -125,8 +125,8 @@ import java.util.Comparator;
             	  
               } else {
             	  
-            	  int rows = (int) Math.floor(master.getHeight()/dimensions[0]);
-            	  int columns = (int) Math.floor(master.getWidth()/dimensions[0]);
+            	  int rows = (int) Math.floor((float) master.getHeight()/dimensions[0]);
+            	  int columns = (int) Math.floor((float) master.getWidth()/dimensions[0]);
            	  
             	  this.subdivide(rows,columns);
               }
@@ -175,8 +175,8 @@ import java.util.Comparator;
 		int H = dimensions [0];
 		int W = dimensions [1];
  		
-		int horizontal_shifts = (int) Math.floor((this.master.width - W)/stride)+1;
-		int vertical_shifts = (int)Math.floor((this.master.height - H)/stride)+1;
+		int horizontal_shifts = (int) Math.floor((float) (this.master.width - W)/stride)+1;
+		int vertical_shifts = (int)Math.floor((float) (this.master.height - H)/stride)+1;
 		
  		int n = horizontal_shifts * vertical_shifts;
  		double [][] metrics = new double [n][3];    //  tlx, tly, value
@@ -190,7 +190,7 @@ import java.util.Comparator;
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.getStats(measure);
+				metrics[i][2] = tile.getStat(measure);
 				i++;
 
 			}//end x
@@ -249,12 +249,11 @@ import java.util.Comparator;
 	//SORT TILES  ==============================================================================
 	public int[] sortTiles(String measure, Boolean ascending) throws IOException{
 		
-		int k =  ( ascending == true) ? 1 : -1;
+		int k =  (ascending) ? 1 : -1;
 		
 		// storing tile index, measure in array
 	    double[][] measures = new double [tileRanks.length][2];
-	    int avgs[]= null;
-	   
+
 		//create a list of indexes and measures
 		for (int t = 0; t<tileRanks.length; t++){
 			measures[t][0] = t;	
@@ -328,7 +327,7 @@ import java.util.Comparator;
 				break;
 				
 			case "std.dev":
-				value  = tiles[r][c].getStats("std.dev");
+				value  = tiles[r][c].getStat("std.dev");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value);
 				tiles[r][c].setMatrix("blue", value);
@@ -348,7 +347,7 @@ import java.util.Comparator;
 				break;
 				
 			case "entropy":
-				value  = tiles[r][c].getStats("entropy");
+				value  = tiles[r][c].getStat("entropy");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value); 
 				tiles[r][c].setMatrix("blue", value);	
@@ -382,7 +381,7 @@ import java.util.Comparator;
 		int n = tileList.length;
 
 		//for each tile
-		for (int t=0; t<n; t++) this.applyOperation(operation, tileList[t]);
+        for (int i : tileList) this.applyOperation(operation, i);
 		
 		Tile composedImg = this.composeImage(false, true);		
 	
@@ -449,8 +448,8 @@ import java.util.Comparator;
 		int newH = (int) Math.round(current.height*percent);
 		int newW = (int) Math.round(current.width*percent);
 
-		int tlx = Math.round((current.height-newH)/2);
-		int tly = Math.round((current.width-newW)/2);
+		int tlx = Math.round((float) (current.height-newH)/2);
+		int tly = Math.round((float) (current.width-newW)/2);
 
 		return this.select_tile_by_coordinates(tlx,tly, newW, newH);
 
@@ -465,14 +464,14 @@ import java.util.Comparator;
 	
 	public void  saveTiles (String filepath) throws IOException {
 
-		this.saveTiles(filepath, this.tileRanks, this.master.metrics);
+		this.saveTiles(filepath, this.tileRanks, this.master.sampleStats.metrics);
 					
 	}
 
 	 public void  saveTiles (String filepath, int[] listTiles) throws IOException {
 
 
-		 this.saveTiles(filepath, listTiles, this.master.metrics);
+		 this.saveTiles(filepath, listTiles, this.master.sampleStats.metrics);
 
 	 }
 
@@ -516,7 +515,7 @@ import java.util.Comparator;
 		int[] rc = new int[2];
 		int cols = this.tiles[0].length;
 	
-		int r = (int) Math.floor( index/cols ) ;
+		int r = (int) Math.floor((float) index/cols ) ;
 		int c = index-r*cols;
 
 		rc[0] = r;
@@ -529,10 +528,8 @@ import java.util.Comparator;
     private int getTileIndex(int r, int c) {
 		
 		int cols = this.tiles[0].length;
-				
-		int index = r * cols + c;
-		
-		return index;
+		return r * cols + c;
+
 	}
 
 	private int[] calculateDimensions(String pixelWindow) throws NumberFormatException {
