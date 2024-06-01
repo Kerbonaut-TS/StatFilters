@@ -48,11 +48,6 @@ public class Tile {
 
     }//end constructor
 
-    public void setChannels(String[] channels) {
-        this.channels = channels;
-        this.monochrome = channels.length>1?  false : true;
-    }
-
     //=== IMPORT METHODS =====================================================================
 
     //import image from another RGBHolder Object
@@ -62,12 +57,12 @@ public class Tile {
         this.setWidth(ih.getWidth());
         this.setChannels(ih.channels);
 
-        for (String c : this.channels) {
-
+        for (String c : ih.channels) {
             this.setMatrix(c, ih.getMatrix(c));
-
         }
+
     }//end setImage
+
     public void setImageFromFile(String imgpath, Boolean monochrome) throws IOException {
 
         File myImg = new File(imgpath);
@@ -81,7 +76,7 @@ public class Tile {
     //import a BufferedImage
     public void setBufferedImage(BufferedImage image, Boolean monochrome) {
 
-        int avgR = 0, avgG = 0, avgB = 0,count = 0;
+        int avgR = 0, avgG = 0, avgB = 0, count = 0;
 
         if (image == null) {
             this.height = 0;
@@ -94,11 +89,11 @@ public class Tile {
             for (int h = 0; h < height; h++) {
                 for (int w = 0; w < width; w++) {
 
-                    Color colour =  this.getPixelColour(image, w, h);
+                    Color colour = this.getPixelColour(image, w, h);
 
-                    if (monochrome){
-                        redPixels[h][w] = (colour.getRed() +colour.getGreen() + colour.getBlue())/3;
-                    } else{
+                    if (monochrome) {
+                        redPixels[h][w] = (colour.getRed() + colour.getGreen() + colour.getBlue()) / 3;
+                    } else {
                         redPixels[h][w] = colour.getRed();
                         greenPixels[h][w] = colour.getGreen();
                         bluePixels[h][w] = colour.getBlue();
@@ -106,7 +101,7 @@ public class Tile {
                         avgR = avgR + colour.getRed();
                         avgG = avgG + colour.getGreen();
                         avgB = avgB + colour.getBlue();
-                        count ++;
+                        count++;
 
                     }
 
@@ -114,11 +109,11 @@ public class Tile {
             }// end width
 
 
-            this.sampleStats.setStats("red", Math.round(avgR/count) );
-            this.sampleStats.setStats("green", Math.round(avgG/count));
-            this.sampleStats.setStats("blue", Math.round(avgB/count));
+            this.sampleStats.setStats("red", Math.round(avgR / count));
+            this.sampleStats.setStats("green", Math.round(avgG / count));
+            this.sampleStats.setStats("blue", Math.round(avgB / count));
 
-            if(monochrome) this.setChannels( new String[] {"red"});
+            if (monochrome) this.setChannels(new String[]{"red"});
 
 
         }//end else
@@ -254,7 +249,7 @@ public class Tile {
 
     }
 
-    public Tile resize(int newHeight, int newWidth) throws IOException {
+    public Tile resize(int newHeight, int newWidth) {
 
         BufferedImage img = this.getBufferedImage();
         Image newImage = img.getScaledInstance(newWidth, newHeight, Image.SCALE_DEFAULT);
@@ -281,8 +276,8 @@ public class Tile {
         for (String c : this.channels) {
 
             //resize z variable to 0-255
-            int max = Utils.getMaxValue(this.getMatrix(c));
-            int min = Utils.getMinValue(this.getMatrix(c));
+            int max = MatrixOps.getMaxValue(this.getMatrix(c));
+            int min = MatrixOps.getMinValue(this.getMatrix(c));
 
             double range = max - min == 0 ? 1 : max - min;
 
@@ -291,11 +286,9 @@ public class Tile {
 
                     int value = (int) (newmin + ((this.getMatrix(c)[h][w] - min) / range) * (newmax - newmin));
                     this.setPixel(c, h, w, value);
-
                 }//i
             }//j
         }
-
 
     }// end resizeToRGB
 
@@ -305,15 +298,25 @@ public class Tile {
         for (String c : this.channels) MatrixOps.standardise(this.getMatrix(c));
     }//end standardize
 
+    public void mean() {
+        for (String c : this.channels) this.setMatrix(c, this.sampleStats.getStat(this, c));
+    }
+
+    public void std_dev() {
+        for (String c : this.channels) this.setMatrix(c, this.sampleStats.getStat(this, "std.dev"));
+    }
+
     public void log() {
         for (String c : this.channels) ImageStats.transform("log", this.getMatrix(c));
     }
 
     public void invert() {
+
         for (String c : this.channels) ImageStats.transform("invert", this.getMatrix(c));
     }
 
     public void sqrt() {
+
         for (String c : this.channels) ImageStats.transform("sqrt", this.getMatrix(c));
     }
 
@@ -357,7 +360,7 @@ public class Tile {
         //iterate in the 3x3 tile
         for (int h = 0; h < this.height; h++) {
             for (int w = 0; w < this.width; w++) {
-                int pixel = (int) Math.floor((redPixels[h][w] + greenPixels[h][w] + bluePixels[h][w]) / 3);
+                int pixel = (int) Math.floor((float) (redPixels[h][w] + greenPixels[h][w] + bluePixels[h][w]) / 3);
 
                 gx = gx + pixel * sx[h][w];
                 gy = gy + pixel * sy[h][w];
@@ -386,9 +389,7 @@ public class Tile {
     // TILE METRICS/STATS  ========================================================================
 
     private Color getPixelColour(BufferedImage image, int x, int y) {
-
         return new Color(image.getRGB(x, y));
-
     }//end getpixelcolour
 
     public int getTlx() {
@@ -422,6 +423,7 @@ public class Tile {
 
     }
 
+
     public HashMap<String, Double> getStats(String[] metrics) {
         /* returns multiple metrics: Dictionary */
         return this.sampleStats.getStats(this, metrics);
@@ -430,7 +432,7 @@ public class Tile {
 
     public double getStat(String metric) {
         /* returns single metric: Double*/
-        return this.sampleStats.getStats(this, new String[] {metric}).get(metric);
+        return this.sampleStats.getStats(this, new String[]{metric}).get(metric);
 
     }
 
@@ -440,7 +442,10 @@ public class Tile {
 
     }
 
-    // === IMG OPERATIONS ======================================================================
+    public ImageStats getSampleStats() {
+        return this.sampleStats;
+    }
+// === IMG OPERATIONS ======================================================================
 
     public int[][] getMatrix(String channel) {
 
@@ -453,7 +458,6 @@ public class Tile {
 
             case "blue":
                 return bluePixels;
-
 
             default:
                 System.out.println("Invalid: set red, green, blue. ");
@@ -472,7 +476,7 @@ public class Tile {
         int rgb;
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                if(this.monochrome) {
+                if (this.monochrome) {
                     rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) redPixels[h][w]) << 8 | ((int) redPixels[h][w]));
                 } else {
                     rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
@@ -486,14 +490,14 @@ public class Tile {
     }//end write image
 
     public String getJson() {
-     //if unspecified return all
-     return getJson(this.sampleStats.metrics);
+        //if unspecified return all
+        return getJson(this.sampleStats.metrics);
     }
 
     public String getJson(String[] metrics) {
 
         // statistics to String
-        HashMap <String, Double> stats = this.getStats(metrics);
+        HashMap<String, Double> stats = this.getStats(metrics);
         String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
 
         //tile stats
@@ -501,7 +505,6 @@ public class Tile {
 
         return json_string;
     }
-
 
 
     public void savetoFile(String filepath, String format) throws IOException {
@@ -514,8 +517,12 @@ public class Tile {
     }//end write image
 
 
-    //=== GET/SET  ========================================================================
+    //=== SET  ========================================================================
 
+    public void setChannels(String[] channels) {
+        this.channels = channels;
+        this.monochrome = channels.length > 1 ? false : true;
+    }
 
     public void setMatrix(String channel, double constant) {
 

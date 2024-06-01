@@ -19,7 +19,7 @@ import java.util.Comparator;
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: speed 9.33");
+		System.out.println("StatFilter: stats 9.4");
 
 	}//end constructor
 	
@@ -115,7 +115,7 @@ import java.util.Comparator;
 		}
 	}
 	
-	public void createTiles(String pixelWindow){
+	public void subdivide(String pixelWindow){
 		
 			  int[] dimensions  = this.calculateDimensions(pixelWindow);
               
@@ -311,7 +311,7 @@ import java.util.Comparator;
 	
 	//POOLING OPERATIONS  ====================================================================================
 	
-	public void applyOperation(String operation, int tile) {
+	public void apply(String operation, int tile) {
 		
 		 int r = this.getTileCoordinates(tile)[0];
 		 int c = this.getTileCoordinates(tile)[1];
@@ -321,19 +321,22 @@ import java.util.Comparator;
 		switch (operation) {
 			
 		//pooling operations
-		
 			case "mean":
-				//tiles[r][c].mean();
+				tiles[r][c].mean();
 				break;
-				
+
 			case "std.dev":
-				value  = tiles[r][c].getStat("std.dev");
+				tiles[r][c].std_dev();
+				break;
+
+			case "entropy":
+				value  = tiles[r][c].getStat("entropy");
 				tiles[r][c].setMatrix("red",value);
 				tiles[r][c].setMatrix("green", value);
 				tiles[r][c].setMatrix("blue", value);
 				break;
 
-		//transformations				
+		//pixel transformations
 			case "log":
 				tiles[r][c].log();
 				break;				
@@ -344,13 +347,6 @@ import java.util.Comparator;
 								
 			case "sqrt":
 				tiles[r][c].sqrt();
-				break;
-				
-			case "entropy":
-				value  = tiles[r][c].getStat("entropy");
-				tiles[r][c].setMatrix("red",value);
-				tiles[r][c].setMatrix("green", value); 
-				tiles[r][c].setMatrix("blue", value);	
 				break;
 
 			case "red":
@@ -376,12 +372,12 @@ import java.util.Comparator;
 				
 	}//end getinputlayer
 	
-	public BufferedImage applyOperation(String operation, int[] tileList) {
+	public BufferedImage apply(String operation, int[] tileList) {
 		
 		int n = tileList.length;
 
 		//for each tile
-        for (int i : tileList) this.applyOperation(operation, i);
+        for (int i : tileList) this.apply(operation, i);
 		
 		Tile composedImg = this.composeImage(false, true);		
 	
@@ -391,10 +387,10 @@ import java.util.Comparator;
 	
 	}
 	
-	public BufferedImage applyOperation(String operation) {
+	public BufferedImage apply(String operation) {
 		
-		if(operation.contains("sobel")) this.createTiles("3x3");
-	    return this.applyOperation(operation, tileRanks);
+		if(operation.contains("sobel")) this.subdivide("3x3");
+	    return this.apply(operation, tileRanks);
 
 	}
 	

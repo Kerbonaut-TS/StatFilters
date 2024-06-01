@@ -78,6 +78,12 @@ public class ImageStats {
 
     }
 
+    public double getStat(Tile tile, String metric) {
+        /* option to return a single metric metrics*/
+        return this.getStats(tile, new String[]{metric}).get(metric);
+
+    }
+
     public void setStats(String key, double value){
 
         this.stats.put(key, value);
@@ -94,7 +100,7 @@ public class ImageStats {
     }
 
 
-    public double mean(Tile tile) {
+    private double mean(Tile tile) {
 
         double sum = 0;
         int count = 0;
