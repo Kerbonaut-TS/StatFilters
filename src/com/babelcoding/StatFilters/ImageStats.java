@@ -1,7 +1,6 @@
 package com.babelcoding.StatFilters;
 
 import java.awt.*;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,13 +48,13 @@ public class ImageStats {
                         this.stats.put("std.dev", this.std_dev(tile));
                         break;
                     case "hue":
-                        this.stats.put("hue", this.hue(red, green, blue));
+                        this.stats.put("hue", this.hue(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
                     case "saturation":
-                        this.stats.put("saturation", this.saturation(red, green, blue));
+                        this.stats.put("saturation", this.saturation(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
                     case "brightness":
-                        this.stats.put("brightness", this.brightness(red, green, blue));
+                        this.stats.put("brightness", this.brightness(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
 
                     case "entropy":
@@ -80,7 +79,8 @@ public class ImageStats {
 
     public double getStat(Tile tile, String metric) {
         /* option to return a single metric metrics*/
-        return this.getStats(tile, new String[]{metric}).get(metric);
+        HashMap<String, Double> dict = this.getStats(tile, new String[]{metric});
+        return dict.get(metric);
 
     }
 
@@ -107,10 +107,10 @@ public class ImageStats {
 
         for (String c: tile.channels) {
             if(this.stats.containsKey(c)){
-                sum = sum = this.stats.get(c);
+                sum = sum + this.stats.get(c);
             }else{
                 this.stats.put(c, (double) MatrixOps.mean(tile.getMatrix(c)));
-                sum = sum = this.stats.get(c);
+                sum = sum + this.stats.get(c);
             }
             count++;
 
@@ -138,7 +138,7 @@ public class ImageStats {
 
 
     // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
-    private double hue(int R, int G, int B) {
+    private double hue(double R, double G, double B) {
 
         double rp, gp, bp, max, min, hue;
 
@@ -166,26 +166,24 @@ public class ImageStats {
         return Math.floor(hue);
     }
 
-    private double saturation(int R, int G, int B) {
+    private double saturation(double R, double G, double B) {
 
         double rp, gp, bp, max, min, saturation;
 
-        rp = R / 255f;
-        gp = G / 255f;
-        bp = B / 255f;
+        rp = (float) R / 255f;
+        gp = (float) G / 255f;
+        bp = (float)  B / 255f;
 
         max = Math.max(Math.max(rp, gp), bp);
         min = Math.min(Math.min(rp, gp), bp);
 
         saturation = (max == 0) ? 0 : ((max - min) / max);
 
-        saturation = saturation * 100;
-
-        return Math.floor(saturation);
+        return saturation;
 
     }
 
-    private double brightness(int R, int G, int B) {
+    private double brightness(double R, double G, double B) {
 
         double rp, gp, bp, max, brightness;
 
@@ -193,11 +191,9 @@ public class ImageStats {
         gp = G / 255f;
         bp = B / 255f;
 
-        max = Math.max(Math.max(rp, gp), bp);
-        brightness = max * 100;
+        brightness = Math.max(Math.max(rp, gp), bp);
 
-
-        return Math.floor(brightness);
+        return brightness;
 
     }
 

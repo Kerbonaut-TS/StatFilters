@@ -156,7 +156,7 @@ import java.util.Comparator;
 				}
 			}
 		}
-		//tile.refresh_channel_stats();
+		tile.refreshStats();
 		return tile;
 	}
 

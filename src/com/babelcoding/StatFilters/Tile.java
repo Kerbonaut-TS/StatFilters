@@ -45,6 +45,7 @@ public class Tile {
         tly = 0;
 
         this.sampleStats = new ImageStats();
+        this.monochrome = false;
 
     }//end constructor
 
@@ -76,7 +77,7 @@ public class Tile {
     //import a BufferedImage
     public void setBufferedImage(BufferedImage image, Boolean monochrome) {
 
-        int avgR = 0, avgG = 0, avgB = 0, count = 0;
+        int sumR = 0, sumG = 0, sumB = 0, count = 0;
 
         if (image == null) {
             this.height = 0;
@@ -98,9 +99,9 @@ public class Tile {
                         greenPixels[h][w] = colour.getGreen();
                         bluePixels[h][w] = colour.getBlue();
 
-                        avgR = avgR + colour.getRed();
-                        avgG = avgG + colour.getGreen();
-                        avgB = avgB + colour.getBlue();
+                        sumR = sumR + colour.getRed();
+                        sumG = sumG + colour.getGreen();
+                        sumB = sumB + colour.getBlue();
                         count++;
 
                     }
@@ -109,9 +110,9 @@ public class Tile {
             }// end width
 
 
-            this.sampleStats.setStats("red", Math.round(avgR / count));
-            this.sampleStats.setStats("green", Math.round(avgG / count));
-            this.sampleStats.setStats("blue", Math.round(avgB / count));
+            this.sampleStats.setStats("red", Math.round(sumR / count));
+            this.sampleStats.setStats("green", Math.round(sumG / count));
+            this.sampleStats.setStats("blue", Math.round(sumB / count));
 
             if (monochrome) this.setChannels(new String[]{"red"});
 
@@ -306,6 +307,8 @@ public class Tile {
         for (String c : this.channels) this.setMatrix(c, this.sampleStats.getStat(this, "std.dev"));
     }
 
+
+
     public void log() {
         for (String c : this.channels) ImageStats.transform("log", this.getMatrix(c));
     }
@@ -351,11 +354,7 @@ public class Tile {
                         {1, 2, 1}
                 };
 
-        int gx, gy, G;
-
-        gx = 0;
-        gy = 0;
-        G = 0;
+        int gx = 0, gy = 0, G = 0;
 
         //iterate in the 3x3 tile
         for (int h = 0; h < this.height; h++) {
@@ -445,6 +444,9 @@ public class Tile {
     public ImageStats getSampleStats() {
         return this.sampleStats;
     }
+
+    public void refreshStats(){ this.sampleStats.refresh(this);}
+
 // === IMG OPERATIONS ======================================================================
 
     public int[][] getMatrix(String channel) {
@@ -587,7 +589,7 @@ public class Tile {
     public void setPixel(String channel, int h, int w, int value) {
 
 
-        if ((value >= 0) && (value <= 255)) {
+        //if ((value >= 0) && (value <= 255)) {
 
             switch (channel) {
                 case "red":
@@ -607,11 +609,11 @@ public class Tile {
                     System.exit(0);
 
             }//end switch
-        } else {
-
+        /*} else {
+#
             System.out.print("ERROR. Invalid pixel value:" + value);
             System.exit(0);
-        }
+        }*/
 
     }//end setPixel
 
