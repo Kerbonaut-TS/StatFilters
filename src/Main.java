@@ -12,7 +12,7 @@ public class Main {
 		f1.setSource(filepath);
 		System.out.println(f1.getTile(0).getStats());
 
-		String [] operations = new String[]{"mean", "std.dev", "sobel", "sqrt", "entropy", "red", "green", "blue"};
+		String [] operations = new String[]{"mean", "std.dev", "sobel", "sqrt", "entropy", "red", "green", "blue", "log"};
 
 		for (String operation: operations) {
 		    System.out.println("Applying filer: "+operation);

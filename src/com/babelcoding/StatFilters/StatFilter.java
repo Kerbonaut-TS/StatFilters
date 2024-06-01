@@ -208,7 +208,7 @@ import java.util.Comparator;
 	}
 
 
-	public Tile composeImage (Boolean drawTiles, Boolean RGBrescale) {
+	public Tile render (Boolean drawTiles) {
 
 		/*** Returns a Buffered Image stitching all tiles together in one single image Tile
 		 * (reverse operation of createTiles) ***/
@@ -238,9 +238,6 @@ import java.util.Comparator;
 
 			}//columns
 		}//rows
-
-
-		if(RGBrescale)  imageout.rescaleRGB(0,255);
 
 		return imageout;
 
@@ -301,7 +298,7 @@ import java.util.Comparator;
 		}//for each interval
 		
 		
-		Tile composedImg = this.composeImage(false, true);		
+		Tile composedImg = this.render(false);
 		
 		return composedImg.getBufferedImage();
 		
@@ -379,7 +376,7 @@ import java.util.Comparator;
 		//for each tile
         for (int i : tileList) this.apply(operation, i);
 		
-		Tile composedImg = this.composeImage(false, true);		
+		Tile composedImg = this.render(false);
 	
 		return composedImg.getBufferedImage();
 
@@ -401,7 +398,7 @@ import java.util.Comparator;
 	
 	public BufferedImage merge(BufferedImage img, String operation) {
 		
-		Tile t1 = this.composeImage(false, false);
+		Tile t1 = this.render(false);
 		Tile t2 = new Tile();
 		t2.setBufferedImage(img, t1.monochrome);
 		
@@ -417,13 +414,13 @@ import java.util.Comparator;
 	
 	public BufferedImage showTiles() {
 		
-		return this.composeImage(true, false).getBufferedImage();
+		return this.render(true).getBufferedImage();
 		
 	}//end ShowTiles
 	
 	public BufferedImage showImage() {
 		
-		return this.composeImage(false, true).getBufferedImage();
+		return this.render(false).getBufferedImage();
 		
 	}//end ShowTiles
 	
@@ -439,7 +436,7 @@ import java.util.Comparator;
 
 	public Tile crop(double percent) {
 
-		Tile current = this.composeImage(false, true);
+		Tile current = this.render(false);
 
 		int newH = (int) Math.round(current.height*percent);
 		int newW = (int) Math.round(current.width*percent);
@@ -454,7 +451,7 @@ import java.util.Comparator;
 
 	public void  saveImage (String filepath, String format) throws IOException {
 		
-		this.composeImage(false, true).savetoFile(filepath, format);
+		this.render(false).savetoFile(filepath, format);
 
 	}
 	

@@ -7,7 +7,7 @@ import java.util.Map;
 public class ImageStats {
 
     HashMap<String, Double> stats;
-    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy"};
+    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy", "baricenter_Rx", "baricenter_Ry"};
 
     //average colours of the cell
     int red;
@@ -21,6 +21,7 @@ public class ImageStats {
     }
 
     public HashMap<String, Double> getStats(Tile tile, String[] metrics) {
+        int[] baricenter_R;
 
         if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) {
             this.refresh(tile);
@@ -56,6 +57,14 @@ public class ImageStats {
                     case "brightness":
                         this.stats.put("brightness", this.brightness(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
+                    case "baricenter_Rx":
+                        baricenter_R = this.baricenter(tile, "red");
+                        this.stats.put("baricenterRx", (double) baricenter_R[0]);
+                        this.stats.put("baricenterRy", (double) baricenter_R[1]);
+                    case "baricenter_Ry":
+                        baricenter_R = this.baricenter(tile, "red");
+                        this.stats.put("baricenterRx", (double) baricenter_R[0]);
+                        this.stats.put("baricenterRy", (double) baricenter_R[1]);
 
                     case "entropy":
                         this.stats.put("entropy", this.entropy(tile));
@@ -129,6 +138,7 @@ public class ImageStats {
             }else{
                 sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c));
             }
+
         }//end for
 
         return sum_sigma;
@@ -226,7 +236,71 @@ public class ImageStats {
             entropy -= probability * Math.log(probability) / Math.log(2);
         }
 
+        //TODO 0-255 rescale
+
+
         return entropy;
+    }
+
+    private int[] baricenter(Tile tile, String channel){
+
+        double baricenterX= 0;
+        double baricenterY = 0;
+        int c_angle =0;
+
+        switch (channel){
+            case "red" -> c_angle = 0;
+            case "green" -> c_angle = 120;
+            case "blue" -> c_angle = 240;
+        }
+
+
+        /* returns the baricenter for a specific channel in x,y coordinates*/
+        int r,g,b;
+
+        //horizontal scan
+        for (int x = 0; x < tile.getWidth(); x++) {
+            double distance = 0;
+            for (int y = 0; y < tile.getHeight(); y++) {
+
+                r = tile.getMatrix("red")[x][y];
+                g = tile.getMatrix("green")[x][y];
+                b = tile.getMatrix("blue")[x][y];
+
+                double hue = this.hue(r,g,b);
+                distance= distance + (hue - c_angle);
+            }
+
+            //update baricenter with (coordinate * weight)
+            baricenterX = baricenterX + x *  (distance / (180* tile.getHeight()));
+
+        }
+
+        //calculate y coordinate
+        baricenterX = baricenterX/ tile.getHeight();
+
+
+        //horizontal scan
+        for (int y = 0; y < tile.getHeight(); y++) {
+            double distance = 0;
+
+            for (int x = 0; x < tile.getWidth(); x++) {
+                r = tile.getMatrix("red")[x][y];
+                g = tile.getMatrix("green")[x][y];
+                b = tile.getMatrix("blue")[x][y];
+
+                double hue = this.hue(r,g,b);
+                distance= distance + (hue - c_angle);
+            }
+
+            //update baricenter with (coordinate * weight)
+            baricenterY = baricenterY + y *  (distance / (180* tile.getHeight()));
+
+        }
+        baricenterY = baricenterY/ tile.getWidth();
+
+
+        return new int[] {(int) baricenterX, (int) baricenterY};
     }
 
 
@@ -256,9 +330,10 @@ public class ImageStats {
             for (int w = 0; w < matrix[0].length; w++) {
                 switch (function) {
 
-                    case "sqrt" -> matrix[h][w] = (int) Math.sqrt(matrix[h][w]);
-                    case "log" -> matrix[h][w] = (matrix[h][w] == 0) ? (int) Math.log(matrix[h][w] + 1) : (int) Math.log(matrix[h][w]);
+                    case "sqrt" -> matrix[h][w] = (int) Math.round(Math.sqrt(matrix[h][w])/Math.sqrt(255) *255);
+                    case "log" -> matrix[h][w] = (matrix[h][w] == 0) ? 0 : (int) Math.round(Math.log(matrix[h][w])/Math.log(255) *255);
                     case "invert" -> matrix[h][w] = 255 - matrix[h][w];
+
                     default -> {
                         System.out.println("Invalid operation: not recognized");
                     }//end default

@@ -109,6 +109,7 @@ public class Tile {
                 }//end height
             }// end width
 
+            if(monochrome) count = 1;
 
             this.sampleStats.setStats("red", Math.round(sumR / count));
             this.sampleStats.setStats("green", Math.round(sumG / count));
@@ -304,7 +305,12 @@ public class Tile {
     }
 
     public void std_dev() {
-        for (String c : this.channels) this.setMatrix(c, this.sampleStats.getStat(this, "std.dev"));
+        for (String c : this.channels) {
+            //rescale to 0-255. Assuming that the max is 70% of the total range in all 3 channels
+            double sigma = this.sampleStats.getStat(this, "std.dev");
+            double RGBvalue = Math.min((sigma/((255*this.channels.length)*0.7))* 255, 255);
+            this.setMatrix(c, RGBvalue);
+        }
     }
 
 
