@@ -10,13 +10,22 @@ public class ImageStats {
     HashMap<String, Double> stats;
     public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy"};
 
+    //average colours of the cell
+    int red;
+    int green;
+    int blue;
+
     public ImageStats (){
-         this.stats = new HashMap <String, Double> ();
+
+        this.stats = new HashMap <String, Double> ();
+
     }
 
-    public HashMap<String, Double> getStat(Tile tile, String[] metrics) {
+    public HashMap<String, Double> getStats(Tile tile, String[] metrics) {
 
-        HashMap<String, Double> stats = new HashMap<String, Double> ();
+        if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) {
+            this.refresh(tile);
+        }
 
         for (String m : metrics) {
 
@@ -28,13 +37,10 @@ public class ImageStats {
 
                 switch (m) {
                     case "red":
-                        this.stats.get("red");
                         break;
                     case "green":
-                        this.stats.get("green");
                         break;
                     case "blue":
-                        this.stats.get("blue");
                         break;
                     case "mean":
                         this.stats.put("mean", (double) this.mean(tile));
@@ -43,13 +49,13 @@ public class ImageStats {
                         this.stats.put("std.dev", this.std_dev(tile));
                         break;
                     case "hue":
-                        this.stats.put("hue", this.hue(tile));
+                        this.stats.put("hue", this.hue(red, green, blue));
                         break;
                     case "saturation":
-                        this.stats.put("saturation", this.saturation(tile));
+                        this.stats.put("saturation", this.saturation(red, green, blue));
                         break;
                     case "brightness":
-                        this.stats.put("brightness", this.brightness(tile));
+                        this.stats.put("brightness", this.brightness(red, green, blue));
                         break;
 
                     case "entropy":
@@ -66,10 +72,9 @@ public class ImageStats {
     }
 
 
-    public HashMap<String, Double> getStat(Tile tile) {
+    public HashMap<String, Double> getStats(Tile tile) {
         /* option to return all metrics*/
-        HashMap<String, Double> stats = new HashMap<String, Double> ();
-        return this.getStat(tile, this.metrics);
+        return this.getStats(tile, this.metrics);
 
     }
 
@@ -78,7 +83,7 @@ public class ImageStats {
         this.stats.put(key, value);
     }
 
-    public double refresh(Tile tile) {
+    public void refresh(Tile tile) {
 
         this.stats = new HashMap<String, Double>();
 
@@ -107,7 +112,23 @@ public class ImageStats {
         return sum/count;
 
     }
+    private double std_dev(Tile tile) {
 
+        double sum_sigma =0;
+
+        for (String c : tile.channels){
+            if(this.stats.containsKey(c)){
+                //pass to std.dev function the precalculated mean
+                sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c), this.stats.get(c));
+            }else{
+                sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c));
+            }
+        }//end for
+
+        return sum_sigma;
+
+
+    }//end std dev
 
 
     // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
@@ -158,17 +179,13 @@ public class ImageStats {
 
     }
 
-    private double brightness(Tile tile) {
+    private double brightness(int R, int G, int B) {
 
         double rp, gp, bp, max, brightness;
 
-        if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) this.mean(tile);
-
-        rp = this.stats.get("red")/ 255f;
-        gp = this.stats.get("green") / 255f;
-        bp = this.stats.get("blue") / 255f;
-
-
+        rp = R / 255f;
+        gp = G / 255f;
+        bp = B / 255f;
 
         max = Math.max(Math.max(rp, gp), bp);
         brightness = max * 100;
@@ -178,23 +195,7 @@ public class ImageStats {
 
     }
 
-    private double std_dev(Tile tile) {
 
-        double sum_sigma =0;
-
-        for (String c : tile.channels){
-
-            if(this.stats.containsKey(c)){
-                sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c), this.stats.get(c));
-            }else{
-                sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c));
-            }
-        }//end for
-
-        return sum_sigma;
-
-
-    }//end std dev
 
     private double entropy(Tile tile) {
         //TODO: use hue bins

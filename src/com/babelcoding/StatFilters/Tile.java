@@ -44,7 +44,7 @@ public class Tile {
         tlx = 0;
         tly = 0;
 
-        this.imageStats = new ImageStats();
+        this.sampleStats = new ImageStats();
 
     }//end constructor
 
@@ -81,11 +81,7 @@ public class Tile {
     //import a BufferedImage
     public void setBufferedImage(BufferedImage image, Boolean monochrome) {
 
-        int avgR, avgG, avgB,count;
-        avgR = 0;
-        avgG = 0;
-        avgB = 0;
-        count = 0;
+        int avgR = 0, avgG = 0, avgB = 0,count = 0;
 
         if (image == null) {
             this.height = 0;
@@ -94,7 +90,6 @@ public class Tile {
 
             this.setHeight(image.getHeight());
             this.setWidth(image.getWidth());
-
             //get Image matrix
             for (int h = 0; h < height; h++) {
                 for (int w = 0; w < width; w++) {
@@ -111,7 +106,7 @@ public class Tile {
                         avgR = avgR + colour.getRed();
                         avgG = avgG + colour.getGreen();
                         avgB = avgB + colour.getBlue();
-                        count =0;
+                        count ++;
 
                     }
 
@@ -427,21 +422,21 @@ public class Tile {
 
     }
 
-    public Dictionary<String, Double> getStats(String[] metrics) {
+    public HashMap<String, Double> getStats(String[] metrics) {
         /* returns multiple metrics: Dictionary */
-        return this.imageStats.getStat(this, metrics);
+        return this.sampleStats.getStats(this, metrics);
 
     }
 
-    public double getStats(String metric) {
+    public double getStat(String metric) {
         /* returns single metric: Double*/
-        return this.imageStats.getStat(this, new String[] {metric}).get(metric);
+        return this.sampleStats.getStats(this, new String[] {metric}).get(metric);
 
     }
 
-    public Dictionary<String, Double> getStats() {
+    public HashMap<String, Double> getStats() {
         /* returns all metrics*/
-        return this.imageStats.getStat(this);
+        return this.sampleStats.getStats(this);
 
     }
 
@@ -492,13 +487,13 @@ public class Tile {
 
     public String getJson() {
      //if unspecified return all
-     return getJson(this.imageStats.metrics);
+     return getJson(this.sampleStats.metrics);
     }
 
     public String getJson(String[] metrics) {
 
         // statistics to String
-        Dictionary stats = this.getStats(metrics);
+        HashMap <String, Double> stats = this.getStats(metrics);
         String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
 
         //tile stats
