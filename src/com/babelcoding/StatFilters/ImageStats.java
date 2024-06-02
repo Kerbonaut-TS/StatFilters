@@ -3,16 +3,13 @@ package com.babelcoding.StatFilters;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ImageStats {
 
     HashMap<String, Double> stats;
-    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy", "baricenter_Rx", "baricenter_Ry"};
+    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy", "baricenterRx", "baricenterRy"};
 
-    //average colours of the cell
-    int red;
-    int green;
-    int blue;
 
     public ImageStats (){
 
@@ -28,11 +25,9 @@ public class ImageStats {
         }
 
         for (String m : metrics) {
-
             if (this.stats.containsKey(m)){
 
                 //already calculated, do nothing
-
             }else{
 
                 switch (m) {
@@ -57,14 +52,10 @@ public class ImageStats {
                     case "brightness":
                         this.stats.put("brightness", this.brightness(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
-                    case "baricenter_Rx":
-                        baricenter_R = this.baricenter(tile, "red");
-                        this.stats.put("baricenterRx", (double) baricenter_R[0]);
-                        this.stats.put("baricenterRy", (double) baricenter_R[1]);
-                    case "baricenter_Ry":
-                        baricenter_R = this.baricenter(tile, "red");
-                        this.stats.put("baricenterRx", (double) baricenter_R[0]);
-                        this.stats.put("baricenterRy", (double) baricenter_R[1]);
+                    case "baricenterRx":
+                        this.stats.put("baricenterRx", (double) this.baricenter(tile, "red",  "X"));
+                    case "baricenterRy":
+                        this.stats.put("baricenterRy", (double) this.baricenter(tile, "red",  "X"));
 
                     case "entropy":
                         this.stats.put("entropy", this.entropy(tile));
@@ -242,65 +233,72 @@ public class ImageStats {
         return entropy;
     }
 
-    private int[] baricenter(Tile tile, String channel){
+    private int baricenter(Tile tile, String channel, String axis){
+        /* returns the baricenter for a specific channel in x,y coordinates*/
 
-        double baricenterX= 0;
-        double baricenterY = 0;
+        System.out.println("call baricenter");
+        double baricenterX = 0, baricenterY = 0, weights_sum =0;
+        int r,g,b;
         int c_angle =0;
 
         switch (channel){
-            case "red" -> c_angle = 0;
-            case "green" -> c_angle = 120;
-            case "blue" -> c_angle = 240;
+            case "red" -> c_angle =  0 + 180;
+            case "green" -> c_angle = 120 + 180;
+            case "blue" -> c_angle = -180 - 240;
         }
 
-
-        /* returns the baricenter for a specific channel in x,y coordinates*/
-        int r,g,b;
-
-        //horizontal scan
-        for (int x = 0; x < tile.getWidth(); x++) {
-            double distance = 0;
-            for (int y = 0; y < tile.getHeight(); y++) {
-
-                r = tile.getMatrix("red")[x][y];
-                g = tile.getMatrix("green")[x][y];
-                b = tile.getMatrix("blue")[x][y];
-
-                double hue = this.hue(r,g,b);
-                distance= distance + (hue - c_angle);
-            }
-
-            //update baricenter with (coordinate * weight)
-            baricenterX = baricenterX + x *  (distance / (180* tile.getHeight()));
-
-        }
-
-        //calculate y coordinate
-        baricenterX = baricenterX/ tile.getHeight();
-
-
-        //horizontal scan
-        for (int y = 0; y < tile.getHeight(); y++) {
-            double distance = 0;
-
+        if(Objects.equals(axis, "X")){
+            //horizontal scan
             for (int x = 0; x < tile.getWidth(); x++) {
-                r = tile.getMatrix("red")[x][y];
-                g = tile.getMatrix("green")[x][y];
-                b = tile.getMatrix("blue")[x][y];
+                double distance_sum = 0;
+                for (int y = 0; y < tile.getHeight(); y++) {
 
-                double hue = this.hue(r,g,b);
-                distance= distance + (hue - c_angle);
+                    r = tile.getMatrix("red")[y][x];
+                    g = tile.getMatrix("green")[y][x];
+                    b = tile.getMatrix("blue")[y][x];
+
+                    double hue = this.hue(r,g,b);
+                    double angle_distance;
+                    angle_distance =  hue >=0? Math.abs(hue - (180 - c_angle)): 0;
+                    if(hue>0){
+                        distance_sum= distance_sum + angle_distance;
+                    }else{
+
+                    }
+                }
+
+                //update baricenter with (coordinate * weight)
+                double weight =  distance_sum;
+                System.out.println(x + "|| " + weight);
+                weights_sum = weights_sum + weight;
+                baricenterX = baricenterX + x * weight;
+
             }
 
-            //update baricenter with (coordinate * weight)
-            baricenterY = baricenterY + y *  (distance / (180* tile.getHeight()));
+            //calculate y coordinate
+            return (int)  Math.round(baricenterX/ weights_sum);
+        } else  {
+
+            //vertical scan
+            for (int y = 0; y < tile.getHeight(); y++) {
+                double distance_sum = 0;
+
+                for (int x = 0; x < tile.getWidth(); x++) {
+                    r = tile.getMatrix("red")[y][x];
+                    g = tile.getMatrix("green")[y][x];
+                    b = tile.getMatrix("blue")[y][x];
+
+                    double hue = this.hue(r,g,b);
+                    distance_sum = distance_sum + Math.abs(hue - c_angle);
+                }
+                //update baricenter with (coordinate * weight)
+                double weight =  distance_sum ;
+                weights_sum = weights_sum + weight;
+                baricenterY = baricenterY + y * weight;
+            }
+            return (int) Math.round(baricenterY/ weights_sum);
 
         }
-        baricenterY = baricenterY/ tile.getWidth();
-
-
-        return new int[] {(int) baricenterX, (int) baricenterY};
     }
 
 

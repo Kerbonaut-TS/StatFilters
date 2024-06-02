@@ -19,7 +19,7 @@ import java.util.Comparator;
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: stats 9.4");
+		System.out.println("StatFilter: baricenter 9.42");
 
 	}//end constructor
 	

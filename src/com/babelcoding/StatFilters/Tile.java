@@ -210,7 +210,7 @@ public class Tile {
         if (x < 0) x = 0;
 
         //draw Rectangles
-        this.drawSquare();
+        this.drawSquare("red");
 
         g2d.drawImage(this.getBufferedImage(), 0, 0, null);
         g2d.drawString(text, x, y);
@@ -221,31 +221,92 @@ public class Tile {
 
     }//end mark
 
-    public void drawSquare() {
+
+    public void mark_pixel(int x, int y,String  colour) {
+
+        HashMap<String, Integer> colours = new HashMap<String, Integer>();
+
+        switch(colour){
+            case "red" -> {
+                colours.put("red", 255);
+                colours.put("green", 255);
+                colours.put("blue", 255);
+            }
+            case "green" -> {
+                colours.put("red", 0);
+                colours.put("green", 255);
+                colours.put("blue", 0);
+            }
+            case "blue" -> {
+                colours.put("red", 0);
+                colours.put("green", 0);
+                colours.put("blue", 255);
+            }
+
+        }
+
+        int cross_height = 10, cross_width =10;
+
+        for (int h = 0; h < cross_height+1; h++) {
+            for (String c : channels) {
+                this.setPixel(c, y - (cross_height/2)+h, x, colours.get(c));
+                this.setPixel(c, y - (cross_height/2)+h, x, colours.get(c));
+
+            }
+        }
+
+
+        for (int w = 0; w < cross_width+1; w++) {
+            for (String c : channels) {
+                this.setPixel(c, y, x - (cross_width/2) + w, colours.get(c));
+                this.setPixel(c, y, x - (cross_width/2) + w, colours.get(c));
+
+            }
+        }
+
+
+
+
+    }//end mark
+
+    public void drawSquare(String colour) {
+
+        HashMap<String, Integer> colours = new HashMap<String, Integer>();
+
+        switch(colour){
+            case "red" -> {
+                colours.put("red", 255);
+                colours.put("green", 0);
+                colours.put("blue", 0);
+            }
+            case "green" -> {
+                colours.put("red", 0);
+                colours.put("green", 255);
+                colours.put("blue", 0);
+            }
+            case "blue" -> {
+                colours.put("red", 0);
+                colours.put("green", 0);
+                colours.put("blue", 255);
+            }
+
+        }
 
         for (int h = 0; h < this.height; h++) {
+            for (String c : channels) {
+                this.setPixel(c, h, 0, colours.get(c));
+                this.setPixel(c, h, this.width - 1, colours.get(c));
 
-            redPixels[h][0] = 255;
-            redPixels[h][this.width - 1] = 255;
-
-            greenPixels[h][0] = 0;
-            greenPixels[h][this.width - 1] = 0;
-
-            bluePixels[h][0] = 0;
-            bluePixels[h][this.width - 1] = 0;
+            }
         }
 
 
         for (int w = 0; w < this.width; w++) {
+            for (String c : channels) {
+                this.setPixel(c, 0, w, colours.get(c));
+                this.setPixel(c, this.height-1, w, colours.get(c));
 
-            redPixels[0][w] = 255;
-            redPixels[this.height - 1][w] = 255;
-
-            greenPixels[0][w] = 0;
-            greenPixels[this.height - 1][w] = 0;
-
-            bluePixels[0][w] = 0;
-            bluePixels[this.height - 1][w] = 0;
+            }
         }
 
 
