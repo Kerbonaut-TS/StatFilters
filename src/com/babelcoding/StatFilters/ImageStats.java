@@ -8,27 +8,27 @@ import java.util.Objects;
 public class ImageStats {
 
     HashMap<String, Double> stats;
-    public String[] metrics = new String[] {"red","blue", "green", "mean","std.dev","hue", "saturation", "brightness","entropy", "baricenterRx", "baricenterRy"};
+    public String[] metrics = new String[]{"red", "blue", "green", "mean", "std.dev", "hue", "saturation", "brightness", "entropy", "baricenterRx", "baricenterRy", "baricenterGx", "baricenterGy", "baricenterBx", "baricenterBy"};
 
 
-    public ImageStats (){
+    public ImageStats() {
 
-        this.stats = new HashMap <String, Double> ();
+        this.stats = new HashMap<String, Double>();
 
     }
 
     public HashMap<String, Double> getStats(Tile tile, String[] metrics) {
         int[] baricenter_R;
 
-        if(!(this.stats.containsKey("red"))&(this.stats.containsKey("green"))&(this.stats.containsKey("blue"))) {
+        if (!(this.stats.containsKey("red")) & (this.stats.containsKey("green")) & (this.stats.containsKey("blue"))) {
             this.refresh(tile);
         }
 
         for (String m : metrics) {
-            if (this.stats.containsKey(m)){
+            if (this.stats.containsKey(m)) {
 
                 //already calculated, do nothing
-            }else{
+            } else {
 
                 switch (m) {
                     case "red":
@@ -53,10 +53,23 @@ public class ImageStats {
                         this.stats.put("brightness", this.brightness(this.stats.get("red"), this.stats.get("green"), this.stats.get("blue")));
                         break;
                     case "baricenterRx":
-                        this.stats.put("baricenterRx", (double) this.baricenter(tile, "red",  "X"));
+                        this.stats.put("baricenterRx", (double) this.baricenter(tile, "red", "X"));
+                        break;
                     case "baricenterRy":
-                        this.stats.put("baricenterRy", (double) this.baricenter(tile, "red",  "Y"));
-
+                        this.stats.put("baricenterRy", (double) this.baricenter(tile, "red", "Y"));
+                        break;
+                    case "baricenterGx":
+                        this.stats.put("baricenterGx", (double) this.baricenter(tile, "green", "X"));
+                        break;
+                    case "baricenterGy":
+                        this.stats.put("baricenterGy", (double) this.baricenter(tile, "green", "Y"));
+                        break;
+                    case "baricenterBx":
+                        this.stats.put("baricenterBx", (double) this.baricenter(tile, "blue", "X"));
+                        break;
+                    case "baricenterBy":
+                        this.stats.put("baricenterBy", (double) this.baricenter(tile, "blue", "Y"));
+                        break;
                     case "entropy":
                         this.stats.put("entropy", this.entropy(tile));
                         break;
@@ -84,7 +97,7 @@ public class ImageStats {
 
     }
 
-    public void setStats(String key, double value){
+    public void setStats(String key, double value) {
 
         this.stats.put(key, value);
     }
@@ -93,7 +106,7 @@ public class ImageStats {
 
         this.stats = new HashMap<String, Double>();
 
-        for (String c: tile.channels){
+        for (String c : tile.channels) {
             this.stats.put(c, (double) MatrixOps.mean(tile.getMatrix(c)));
 
         }
@@ -105,28 +118,29 @@ public class ImageStats {
         double sum = 0;
         int count = 0;
 
-        for (String c: tile.channels) {
-            if(this.stats.containsKey(c)){
+        for (String c : tile.channels) {
+            if (this.stats.containsKey(c)) {
                 sum = sum + this.stats.get(c);
-            }else{
+            } else {
                 this.stats.put(c, (double) MatrixOps.mean(tile.getMatrix(c)));
                 sum = sum + this.stats.get(c);
             }
             count++;
 
         }
-        return sum/count;
+        return sum / count;
 
     }
+
     private double std_dev(Tile tile) {
 
-        double sum_sigma =0;
+        double sum_sigma = 0;
 
-        for (String c : tile.channels){
-            if(this.stats.containsKey(c)){
+        for (String c : tile.channels) {
+            if (this.stats.containsKey(c)) {
                 //pass to std.dev function the precalculated mean
                 sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c), this.stats.get(c));
-            }else{
+            } else {
                 sum_sigma = sum_sigma + MatrixOps.std_dev(tile.getMatrix(c));
             }
 
@@ -137,13 +151,11 @@ public class ImageStats {
 
     }//end std dev
 
-
-    // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
     private double hue(double R, double G, double B) {
 
         double rp, gp, bp, max, min, hue;
 
-        rp = R/ 255f;
+        rp = R / 255f;
         gp = G / 255f;
         bp = B / 255f;
 
@@ -173,7 +185,7 @@ public class ImageStats {
 
         rp = (float) R / 255f;
         gp = (float) G / 255f;
-        bp = (float)  B / 255f;
+        bp = (float) B / 255f;
 
         max = Math.max(Math.max(rp, gp), bp);
         min = Math.min(Math.min(rp, gp), bp);
@@ -197,7 +209,6 @@ public class ImageStats {
         return brightness;
 
     }
-
 
 
     private double entropy(Tile tile) {
@@ -233,73 +244,72 @@ public class ImageStats {
         return entropy;
     }
 
-    private int baricenter(Tile tile, String channel, String axis){
+    private int baricenter(Tile tile, String channel, String axis) {
         /* returns the baricenter for a specific channel in x,y coordinates*/
 
         System.out.println("call baricenter");
-        double baricenterX = 0, baricenterY = 0, weights_sum =0;
-        int r,g,b;
-        int c_angle =0;
+        double baricenterX = 0, baricenterY = 0, weights_sum = 0;
+        int c_angle = 0;
 
-        switch (channel){
-            case "red" -> c_angle =  0 + 180;
-            case "green" -> c_angle = 120 + 180;
-            case "blue" -> c_angle = -180 - 240;
+        switch (channel) {
+            case "red" -> c_angle = 0 ;
+            case "green" -> c_angle = 120;
+            case "blue" -> c_angle = 240;
         }
-
-        if(Objects.equals(axis, "X")){
+        if (Objects.equals(axis, "X")) {
             //horizontal scan
             for (int x = 0; x < tile.getWidth(); x++) {
-                double distance_sum = 0;
+                double distance_tot = 0;
                 for (int y = 0; y < tile.getHeight(); y++) {
 
-                    r = tile.getMatrix("red")[y][x];
-                    g = tile.getMatrix("green")[y][x];
-                    b = tile.getMatrix("blue")[y][x];
+                    int r = tile.getMatrix("red")[y][x];
+                    int g = tile.getMatrix("green")[y][x];
+                    int b = tile.getMatrix("blue")[y][x];
 
-                    double hue = this.hue(r,g,b);
-                    System.out.println(hue+ "|| " + Math.abs(hue - c_angle));
-                    double angle_distance;
-                    angle_distance =  hue >=0? Math.abs(hue - c_angle): 0;
-                    distance_sum= distance_sum + angle_distance;
+                    double hue = this.hue(r, g, b);
+                    double angle_distance = Math.abs(hue - c_angle);
+                    angle_distance =  ((hue >= 0) & (angle_distance<=10))? 1: 0;
+                    distance_tot = distance_tot + angle_distance;
 
                 }
 
                 //update baricenter with (coordinate * weight)
-                double weight =  distance_sum;
+                double weight = distance_tot;
                 weights_sum = weights_sum + weight;
                 baricenterX = baricenterX + x * weight;
 
             }
+            //calculate X coordinate
+            System.out.println("X: " + Math.round(baricenterX / weights_sum));
 
-            //calculate y coordinate
-            return (int)  Math.round(baricenterX/ weights_sum);
-        } else  {
+            return (int) Math.round(baricenterX / weights_sum);
+        } else {
 
             //vertical scan
             for (int y = 0; y < tile.getHeight(); y++) {
-                double distance_sum = 0;
+                double distance_tot = 0;
 
                 for (int x = 0; x < tile.getWidth(); x++) {
-                    r = tile.getMatrix("red")[y][x];
-                    g = tile.getMatrix("green")[y][x];
-                    b = tile.getMatrix("blue")[y][x];
+                    int r = tile.getMatrix("red")[y][x];
+                    int g = tile.getMatrix("green")[y][x];
+                    int b = tile.getMatrix("blue")[y][x];
 
-                    double hue = this.hue(r,g,b);
-                    double angle_distance;
-                    angle_distance =  hue >=0? Math.abs(hue - c_angle): 0;
-                    distance_sum= distance_sum + angle_distance;
+                    double hue = this.hue(r, g, b);
+                    double angle_distance = Math.abs(hue - c_angle);
+                    angle_distance =  ((hue >= 0) & (angle_distance<=10))? 1: 0;
+                    distance_tot = distance_tot + angle_distance;
                 }
                 //update baricenter with (coordinate * weight)
-                double weight =  distance_sum ;
+                double weight = distance_tot;
                 weights_sum = weights_sum + weight;
                 baricenterY = baricenterY + y * weight;
             }
-            return (int) Math.round(baricenterY/ weights_sum);
+            //calculate Y Coordinate
+            System.out.println("Y: " + Math.round(baricenterY / weights_sum));
+            return (int) Math.round(baricenterY / weights_sum);
 
         }
     }
-
 
 
     public static int apply(String operator, int pixelA, int pixelB) {
@@ -307,10 +317,10 @@ public class ImageStats {
 
         return switch (operator) {
             case "diff" -> (int) Math.max(pixelA - pixelB, 0);
-            case "add" ->  (int) Math.min(pixelA + pixelB, 255);
-            case "avg" ->  (int) Math.floor((pixelA + pixelB) * 0.5);
-            case "max" ->  (int) Math.max(pixelA, pixelB);
-            case "min" ->  (int) Math.min(pixelA, pixelB);
+            case "add" -> (int) Math.min(pixelA + pixelB, 255);
+            case "avg" -> (int) Math.floor((pixelA + pixelB) * 0.5);
+            case "max" -> (int) Math.max(pixelA, pixelB);
+            case "min" -> (int) Math.min(pixelA, pixelB);
 
 
             default -> {
@@ -327,8 +337,9 @@ public class ImageStats {
             for (int w = 0; w < matrix[0].length; w++) {
                 switch (function) {
 
-                    case "sqrt" -> matrix[h][w] = (int) Math.round(Math.sqrt(matrix[h][w])/Math.sqrt(255) *255);
-                    case "log" -> matrix[h][w] = (matrix[h][w] == 0) ? 0 : (int) Math.round(Math.log(matrix[h][w])/Math.log(255) *255);
+                    case "sqrt" -> matrix[h][w] = (int) Math.round(Math.sqrt(matrix[h][w]) / Math.sqrt(255) * 255);
+                    case "log" ->
+                            matrix[h][w] = (matrix[h][w] == 0) ? 0 : (int) Math.round(Math.log(matrix[h][w]) / Math.log(255) * 255);
                     case "invert" -> matrix[h][w] = 255 - matrix[h][w];
 
                     default -> {
@@ -338,7 +349,6 @@ public class ImageStats {
             }//end w
         }//endh
     }
-
 
 
 }

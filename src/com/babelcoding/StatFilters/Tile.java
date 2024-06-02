@@ -229,8 +229,8 @@ public class Tile {
         switch(colour){
             case "red" -> {
                 colours.put("red", 255);
-                colours.put("green", 255);
-                colours.put("blue", 255);
+                colours.put("green", 0);
+                colours.put("blue", 0);
             }
             case "green" -> {
                 colours.put("red", 0);
@@ -506,10 +506,6 @@ public class Tile {
         /* returns all metrics*/
         return this.sampleStats.getStats(this);
 
-    }
-
-    public ImageStats getSampleStats() {
-        return this.sampleStats;
     }
 
     public void refreshStats(){ this.sampleStats.refresh(this);}
