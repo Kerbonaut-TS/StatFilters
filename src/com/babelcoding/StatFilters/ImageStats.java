@@ -55,7 +55,7 @@ public class ImageStats {
                     case "baricenterRx":
                         this.stats.put("baricenterRx", (double) this.baricenter(tile, "red",  "X"));
                     case "baricenterRy":
-                        this.stats.put("baricenterRy", (double) this.baricenter(tile, "red",  "X"));
+                        this.stats.put("baricenterRy", (double) this.baricenter(tile, "red",  "Y"));
 
                     case "entropy":
                         this.stats.put("entropy", this.entropy(tile));
@@ -258,18 +258,15 @@ public class ImageStats {
                     b = tile.getMatrix("blue")[y][x];
 
                     double hue = this.hue(r,g,b);
+                    System.out.println(hue+ "|| " + Math.abs(hue - c_angle));
                     double angle_distance;
-                    angle_distance =  hue >=0? Math.abs(hue - (180 - c_angle)): 0;
-                    if(hue>0){
-                        distance_sum= distance_sum + angle_distance;
-                    }else{
+                    angle_distance =  hue >=0? Math.abs(hue - c_angle): 0;
+                    distance_sum= distance_sum + angle_distance;
 
-                    }
                 }
 
                 //update baricenter with (coordinate * weight)
                 double weight =  distance_sum;
-                System.out.println(x + "|| " + weight);
                 weights_sum = weights_sum + weight;
                 baricenterX = baricenterX + x * weight;
 
@@ -289,7 +286,9 @@ public class ImageStats {
                     b = tile.getMatrix("blue")[y][x];
 
                     double hue = this.hue(r,g,b);
-                    distance_sum = distance_sum + Math.abs(hue - c_angle);
+                    double angle_distance;
+                    angle_distance =  hue >=0? Math.abs(hue - c_angle): 0;
+                    distance_sum= distance_sum + angle_distance;
                 }
                 //update baricenter with (coordinate * weight)
                 double weight =  distance_sum ;
