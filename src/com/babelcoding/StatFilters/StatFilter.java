@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 
 
  public class StatFilter {
@@ -162,14 +163,14 @@ import java.util.Comparator;
 
 
 
- 	public Tile findTile(String measure, String operator,  String size, int stride) {
+ 	public Tile findTile(HashMap<String, Double> stats, String operator, String size, int stride) {
 
 		/*** Finds the tile that is  maximising/minimizing  a particular Stats
 		 * the convolution operation will use a pixel window and stride specified in the parameters ***/
 
 		int k =  ( operator == "min") ? 1 : -1;
  		
- 		//height and width of sub matrixes
+ 		//height and width of convolution Window
 		int[] dimensions = this.calculateDimensions(size);
 				
 		int H = dimensions [0];
@@ -182,15 +183,21 @@ import java.util.Comparator;
  		double [][] metrics = new double [n][3];    //  tlx, tly, value
 
 		int i = 0;
-		
+
+
 		// convolution
 		for (int tly = 0; tly < (this.master.height - H);  tly = tly+stride){
 			for (int tlx = 0; tlx < (this.master.width - W); tlx = tlx+stride){
-
+				double delta_sum =0;
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
 				metrics[i][1] = (double) tly;
-				metrics[i][2] = tile.getStat(measure);
+				for (String m : stats.keySet()){
+					double delta  = Math.abs(stats.get(m) - tile.getStat(m));
+					delta_sum = delta_sum + delta;
+				}
+				metrics[i][2] = delta_sum;
+
 				i++;
 
 			}//end x

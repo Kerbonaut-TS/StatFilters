@@ -5,7 +5,7 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 
-		final String filepath= "C:\\Users\\Riccardo\\Desktop\\test_alchemy.jpg";
+		final String filepath= "C:\\path\\to\\image\\input";
 		
 
 		StatFilter f1= new StatFilter();
@@ -15,10 +15,11 @@ public class Main {
 		String [] operations = new String[]{"mean", "std.dev", "sobel", "sqrt", "entropy", "red", "green", "blue", "log"};
 
 		for (String operation: operations) {
+
 		    System.out.println("Applying filer: "+operation);
 		    f1.subdivide("10x10");
 		    f1.apply(operation);
-		    f1.saveImage("C:\\Users\\Riccardo\\Desktop\\New folder\\test\\"+operation+".jpg", "jpg");
+		    f1.saveImage("C:\\path\\to\\image\\output"+operation+".jpg", "jpg");
 		    f1.reset();
 
 		} 

@@ -246,8 +246,6 @@ public class ImageStats {
 
     private int baricenter(Tile tile, String channel, String axis) {
         /* returns the baricenter for a specific channel in x,y coordinates*/
-
-        System.out.println("call baricenter");
         double baricenterX = 0, baricenterY = 0, weights_sum = 0;
         int c_angle = 0;
 
@@ -280,7 +278,6 @@ public class ImageStats {
 
             }
             //calculate X coordinate
-            System.out.println("X: " + Math.round(baricenterX / weights_sum));
 
             return (int) Math.round(baricenterX / weights_sum);
         } else {
@@ -305,7 +302,6 @@ public class ImageStats {
                 baricenterY = baricenterY + y * weight;
             }
             //calculate Y Coordinate
-            System.out.println("Y: " + Math.round(baricenterY / weights_sum));
             return (int) Math.round(baricenterY / weights_sum);
 
         }
