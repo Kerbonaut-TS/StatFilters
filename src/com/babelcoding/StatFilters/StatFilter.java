@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -11,16 +12,14 @@ import java.util.HashMap;
 
  public class StatFilter {
 	
-	Tile master;				// single master image on import
+	public Tile image;				// single master image on import
 	public Tile[][] tiles; 		//[rows], [columns]  c and r are the coordinates in the picture
-
 	int[] tileRanks;		// list of tiles indexes ranked by metric
-	int[][] indexList; 		// the tile index displayed
 
 
 	public StatFilter()  {
 
-		System.out.println("StatFilter: baricenter 9.42");
+		System.out.println("StatFilter: baricenter 9.43");
 
 	}//end constructor
 	
@@ -35,8 +34,8 @@ import java.util.HashMap;
 
 	 public void setSource(String filepath,  Boolean monochrome) throws IOException {
 
-		 this.master = new Tile();
-		 master.setImageFromFile(filepath,monochrome);
+		 this.image = new Tile();
+		 image.setImageFromFile(filepath,monochrome);
 		 this.subdivide(1, 1);
 
 	 }
@@ -49,14 +48,14 @@ import java.util.HashMap;
 
 	public void setImage(BufferedImage img, Boolean monochrome) {
 
-		this.master = new Tile();
-		this.master.setBufferedImage(img, monochrome);
+		this.image = new Tile();
+		this.image.setBufferedImage(img, monochrome);
 		this.subdivide(1, 1);
 
 	}
 	
 	public BufferedImage reset() {
-		BufferedImage original = this.master.getBufferedImage();
+		BufferedImage original = this.image.getBufferedImage();
 		this.setImage(original);
 		this.subdivide(1, 1);
 
@@ -67,15 +66,15 @@ import java.util.HashMap;
 
 	public void resize(int newHeight, int newWidth) throws IOException {
 
-		this.master = this.master.resize(newHeight, newWidth);
+		this.image = this.image.resize(newHeight, newWidth);
 		this.subdivide(1, 1);
 
 	}
 
 	 public void resize(float percentage) throws IOException {
 
-		int newHeight =  Math.round(this.master.getHeight() * percentage);
-		int newWidth =  Math.round(this.master.getWidth() * percentage);
+		int newHeight =  Math.round(this.image.getHeight() * percentage);
+		int newWidth =  Math.round(this.image.getWidth() * percentage);
 		this.resize(newHeight, newWidth);
 
 	 }
@@ -89,8 +88,8 @@ import java.util.HashMap;
 
 		int hs,ws;
 
-		hs= (int) Math.floor((float) master.getHeight()/rows);
-		ws= (int) Math.floor((float) master.getWidth()/columns);
+		hs= (int) Math.floor((float) image.getHeight()/rows);
+		ws= (int) Math.floor((float) image.getWidth()/columns);
 
 		tiles = new Tile [rows][columns];
 		this.tileRanks = new int [rows*columns];
@@ -99,7 +98,7 @@ import java.util.HashMap;
 
 		if(rows == 1 && columns ==1){
 
-			tiles[0][0] = this.master;
+			tiles[0][0] = this.image;
 
 		} else {
 			//for each  tile  c=columns r=rows
@@ -126,8 +125,8 @@ import java.util.HashMap;
             	  
               } else {
             	  
-            	  int rows = (int) Math.floor((float) master.getHeight()/dimensions[0]);
-            	  int columns = (int) Math.floor((float) master.getWidth()/dimensions[0]);
+            	  int rows = (int) Math.floor((float) image.getHeight()/dimensions[0]);
+            	  int columns = (int) Math.floor((float) image.getWidth()/dimensions[0]);
            	  
             	  this.subdivide(rows,columns);
               }
@@ -150,8 +149,8 @@ import java.util.HashMap;
 
 		for (int h=0; h<height;h++) {
 			for (int w = 0; w < width; w++) {
-				for (String c : this.master.channels) {
-					int value = this.master.getMatrix(c)[h+y][w+x];
+				for (String c : this.image.channels) {
+					int value = this.image.getMatrix(c)[h+y][w+x];
 					tile.setPixel(c,  h,  w, value);
 
 				}
@@ -176,8 +175,8 @@ import java.util.HashMap;
 		int H = dimensions [0];
 		int W = dimensions [1];
  		
-		int horizontal_shifts = (int) Math.floor((float) (this.master.width - W)/stride)+1;
-		int vertical_shifts = (int)Math.floor((float) (this.master.height - H)/stride)+1;
+		int horizontal_shifts = (int) Math.floor((float) (this.image.width - W)/stride)+1;
+		int vertical_shifts = (int)Math.floor((float) (this.image.height - H)/stride)+1;
 		
  		int n = horizontal_shifts * vertical_shifts;
  		double [][] metrics = new double [n][3];    //  tlx, tly, value
@@ -186,8 +185,8 @@ import java.util.HashMap;
 
 
 		// convolution
-		for (int tly = 0; tly < (this.master.height - H);  tly = tly+stride){
-			for (int tlx = 0; tlx < (this.master.width - W); tlx = tlx+stride){
+		for (int tly = 0; tly < (this.image.height - H);  tly = tly+stride){
+			for (int tlx = 0; tlx < (this.image.width - W); tlx = tlx+stride){
 				double delta_sum =0;
 				Tile tile = this.select_tile_by_coordinates(tlx, tly,  W, H);
 				metrics[i][0] = (double) tlx;
@@ -464,14 +463,14 @@ import java.util.HashMap;
 	
 	public void  saveTiles (String filepath) throws IOException {
 
-		this.saveTiles(filepath, this.tileRanks, this.master.sampleStats.metrics);
+		this.saveTiles(filepath, this.tileRanks, this.image.sampleStats.metrics);
 					
 	}
 
 	 public void  saveTiles (String filepath, int[] listTiles) throws IOException {
 
 
-		 this.saveTiles(filepath, listTiles, this.master.sampleStats.metrics);
+		 this.saveTiles(filepath, listTiles, this.image.sampleStats.metrics);
 
 	 }
 

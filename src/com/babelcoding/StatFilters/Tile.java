@@ -209,15 +209,14 @@ public class Tile {
         if (x + stringWidth >= width) x = x - ((x + stringWidth) - width);
         if (x < 0) x = 0;
 
-        //draw Rectangles
-        this.drawSquare("red");
+        //draw box
+        this.drawBoundaryBox("red", 0,0,this.height, this.width);
 
         g2d.drawImage(this.getBufferedImage(), 0, 0, null);
         g2d.drawString(text, x, y);
         g2d.dispose();
 
         this.setBufferedImage(imgWithText, this.monochrome);
-
 
     }//end mark
 
@@ -269,7 +268,7 @@ public class Tile {
 
     }//end mark
 
-    public void drawSquare(String colour) {
+    public void drawBoundaryBox(String colour, int tlx, int tly,int height, int width) {
 
         HashMap<String, Integer> colours = new HashMap<String, Integer>();
 
@@ -292,19 +291,19 @@ public class Tile {
 
         }
 
-        for (int h = 0; h < this.height; h++) {
+        for (int h = tly; h < height; h++) {
             for (String c : channels) {
                 this.setPixel(c, h, 0, colours.get(c));
-                this.setPixel(c, h, this.width - 1, colours.get(c));
+                this.setPixel(c, h, width - 1, colours.get(c));
 
             }
         }
 
 
-        for (int w = 0; w < this.width; w++) {
+        for (int w = tlx; w < width; w++) {
             for (String c : channels) {
                 this.setPixel(c, 0, w, colours.get(c));
-                this.setPixel(c, this.height-1, w, colours.get(c));
+                this.setPixel(c, height-1, w, colours.get(c));
 
             }
         }
