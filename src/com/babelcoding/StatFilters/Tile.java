@@ -25,15 +25,14 @@ public class Tile {
     int tlx;
     int tly;
 
+    Boolean monochrome;
+    String[] channels = {"red", "green", "blue"};
+
     int[][] redPixels;
     int[][] greenPixels;
     int[][] bluePixels;
 
-    //channel averages
-    double  meanR,meanG,meanB;
-    Boolean monochrome;
-    String[] channels = {"red", "green", "blue"};
-    public String[] metrics = new String[] {"tlx", "tly", "height","width","mean","std.dev","entropy","red","blue", "green", "hue", "saturation", "brightness"};
+    ImageStats sampleStats;
 
     public Tile() {
 
@@ -45,12 +44,10 @@ public class Tile {
         tlx = 0;
         tly = 0;
 
-    }//end constructor
+        this.sampleStats = new ImageStats();
+        this.monochrome = false;
 
-    public void setChannels(String[] channels) {
-        this.channels = channels;
-        this.monochrome = channels.length>1?  false : true;
-    }
+    }//end constructor
 
     //=== IMPORT METHODS =====================================================================
 
@@ -61,49 +58,12 @@ public class Tile {
         this.setWidth(ih.getWidth());
         this.setChannels(ih.channels);
 
-        for (String c : this.channels) {
-
+        for (String c : ih.channels) {
             this.setMatrix(c, ih.getMatrix(c));
-
         }
+
     }//end setImage
 
-    //import a BufferedImage
-    public void setBufferedImage(BufferedImage image, Boolean monochrome) {
-
-        if (image == null) {
-            this.height = 0;
-            this.width = 0;
-        } else {
-
-            this.setHeight(image.getHeight());
-            this.setWidth(image.getWidth());
-
-            //get Image matrix
-            for (int h = 0; h < height; h++) {
-                for (int w = 0; w < width; w++) {
-
-                    Color colour =  this.getPixelColour(image, w, h);
-
-                    if (monochrome){
-                        redPixels[h][w] = (colour.getRed() +colour.getGreen() + colour.getBlue())/3;
-                    } else{
-                        redPixels[h][w] = colour.getRed();
-                        greenPixels[h][w] = colour.getGreen();
-                        bluePixels[h][w] = colour.getBlue();
-                    }
-
-                }//end height
-            }// end width
-
-            if(monochrome) this.setChannels( new String[] {"red"});
-
-
-        }//end else
-
-    }//end
-
-    //import Image from file
     public void setImageFromFile(String imgpath, Boolean monochrome) throws IOException {
 
         File myImg = new File(imgpath);
@@ -112,6 +72,58 @@ public class Tile {
         this.setBufferedImage(image, monochrome);
 
     } //end
+
+
+    //import a BufferedImage
+    public void setBufferedImage(BufferedImage image, Boolean monochrome) {
+
+        int sumR = 0, sumG = 0, sumB = 0, count = 0;
+
+        if (image == null) {
+            this.height = 0;
+            this.width = 0;
+        } else {
+
+            this.setHeight(image.getHeight());
+            this.setWidth(image.getWidth());
+            //get Image matrix
+            for (int h = 0; h < height; h++) {
+                for (int w = 0; w < width; w++) {
+
+                    Color colour = this.getPixelColour(image, w, h);
+
+                    if (monochrome) {
+                        redPixels[h][w] = (colour.getRed() + colour.getGreen() + colour.getBlue()) / 3;
+                    } else {
+                        redPixels[h][w] = colour.getRed();
+                        greenPixels[h][w] = colour.getGreen();
+                        bluePixels[h][w] = colour.getBlue();
+
+                        sumR = sumR + colour.getRed();
+                        sumG = sumG + colour.getGreen();
+                        sumB = sumB + colour.getBlue();
+                        count++;
+
+                    }
+
+                }//end height
+            }// end width
+
+            if(monochrome) count = 1;
+
+            this.sampleStats.setStats("red", Math.round(sumR / count));
+            this.sampleStats.setStats("green", Math.round(sumG / count));
+            this.sampleStats.setStats("blue", Math.round(sumB / count));
+
+            if (monochrome) this.setChannels(new String[]{"red"});
+
+
+        }//end else
+
+    }//end
+
+    //import Image from file
+
 
     //import image from a linear RGB array
     public void setImgFromVector(int[] array) {
@@ -145,7 +157,7 @@ public class Tile {
 
                     int pixelA = this.getMatrix(c)[h][w];
                     int pixelB = t2.getMatrix(c)[h][w];
-                    int value = Stats.apply(operation, pixelA, pixelB);
+                    int value = ImageStats.apply(operation, pixelA, pixelB);
                     this.setPixel(c, h, w, value);
 
                 }//end channels
@@ -198,7 +210,7 @@ public class Tile {
         if (x < 0) x = 0;
 
         //draw Rectangles
-        this.drawSquare();
+        this.drawSquare("red");
 
         g2d.drawImage(this.getBufferedImage(), 0, 0, null);
         g2d.drawString(text, x, y);
@@ -209,36 +221,98 @@ public class Tile {
 
     }//end mark
 
-    public void drawSquare() {
+
+    public void mark_pixel(int x, int y,String  colour) {
+
+        HashMap<String, Integer> colours = new HashMap<String, Integer>();
+
+        switch(colour){
+            case "red" -> {
+                colours.put("red", 255);
+                colours.put("green", 0);
+                colours.put("blue", 0);
+            }
+            case "green" -> {
+                colours.put("red", 0);
+                colours.put("green", 255);
+                colours.put("blue", 0);
+            }
+            case "blue" -> {
+                colours.put("red", 0);
+                colours.put("green", 0);
+                colours.put("blue", 255);
+            }
+
+        }
+
+        int cross_height = 10, cross_width =10;
+
+        for (int h = 0; h < cross_height+1; h++) {
+            for (String c : channels) {
+                this.setPixel(c, y - (cross_height/2)+h, x, colours.get(c));
+                this.setPixel(c, y - (cross_height/2)+h, x, colours.get(c));
+
+            }
+        }
+
+
+        for (int w = 0; w < cross_width+1; w++) {
+            for (String c : channels) {
+                this.setPixel(c, y, x - (cross_width/2) + w, colours.get(c));
+                this.setPixel(c, y, x - (cross_width/2) + w, colours.get(c));
+
+            }
+        }
+
+
+
+
+    }//end mark
+
+    public void drawSquare(String colour) {
+
+        HashMap<String, Integer> colours = new HashMap<String, Integer>();
+
+        switch(colour){
+            case "red" -> {
+                colours.put("red", 255);
+                colours.put("green", 0);
+                colours.put("blue", 0);
+            }
+            case "green" -> {
+                colours.put("red", 0);
+                colours.put("green", 255);
+                colours.put("blue", 0);
+            }
+            case "blue" -> {
+                colours.put("red", 0);
+                colours.put("green", 0);
+                colours.put("blue", 255);
+            }
+
+        }
 
         for (int h = 0; h < this.height; h++) {
+            for (String c : channels) {
+                this.setPixel(c, h, 0, colours.get(c));
+                this.setPixel(c, h, this.width - 1, colours.get(c));
 
-            redPixels[h][0] = 255;
-            redPixels[h][this.width - 1] = 255;
-
-            greenPixels[h][0] = 0;
-            greenPixels[h][this.width - 1] = 0;
-
-            bluePixels[h][0] = 0;
-            bluePixels[h][this.width - 1] = 0;
+            }
         }
 
 
         for (int w = 0; w < this.width; w++) {
+            for (String c : channels) {
+                this.setPixel(c, 0, w, colours.get(c));
+                this.setPixel(c, this.height-1, w, colours.get(c));
 
-            redPixels[0][w] = 255;
-            redPixels[this.height - 1][w] = 255;
-
-            greenPixels[0][w] = 0;
-            greenPixels[this.height - 1][w] = 0;
-
-            bluePixels[0][w] = 0;
-            bluePixels[this.height - 1][w] = 0;
+            }
         }
 
 
     }
-    public Tile resize(int newHeight, int newWidth) throws IOException {
+
+    public Tile resize(int newHeight, int newWidth) {
 
         BufferedImage img = this.getBufferedImage();
         Image newImage = img.getScaledInstance(newWidth, newHeight, Image.SCALE_DEFAULT);
@@ -265,8 +339,8 @@ public class Tile {
         for (String c : this.channels) {
 
             //resize z variable to 0-255
-            int max = Utils.getMaxValue(this.getMatrix(c));
-            int min = Utils.getMinValue(this.getMatrix(c));
+            int max = MatrixOps.getMaxValue(this.getMatrix(c));
+            int min = MatrixOps.getMinValue(this.getMatrix(c));
 
             double range = max - min == 0 ? 1 : max - min;
 
@@ -275,38 +349,45 @@ public class Tile {
 
                     int value = (int) (newmin + ((this.getMatrix(c)[h][w] - min) / range) * (newmax - newmin));
                     this.setPixel(c, h, w, value);
-
                 }//i
             }//j
         }
-
 
     }// end resizeToRGB
 
     //==== PIXEL TRANSFORMS ==================================================================
 
     public void standardise() {
-        for (String c : this.channels) Stats.standardise(this.getMatrix(c));
+        for (String c : this.channels) MatrixOps.standardise(this.getMatrix(c));
     }//end standardize
 
+    public void mean() {
+        for (String c : this.channels) this.setMatrix(c, this.sampleStats.getStat(this, c));
+    }
+
+    public void std_dev() {
+        for (String c : this.channels) {
+            //rescale to 0-255. Assuming that the max is 70% of the total range in all 3 channels
+            double sigma = this.sampleStats.getStat(this, "std.dev");
+            double RGBvalue = Math.min((sigma/((255*this.channels.length)*0.7))* 255, 255);
+            this.setMatrix(c, RGBvalue);
+        }
+    }
+
+
+
     public void log() {
-        for (String c : this.channels) Stats.transform("log", this.getMatrix(c));
+        for (String c : this.channels) ImageStats.transform("log", this.getMatrix(c));
     }
 
     public void invert() {
-        for (String c : this.channels) Stats.transform("invert", this.getMatrix(c));
+
+        for (String c : this.channels) ImageStats.transform("invert", this.getMatrix(c));
     }
 
     public void sqrt() {
-        for (String c : this.channels) Stats.transform("sqrt", this.getMatrix(c));
-    }
 
-    public void mean() {
-
-        this.setMatrix("red", this.meanR);
-        this.setMatrix("green", this.meanG);
-        this.setMatrix("blue", this.meanB);
-
+        for (String c : this.channels) ImageStats.transform("sqrt", this.getMatrix(c));
     }
 
 
@@ -340,16 +421,12 @@ public class Tile {
                         {1, 2, 1}
                 };
 
-        int gx, gy, G;
-
-        gx = 0;
-        gy = 0;
-        G = 0;
+        int gx = 0, gy = 0, G = 0;
 
         //iterate in the 3x3 tile
         for (int h = 0; h < this.height; h++) {
             for (int w = 0; w < this.width; w++) {
-                int pixel = (int) Math.floor((redPixels[h][w] + greenPixels[h][w] + bluePixels[h][w]) / 3);
+                int pixel = (int) Math.floor((float) (redPixels[h][w] + greenPixels[h][w] + bluePixels[h][w]) / 3);
 
                 gx = gx + pixel * sx[h][w];
                 gy = gy + pixel * sy[h][w];
@@ -378,9 +455,7 @@ public class Tile {
     // TILE METRICS/STATS  ========================================================================
 
     private Color getPixelColour(BufferedImage image, int x, int y) {
-
         return new Color(image.getRGB(x, y));
-
     }//end getpixelcolour
 
     public int getTlx() {
@@ -412,198 +487,30 @@ public class Tile {
         int offset = (absolute) ? this.tly : 0;
         return offset + (int) ((float) height * 0.5);
 
-
-    }
-    private void calculate_avgs(){
-
-        this.meanR = Stats.mean(this.getMatrix("red"));
-        this.meanG = Stats.mean(this.getMatrix("green"));
-        this.meanB = Stats.mean(this.getMatrix("blue"));
-
     }
 
 
-    private double avg() {
-
-        return (this.meanR + this.meanG + this.meanB) / 3;
-    }
-
-
-    private double hue() {
-        double rp, gp, bp, max, min, hue;
-
-        rp = this.meanR/ 255f;
-        gp = this.meanG / 255f;
-        bp = this.meanB / 255f;
-
-        max = Math.max(Math.max(rp, gp), bp);
-        min = Math.min(Math.min(rp, gp), bp);
-
-        // Check if max and min are equal (pixel is grey)
-        if (max == min) {
-            // Return -1 to represent grey
-            return -1;
-        }
-
-        // Calculate hue colour wheel
-        hue = (float) Math.toDegrees(Math.atan2(Math.sqrt(3) * (gp - bp), 2 * rp - gp - bp));
-
-        // Normalize hue to be within the range of 0 to 360 degrees
-        if (hue < 0) {
-            hue += 360;
-        }
-
-        return Math.floor(hue);
-    }
-
-    private double saturation() {
-
-        double rp, gp, bp, max, min, saturation;
-
-        rp = this.meanR/ 255f;
-        gp = this.meanG / 255f;
-        bp = this.meanB / 255f;
-
-        max = Math.max(Math.max(rp, gp), bp);
-        min = Math.min(Math.min(rp, gp), bp);
-
-        saturation = (max == 0) ? 0 : ((max - min) / max);
-
-        saturation = saturation * 100;
-
-        return Math.floor(saturation);
+    public HashMap<String, Double> getStats(String[] metrics) {
+        /* returns multiple metrics: Dictionary */
+        return this.sampleStats.getStats(this, metrics);
 
     }
 
-    private double brightness() {
-
-        double max, brightness;
-
-        double rp = this.meanR/ 255f;
-        double gp = this.meanG / 255f;
-        double bp = this.meanB / 255f;
-
-
-        max = Math.max(Math.max(rp, gp), bp);
-        brightness = max * 100;
-
-
-        return Math.floor(brightness);
+    public double getStat(String metric) {
+        /* returns single metric: Double*/
+        return this.sampleStats.getStats(this, new String[]{metric}).get(metric);
 
     }
 
-    private double std_dev() {
-
-        double sigmar, sigmag, sigmab;
-        sigmar = Stats.std_dev(this.getMatrix("red"), this.meanR);
-        sigmag = Stats.std_dev(this.getMatrix("green"), this.meanG);
-        sigmab = Stats.std_dev(this.getMatrix("blue"), this.meanB);
-
-        return sigmar + sigmag + sigmab;
-
-    }//end getinfo
-
-    private double entropy() {
-        // Create a map to count the frequency of each color
-
-        Map<Color, Integer> colorCounts = new HashMap<>();
-        int[][] red = this.getMatrix("red");
-        int[][] blue = this.getMatrix("blue");
-        int[][] green = this.getMatrix("green");
-
-
-        // Iterate over each pixel and count the occurrences of each color
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                Color pixel = new Color((int) red[i][j], (int) green[i][j], (int) blue[i][j]);
-                colorCounts.put(pixel, colorCounts.getOrDefault(pixel, 0) + 1);
-            }
-        }
-
-        // Calculate the entropy
-        double totalPixels = width * height;
-        double entropy = 0.0;
-
-        for (int count : colorCounts.values()) {
-            double probability = count / totalPixels;
-            entropy -= probability * Math.log(probability) / Math.log(2);
-        }
-
-        return entropy;
-    }
-
-
-    public Dictionary<String, Double> getStats() {
-
-        //if unspecified export all
-        return this.getStats(this.metrics);
+    public HashMap<String, Double> getStats() {
+        /* returns all metrics*/
+        return this.sampleStats.getStats(this);
 
     }
 
-    public double getStats(String metric) {
+    public void refreshStats(){ this.sampleStats.refresh(this);}
 
-        //if unspecified export all
-        Dictionary<String, Double> json_result = this.getStats(new String[] {metric});
-        return json_result.get(metric);
-
-    }
-
-
-    public Dictionary<String, Double> getStats(String[] metrics) {
-
-        Dictionary<String, Double> stats = new Hashtable();
-        this.calculate_avgs();
-
-        for (String m : metrics) {
-            switch (m) {
-
-                case "tlx":
-                    stats.put("tlx", (double) this.tlx);
-                    break;
-                case "height":
-                    stats.put("height", (double) this.height);
-                    break;
-                case "width":
-                    stats.put("width", (double) this.width);
-                    break;
-                case "mean":
-                    stats.put("mean", (double) this.avg());
-                    break;
-                case "std.dev":
-                    stats.put("std.dev", this.std_dev());
-                    break;
-                case "entropy":
-                    stats.put("entropy", this.entropy());
-                    break;
-                case "red":
-                    stats.put("red", this.meanR);
-                    break;
-                case "green":
-                    stats.put("green", this.meanG);
-                    break;
-                case "blue":
-                    stats.put("blue", this.meanB);
-                    break;
-                case "hue":
-                    stats.put("hue", this.hue());
-                    break;
-                case "saturation":
-                    stats.put("saturation", this.saturation());
-                    break;
-                case "brightness":
-                    stats.put("brightness", this.brightness());
-                    break;
-
-
-            }//end switch
-        }
-
-        return stats;
-
-    }
-
-
-    // === IMG OPERATIONS ======================================================================
+// === IMG OPERATIONS ======================================================================
 
     public int[][] getMatrix(String channel) {
 
@@ -616,7 +523,6 @@ public class Tile {
 
             case "blue":
                 return bluePixels;
-
 
             default:
                 System.out.println("Invalid: set red, green, blue. ");
@@ -635,7 +541,7 @@ public class Tile {
         int rgb;
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                if(this.monochrome) {
+                if (this.monochrome) {
                     rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) redPixels[h][w]) << 8 | ((int) redPixels[h][w]));
                 } else {
                     rgb = (((int) 255 << 24) | ((int) redPixels[h][w]) << 16 | ((int) greenPixels[h][w]) << 8 | ((int) bluePixels[h][w]));
@@ -649,14 +555,14 @@ public class Tile {
     }//end write image
 
     public String getJson() {
-
-     return getJson(this.metrics);
+        //if unspecified return all
+        return getJson(this.sampleStats.metrics);
     }
 
     public String getJson(String[] metrics) {
 
         // statistics to String
-        Dictionary stats = this.getStats(metrics);
+        HashMap<String, Double> stats = this.getStats(metrics);
         String stats_string = stats.toString().replace("=", "\":").replace(", ", ", \"").replace("{", "\"").replace("}", "");
 
         //tile stats
@@ -664,7 +570,6 @@ public class Tile {
 
         return json_string;
     }
-
 
 
     public void savetoFile(String filepath, String format) throws IOException {
@@ -677,8 +582,12 @@ public class Tile {
     }//end write image
 
 
-    //=== GET/SET  ========================================================================
+    //=== SET  ========================================================================
 
+    public void setChannels(String[] channels) {
+        this.channels = channels;
+        this.monochrome = channels.length > 1 ? false : true;
+    }
 
     public void setMatrix(String channel, double constant) {
 
@@ -743,7 +652,7 @@ public class Tile {
     public void setPixel(String channel, int h, int w, int value) {
 
 
-        if ((value >= 0) && (value <= 255)) {
+        //if ((value >= 0) && (value <= 255)) {
 
             switch (channel) {
                 case "red":
@@ -763,11 +672,11 @@ public class Tile {
                     System.exit(0);
 
             }//end switch
-        } else {
-
+        /*} else {
+#
             System.out.print("ERROR. Invalid pixel value:" + value);
             System.exit(0);
-        }
+        }*/
 
     }//end setPixel
 
