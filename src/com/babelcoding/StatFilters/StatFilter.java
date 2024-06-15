@@ -469,14 +469,11 @@ import java.util.HashMap;
 
 	 public void  saveTiles (String filepath, int[] listTiles) throws IOException {
 
-
 		 this.saveTiles(filepath, listTiles, this.image.sampleStats.metrics);
 
 	 }
 
 	 public void  saveTiles (String filepath, String[] metrics) throws IOException {
-
-
 		 this.saveTiles(filepath, this.tileRanks, metrics);
 
 	 }
@@ -489,20 +486,24 @@ import java.util.HashMap;
 		File file = new File(filepath);
 		String path = file.getParent();
 		String name = Utils.getFilename(filepath);
-		String json_out = "{";
-		
-		//cycle through tiles
-		for (int i : listTiles){
-
-			json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson(metrics) + ", ";
-
-		}
-
-		json_out = json_out +  "}";
-		Utils.writeFile(filepath, json_out);
-
+		Utils.writeFile(filepath, this.get_JSON(listTiles, metrics));
 
 	}//end saveTiles
+
+	 public String get_JSON (int[] listTiles , String[] metrics ){
+
+		 String json_out = "{";
+
+		 //cycle through tiles
+		 for (int i : listTiles){
+			 json_out = json_out + "\"" + i + "\"  : " +  this.getTile(i).getJson(metrics) + ", ";
+		 }
+
+		 json_out = json_out +  "}";
+
+		 return json_out;
+
+	 }
 		
 
 	
