@@ -40,20 +40,7 @@ final class Stats {
         }//endh
     }
 
-     static public void standardise(int[][] matrix){
 
-         //calculate z variable
-         double avg = Stats.mean(matrix);
-         double stddev = Stats.std_dev(matrix);
-
-         for(int h=0; h<matrix.length; h++){
-             for(int w=0; w<matrix[0].length; w++){
-                 matrix[h][w]= (int) Math.round((matrix[h][w]-avg)/stddev);
-
-             }//i
-         }//j
-
-     }//end standardize
 
      // AGGREGATION FUNCTIONS  int[][] -> Y ========================================================================
 
@@ -92,6 +79,40 @@ final class Stats {
          return Math.sqrt(sum/n);
 
      }//end standard deviation
+
+    static public double std_dev(int [][] matrix, double mean){
+
+        int avg= (int) mean ;
+
+        double sum=0;
+
+        for(int j=0; j<matrix.length;j++){
+            for(int i=0;i<matrix[0].length;i++){
+
+                sum=sum + Math.pow(matrix[j][i]-avg, 2);
+
+            }//i
+        }//j
+
+        double n = matrix[0].length*matrix.length;
+        return Math.sqrt(sum/n);
+
+    }//end standard deviation
+
+    static public void standardise(int[][] matrix){
+
+        //calculate z variable
+        double avg = Stats.mean(matrix);
+        double stddev = Stats.std_dev(matrix);
+
+        for(int h=0; h<matrix.length; h++){
+            for(int w=0; w<matrix[0].length; w++){
+                matrix[h][w]= (int) Math.round((matrix[h][w]-avg)/stddev);
+
+            }//i
+        }//j
+
+    }//end standardize
 
 
 }
