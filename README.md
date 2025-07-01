@@ -30,7 +30,7 @@ which returns:
 {6,19,16,17,10,2,8,23,18,3,11,9,22,1,13,24,12,14,4,5,7,21,0,15,20,}
 ```
 
-Some of these metrics can be applied as "operation filters" using 
+You can apply "operation filters" on all or a subset of tiles using 
 
     filter.applyOperation(operation, subset) 
     
