@@ -10,14 +10,16 @@ public class Main {
 
 		StatFilter f1= new StatFilter();
 		f1.setSource(filepath);
+		System.out.println(f1.getTile(0).getStats());
 
-		String [] operations = new String[]{"mean", "std.dev", "sobel", "sqrt", "entropy", "red", "green", "blue", ""};
+		String [] operations = new String[]{"mean", "std.dev", "sobel", "sqrt", "entropy", "red", "green", "blue", "log"};
 
 		for (String operation: operations) {
+
 		    System.out.println("Applying filer: "+operation);
-		    f1.createTiles("5x5");
-		    f1.applyOperation(operation);
-		    f1.saveImage("test//"+operation+".jpg", "jpg");
+		    f1.subdivide("10x10");
+		    f1.apply(operation);
+		    f1.saveImage("C:\\path\\to\\image\\output"+operation+".jpg", "jpg");
 		    f1.reset();
 
 		} 
